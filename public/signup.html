@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="css/signup.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container nav">
+        <button
+          class="icon-btn hamburger"
+          id="navToggle"
+          aria-label="Open menu"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M3 6h18M3 12h18M3 18h18"
+              stroke="#5f5a54"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+        <div class="brand">PrestigePages</div>
+        <nav class="nav-links" aria-label="Main">
+          <a href="index.html">Home</a>
+          <a href="#">Store</a>
+          <a href="#">About us</a>
+        </nav>
+
+        <div class="nav-spacer"></div>
+
+        <div class="actions">
+          <button class="icon-btn" aria-label="Wishlist">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12.1 20.3 4.7 13c-2.6-2.6-1.9-6.9 1.6-8.5 1.7-.8 3.7-.5 5.1.7 1.4-1.2 3.4-1.5 5.1-.7 3.5 1.6 4.2 5.9 1.6 8.5l-7.3 7.3Z"
+                stroke="#7E6E5B"
+                stroke-width="1.6"
+                fill="#fff"
+              />
+            </svg>
+          </button>
+
+          <button class="icon-btn" aria-label="Cart">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M3 3h2l2.4 12.3a2 2 0 0 0 2 1.7h6.9a2 2 0 0 0 2-1.6L21 7H6"
+                stroke="#7E6E5B"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="10" cy="20" r="1.5" fill="#7E6E5B" />
+              <circle cx="17" cy="20" r="1.5" fill="#7E6E5B" />
+            </svg>
+          </button>
+
+          <nav class="nav-links" aria-label="Main">
+            <a href="login.html">Log In</a>
+            <a href="signup.html">Sign Up</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+    <div class="containers">
+      <h1>Create a new Account.</h1>
+      <p>
+        Already have an account?
+        <a href="login.html">
+          <span style="color: rgb(75, 75, 245)"><u>Login</u></span></a
+        >
+      </p>
+      <form id="signupForm">
+        <div style="display: flex">
+          <div class="input-container" style="width: 11.5rem">
+            <i class="fa-solid fa-user"></i>
+            <input
+              type="text"
+              id="firstName"
+              placeholder="First Name"
+              required
+            />
+          </div>
+
+          <div class="input-container" style="width: 11.8rem">
+            <i class="fa-solid fa-user"></i>
+            <input type="text" id="lastName" placeholder="Last Name" required />
+          </div>
+        </div>
+
+        <div class="input-container">
+          <i class="fa-solid fa-envelope"></i>
+          <input type="email" id="email" placeholder="Email" required />
+        </div>
+
+        <div class="input-container">
+          <i class="fa-solid fa-lock"></i>
+          <input
+            type="password"
+            id="password"
+            placeholder="Password"
+            required
+          />
+          <i
+            class="fa-solid fa-eye"
+            id="togglePassword"
+            style="margin-left: 330px; cursor: pointer"
+          ></i>
+        </div>
+
+        <div class="input-container">
+          <i class="fa-solid fa-lock"></i>
+          <input
+            type="password"
+            id="cpassword"
+            placeholder="Confirm Password"
+            required
+          />
+          <i
+            class="fa-solid fa-eye"
+            id="toggleCPassword"
+            style="margin-left: 330px; cursor: pointer"
+          ></i>
+        </div>
+
+        <div class="input-container">
+          <i class="fa-solid fa-phone"></i>
+          <input type="tel" id="mobile" placeholder="Mobile Number" required />
+        </div>
+        <div style="display: flex; justify-content: space-between">
+          <div>
+            <p style="margin: 0; padding-left: 1.5rem; padding-bottom: 0.5rem">
+              Or login with.
+            </p>
+            <a href="#" class="fa fa-google"></a>
+            <a href="#" class="fa fa-facebook"></a>
+          </div>
+          <button class="login-btn" type="submit">Sign Up</button>
+        </div>
+      </form>
+    </div>
+
+    <script type="module">
+      // Firebase imports
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+      import {
+        getAuth,
+        createUserWithEmailAndPassword,
+      } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+      import {
+        getFirestore,
+        doc,
+        setDoc,
+      } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+      // Firebase config
+      const firebaseConfig = {
+        apiKey: "AIzaSyCC_14beDBhudrtoAIFqc29TCMY5zoa4AA",
+        authDomain: "prestige-pages.firebaseapp.com",
+        databaseURL: "https://prestige-pages-default-rtdb.firebaseio.com",
+        projectId: "prestige-pages",
+        storageBucket: "prestige-pages.appspot.com",
+        messagingSenderId: "1065922943021",
+        appId: "1:1065922943021:web:e5829dd09e206063b500a4",
+        measurementId: "G-V0E6PXN1Z5",
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // Handle account creation
+      document
+        .getElementById("signupForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const firstName = document.getElementById("firstName").value;
+          const lastName = document.getElementById("lastName").value;
+          const mobile = document.getElementById("mobile").value;
+          const email = document.getElementById("email").value;
+          const password = document.getElementById("password").value;
+          const cpassword = document.getElementById("cpassword").value;
+
+          const mobileRegex = /^09\d{9}$/;
+          if (!mobileRegex.test(mobile)) {
+            alert(
+              "❌ Invalid mobile number. It must start with 09 and be 11 digits."
+            );
+            return;
+          }
+
+          if (password !== cpassword) {
+            alert("❌ Passwords do not match. Please try again.");
+            return; // stop form submission
+          }
+
+          try {
+            // 1. Create user in Firebase Auth
+            const userCredential = await createUserWithEmailAndPassword(
+              auth,
+              email,
+              password
+            );
+            const user = userCredential.user;
+
+            // 2. Store extra details in Firestore under users/{uid}
+            await setDoc(doc(db, "users", user.uid), {
+              firstName: firstName,
+              lastName: lastName,
+              mobile: mobile,
+              email: email,
+              createdAt: new Date(),
+            });
+
+            alert("✅ Account created successfully! Redirecting to homepage...");
+            document.getElementById("signupForm").reset();
+            window.location.href = "homepage-logged.html";
+          } catch (error) {
+            // show specific errors
+            if (error.code === "auth/email-already-in-use") {
+              alert(
+                "❌ This email is already registered. Please log in or use another one."
+              );
+            } else if (error.code === "auth/invalid-email") {
+              alert("❌ Invalid email format. Please enter a valid email.");
+            } else if (error.code === "auth/weak-password") {
+              alert("❌ Weak password. It should be at least 6 characters.");
+            } else {
+              alert("❌ Error: " + error.message);
+            }
+          }
+        });
+
+      // Toggle password visibility
+      function togglePasswordVisibility(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+
+        icon.addEventListener("click", () => {
+          const isHidden = input.type === "password";
+          input.type = isHidden ? "text" : "password";
+          icon.classList.toggle("fa-eye");
+          icon.classList.toggle("fa-eye-slash");
+        });
+      }
+
+      togglePasswordVisibility("password", "togglePassword");
+      togglePasswordVisibility("cpassword", "toggleCPassword");
+
+      // Mobile nav toggle
+      document.getElementById("navToggle").addEventListener("click", () => {
+        const existing = document.getElementById("mobileMenu");
+        if (existing) {
+          existing.remove();
+          return;
+        }
+        const menu = document.createElement("div");
+        menu.id = "mobileMenu";
+        menu.style.background = "var(--paper)";
+        menu.style.borderTop = "1px solid var(--line)";
+        menu.innerHTML = `<div class="container" style="padding:12px 20px 16px; display:grid; gap:10px;">
+        <a href="index.html">Home</a>
+        <a href="#popular">Store</a>
+        <a href="about-us.html">About us</a>
+      </div>`;
+        document.querySelector(".site-header").appendChild(menu);
+      });
+    </script>
+  </body>
+</html>
