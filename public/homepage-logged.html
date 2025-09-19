@@ -340,6 +340,15 @@
       </div>
     </div>
 
+    <!-- Wishlist Modal -->
+    <div id="wishlistModal" class="modal">
+      <div class="modal-content">
+        <span id="closeWishlist" class="close-btn">&times;</span>
+        <h2>Your Wishlist ❤️</h2>
+        <div id="wishlistItems"></div>
+      </div>
+    </div>
+
     <!-- Cart Modal -->
     <div id="cartModal" class="modal">
       <div class="modal-content">
@@ -369,6 +378,8 @@
     getDoc,
     updateDoc,
     setDoc,
+    arrayUnion,
+    arrayRemove,
   } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
   // Firebase config
@@ -412,8 +423,14 @@
 
   // Cart system variables
   let cart = [];
+  // Wishlist state
+  let USER_WISHLIST = [];
 
   const cartBtn = document.getElementById("cartBtn");
+  const wishlistBtn = document.querySelector(".actions button[aria-label='Wishlist']");
+  const wishlistModal = document.getElementById("wishlistModal");
+  const wishlistItemsEl = document.getElementById("wishlistItems");
+  const closeWishlistBtn = document.getElementById("closeWishlist");
   const cartCount = document.getElementById("cartCount");
   const cartModal = document.getElementById("cartModal");
   const closeCart = document.getElementById("closeCart");
@@ -555,6 +572,8 @@
       if (docSnap.exists()) {
         const firstName = docSnap.data().firstName;
         welcomeEl.textContent = firstName;
+        // Load wishlist if available
+        USER_WISHLIST = docSnap.data().wishlist || [];
       } else {
         welcomeEl.textContent = "Welcome User!";
       }
@@ -721,10 +740,53 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M12.1 20.3 4.7 13c-2.6-2.6-1.9-6.9 1.6-8.5 1.7-.8 3.7-.5 5.1.7 1.4-1.2 3.4-1.5 5.1-.7 3.5 1.6 4.2 5.9 1.6 8.5l-7.3 7.3Z" stroke="#7E6E5B" stroke-width="1.6" fill="#fff"/>
         </svg>`;
 
-      heart.addEventListener("click", () => {
+      // Set initial heart state if book is in wishlist
+      const isInWishlist = USER_WISHLIST.some(item => item.title === b.title && item.author === b.author);
+      if (isInWishlist) {
+        heart.classList.add("active");
+        heart.querySelector("svg path").setAttribute("fill", "#FF0000");
+      }
+
+      heart.addEventListener("click", async () => {
+        const user = auth.currentUser;
+        if (!user) {
+          alert("Please log in to save items to your wishlist");
+          return;
+        }
+
         const path = heart.querySelector("svg path");
-        const isActive = heart.classList.toggle("active");
-        path.setAttribute("fill", isActive ? "#FF0000" : "#fff");
+        const userDocRef = doc(db, "users", user.uid);
+        
+        try {
+          if (heart.classList.contains("active")) {
+            // Remove from wishlist
+            await updateDoc(userDocRef, {
+              wishlist: arrayRemove(b)
+            });
+            USER_WISHLIST = USER_WISHLIST.filter(item => !(item.title === b.title && item.author === b.author));
+            heart.classList.remove("active");
+            path.setAttribute("fill", "#fff");
+          } else {
+            // Add to wishlist
+            await updateDoc(userDocRef, {
+              wishlist: arrayUnion(b)
+            });
+            USER_WISHLIST.push(b);
+            heart.classList.add("active");
+            path.setAttribute("fill", "#FF0000");
+          }
+        } catch (error) {
+          // If wishlist field doesn't exist yet, create it
+          try {
+            await setDoc(userDocRef, { wishlist: [b] }, { merge: true });
+            USER_WISHLIST.push(b);
+            heart.classList.add("active");
+            path.setAttribute("fill", "#FF0000");
+          } catch (err) {
+            console.error("Failed to update wishlist:", err);
+            alert("Failed to update wishlist");
+          }
+        }
       });
 
       actions.append(addBtn, heart);
@@ -904,6 +966,91 @@
   window.addEventListener("click", (e) => {
     if (e.target === cartModal) {
       cartModal.style.display = "none";
+    }
+  });
+
+  // Wishlist modal handlers
+  wishlistBtn.addEventListener("click", async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      alert("Please log in to view your wishlist");
+      return;
+    }
+
+    // Refresh wishlist from Firestore
+    const docRef = doc(db, "users", user.uid);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      USER_WISHLIST = docSnap.data().wishlist || [];
+    }
+
+    // Display wishlist items
+    wishlistItemsEl.innerHTML = "";
+    if (USER_WISHLIST.length === 0) {
+      wishlistItemsEl.innerHTML = "<p>Your wishlist is empty</p>";
+    } else {
+      USER_WISHLIST.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "wishlist-item";
+        div.style.display = "flex";
+        div.style.alignItems = "center";
+        div.style.gap = "15px";
+        div.style.padding = "10px 0";
+        div.style.borderBottom = "1px solid var(--line)";
+
+        div.innerHTML = `
+          <img src="${item.cover}" alt="${item.title}" style="width: 60px; height: 90px; object-fit: cover; border-radius: 6px;">
+          <div style="flex: 1">
+            <h4 style="margin: 0 0 5px">${item.title}</h4>
+            <p style="margin: 0; color: var(--muted-ink)">by ${item.author}</p>
+            <p style="margin: 5px 0 0">₱${item.price.toFixed(2)}</p>
+          </div>
+          <button class="remove-from-wishlist btn secondary small" data-title="${item.title}" data-author="${item.author}">Remove</button>
+        `;
+
+        div.querySelector(".remove-from-wishlist").addEventListener("click", async () => {
+          const user = auth.currentUser;
+          if (!user) return;
+
+          const userDocRef = doc(db, "users", user.uid);
+          try {
+            await updateDoc(userDocRef, {
+              wishlist: arrayRemove(item)
+            });
+            USER_WISHLIST = USER_WISHLIST.filter(b => !(b.title === item.title && b.author === item.author));
+            div.remove();
+            if (USER_WISHLIST.length === 0) {
+              wishlistItemsEl.innerHTML = "<p>Your wishlist is empty</p>";
+            }
+
+            // Update heart button state if book is visible
+            const bookCard = document.querySelector(`.card:has(button.active[data-title="${item.title}"])`);
+            if (bookCard) {
+              const heartBtn = bookCard.querySelector(".btn.icon.secondary");
+              heartBtn.classList.remove("active");
+              heartBtn.querySelector("svg path").setAttribute("fill", "#fff");
+            }
+          } catch (err) {
+            console.error("Failed to remove from wishlist:", err);
+            alert("Failed to remove from wishlist");
+          }
+        });
+
+        wishlistItemsEl.appendChild(div);
+      });
+    }
+    
+    wishlistModal.style.display = "flex";
+  });
+
+  closeWishlistBtn.addEventListener("click", () => {
+    wishlistModal.style.display = "none";
+  });
+
+  // Close wishlist modal when clicking outside
+  window.addEventListener("click", (e) => {
+    if (e.target === wishlistModal) {
+      wishlistModal.style.display = "none";
     }
   });
 </script>
