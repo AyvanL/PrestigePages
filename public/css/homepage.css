@@ -151,6 +151,36 @@ body {
   display: none;
 }
 
+.cart-count {
+  background: #c89b3c;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 50%;
+  padding: 2px 6px;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+
+/* Badge */
+.badge {
+  background: red;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 50%;
+  padding: 2px 6px;
+  position: absolute;
+  top: -6px;
+  right: -6px;
+}
+
+/* Position inside cart button */
+.icon-btn {
+  position: relative;
+}
+
 /* --- Hero ------------------------------------------------------------ */
 .hero {
   position: relative;
@@ -276,13 +306,106 @@ body {
   font-size: 13px;
   color: var(--muted-ink);
 }
+/* --- Category or Filter ---------------------------------------------------*/
+/* Layout wrapper for sidebar + books */
+.content-wrapper {
+  display: flex;
+  gap: 24px; /* fixed from gap: px; */
+  margin-top: 20px;
+  align-items: flex-start;
+}
+
+/* Sidebar styles */
+.sidebar {
+  width: 240px;
+  padding: 18px 20px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  flex-shrink: 0;
+}
+
+.sidebar h3 {
+  margin-bottom: 14px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--brand-ink);
+}
+
+.sidebar label {
+  display: block;
+  margin-bottom: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.sidebar input[type="radio"] {
+  margin-right: 8px;
+}
+/* Price Range */
+.price-range {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.price-range label {
+  font-size: 14px;
+  color: var(--ink);
+  display: flex;
+  justify-content: space-between;
+}
+
+.price-range input[type="range"] {
+  width: 100%;
+  cursor: pointer;
+}
+
+
+/* Main content */
+.main-content {
+  flex: 1;
+}
+
+
+.items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
 
 /* --- Popular Books --------------------------------------------------- */
+/* Header row with title + search */
+.popular-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+/* Make heading not shrink */
+.popular-header h2 {
+  font-family: "Playfair Display", serif;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+/* Search beside title */
+.popular-header .search {
+  flex: 1;
+  max-width: 400px;
+}
+
 .section-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-
+  margin-top: 42px;
+  margin-bottom: 14px;
 }
 .section-head h2 {
   font-family: "Playfair Display", serif;
@@ -294,7 +417,6 @@ body {
   color: var(--brand-ink);
   font-weight: 600;
 }
-
 
 .grid {
   display: grid;
@@ -457,6 +579,123 @@ footer {
   display: block;
 }
 
+/* Modal (reuse your style, but ensure for cart too) */
+#cartModal {
+  display: none; /* hidden by default */
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+#cartModal .modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 800px;
+  width: 90%;
+  max-height: 600px;   /* fixed modal height */
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow);
+
+}
+#cartItems {
+  flex: 1;
+  overflow-y: auto; /* ✅ only cart items scroll */
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+#cartItems li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+
+
+/* Cart item style */
+.cart-item {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  padding: 12px 0;
+}
+
+#cartItems img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+#cartTotal {
+  margin-top: 10px;
+  font-weight: bold;
+  text-align: right;
+}
+
+.cart-item-details {
+  flex: 1;
+}
+
+.cart-item-details h4 {
+  font-size: 15px;
+  margin: 0;
+  color: #333;
+}
+
+.cart-item-details p {
+  font-size: 13px;
+  margin: 4px 0;
+  color: #777;
+}
+
+.cart-item-price {
+  font-weight: bold;
+  margin-right: 12px;
+}
+
+.cart-qty {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cart-qty button {
+  border: 1px solid #aaa;
+  background: #f7f7f7;
+  width: 28px;
+  height: 28px;
+  font-size: 18px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.cart-qty input {
+  width: 40px;
+  text-align: center;
+  border: 1px solid #ccc;
+  height: 28px;
+}
+
+.cart-remove {
+  cursor: pointer;
+  color: red;
+  font-size: 18px;
+  margin-left: 10px;
+}
+
+.cart-footer {
+  margin-top: 12px;
+  text-align: right;
+  font-size: 16px;
+}
+
 /* Modal background */
 .modal {
   display: none;
@@ -481,6 +720,33 @@ footer {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   animation: fadeIn 0.3s ease;
 }
+
+#profile-modal {
+  display: none; /* hidden by default */
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  justify-content: center;
+  align-items: center;
+  justify-content: center;
+}
+
+#profile-modal .modal-content {
+ width: 400px;
+  max-width: 90%;
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  margin: auto; /* centers it */
+  max-height: 90vh; 
+  overflow-y: auto; /* scroll only if content is long */
+}
+
 
 /* Close button */
 .close-btn {
@@ -565,29 +831,20 @@ footer {
     display: grid;
   }
 
-.sidebar {
- width: 250px;
-  background: #fdfbf7;
-  border: 1px solid #ddd;
-  padding: 16px;
-  border-radius: 12px;
-}
-
-
-
-
-.sidebar h3 {
-  font-size: 1rem;
-  margin-bottom: 8px;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 6px;
-}
-
   .search {
     position: relative;
     display: flex;
     align-items: center;
     margin-right: 0rem;
+    display: flex;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 400px;
+    background: #fff;
+    margin-bottom: 20px;
   }
   .search input {
     width: 300px;
@@ -597,6 +854,10 @@ footer {
     border: 1px solid var(--line);
     border-radius: 999px;
     outline: none;
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
   }
 }
 @media (max-width: 855px) {
