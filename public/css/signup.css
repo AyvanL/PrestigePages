@@ -170,7 +170,51 @@ a{
         max-width: var(--container); margin-inline:auto; padding-inline: 20px; 
     }
 
-    /* --- Header ---------------------------------------------------------- */
+    /* --- Modal ----------------------------------------------------------- */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .modal-content input {
+      width: 100%;
+      padding: 10px;
+      margin: 1rem 0;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+
+    .modal-content button {
+      background: #ab966d;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .modal-content button:hover {
+      background: #8e7d5a;
+    }
+
+/* --- Header ---------------------------------------------------------- */
     .site-header{ 
         position: sticky; top:0; 
         z-index:50; backdrop-filter: 

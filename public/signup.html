@@ -21,6 +21,8 @@
     />
   </head>
   <body>
+    <!-- Include EmailJS -->
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
     <header class="site-header">
       <div class="container nav">
         <button
@@ -175,6 +177,17 @@
       </form>
     </div>
 
+    <!-- OTP Modal -->
+    <div class="modal" id="otpModal">
+      <div class="modal-content">
+        <h3>Enter OTP</h3>
+        <p>We sent a 6-digit code to your email</p>
+        <input type="text" id="otpInput" maxlength="6" placeholder="Enter OTP">
+        <button id="verifyOtpBtn">Verify</button>
+        <p id="otpMsg"></p>
+      </div>
+    </div>
+
     <script type="module">
       // Firebase imports
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
@@ -205,6 +218,12 @@
       const auth = getAuth(app);
       const db = getFirestore(app);
 
+      // Initialize EmailJS
+      emailjs.init("V_oKhFcC3LwiidUSC");
+
+      let formData = null;
+      let generatedOtp = "";
+
       // Handle account creation
       document
         .getElementById("signupForm")
@@ -232,26 +251,27 @@
           }
 
           try {
-            // 1. Create user in Firebase Auth
-            const userCredential = await createUserWithEmailAndPassword(
-              auth,
+            // Store form data for later use after OTP verification
+            formData = {
+              firstName,
+              lastName,
+              mobile,
               email,
               password
-            );
-            const user = userCredential.user;
+            };
 
-            // 2. Store extra details in Firestore under users/{uid}
-            await setDoc(doc(db, "users", user.uid), {
-              firstName: firstName,
-              lastName: lastName,
-              mobile: mobile,
-              email: email,
-              createdAt: new Date(),
+            // Generate and send OTP
+            generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
+            // Send OTP via email
+            await emailjs.send("service_i1rq2k4", "template_7qxudct", {
+              to_email: email,
+              otp: generatedOtp,
+              name: firstName,
             });
 
-            alert("✅ Account created successfully! Redirecting to homepage...");
-            document.getElementById("signupForm").reset();
-            window.location.href = "homepage-logged.html";
+            // Show OTP modal
+            document.getElementById("otpModal").style.display = "flex";
           } catch (error) {
             // show specific errors
             if (error.code === "auth/email-already-in-use") {
@@ -283,6 +303,45 @@
 
       togglePasswordVisibility("password", "togglePassword");
       togglePasswordVisibility("cpassword", "toggleCPassword");
+
+      // Handle OTP verification
+      document.getElementById("verifyOtpBtn").addEventListener("click", async () => {
+        const enteredOtp = document.getElementById("otpInput").value.trim();
+        
+        if (enteredOtp === generatedOtp && formData) {
+          try {
+            // Create user in Firebase Auth
+            const userCredential = await createUserWithEmailAndPassword(
+              auth,
+              formData.email,
+              formData.password
+            );
+            const user = userCredential.user;
+
+            // Store extra details in Firestore
+            await setDoc(doc(db, "users", user.uid), {
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              mobile: formData.mobile,
+              email: formData.email,
+              createdAt: new Date(),
+            });
+
+            // Save OTP verification flag
+            localStorage.setItem("otpVerified", "true");
+
+            document.getElementById("otpMsg").textContent = "✅ Verified!";
+            alert("✅ Account created successfully! Redirecting to homepage...");
+            document.getElementById("signupForm").reset();
+            window.location.href = "homepage-logged.html";
+          } catch (error) {
+            document.getElementById("otpMsg").textContent = "❌ Error creating account. Please try again.";
+            console.error("Account creation error:", error);
+          }
+        } else {
+          document.getElementById("otpMsg").textContent = "❌ Invalid OTP. Try again.";
+        }
+      });
 
       // Mobile nav toggle
       document.getElementById("navToggle").addEventListener("click", () => {

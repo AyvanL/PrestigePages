@@ -279,68 +279,77 @@
       // --- Demo data -------------------------------------------------------
       const BOOKS = [
         {
-          title: "Hunger Games 4-Book Paperback Box Set",
-          author: "Suzanne Collins",
-          price: 3998,
+          title: "For the Record",
+          author: "Emma Lord",
+          price: 1025.99,
           rating: 4,
+          category: "romance",
           cover:
-            "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRrwrwGqgBkR2TQPgDixUR1q1K-wp0BFDrliH1FS3cF9xuE-OUbk-E0KKgueLaalWu8ndqcoN7Nk0YwzXkzXfMW56WY1jxfkfJY9j1SmOEtkY1ASEgd1jLQtA",
+            "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1726945848i/217387723.jpg",
         },
         {
-          title: "Harry Potter and the Philosopher's Stone",
-          author: "J. K. Rowling",
-          price: 11931,
-          rating: 5,
+          title: "High Seasons",
+          author: "Katie Bishop",
+          price: 1709.94,
+          rating: 3.83,
+          category: "mystery",
           cover:
-            "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcQqU2SF4cC-SPTQ5qVwV5BHHJMe4ygkDebAGw8jEFIwqj_fLb6hGqhw5rHgpoZnKdYUbvP9aiMPrtsbS87_ZHZCtyuyhoCN35eoh3MDfbl_wS78fcrirUCcjA",
+            "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1728226919i/217388179.jpg",
         },
         {
-          title: "The Song of Achilles Deluxe Edition: A Novel",
-          author: "Madeline Miller",
-          price: 2100,
+          title:
+            "We Are Eating the Earth: The Race to Fix Our Food System and Save Our Climate",
+          author: "Michael Grunwarld",
+          price: 1708.17,
+          rating: 4.26,
+          category: "science",
+          cover:
+            "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1732454271i/220595471.jpg",
+        },
+        {
+          title: "Hotshot: A Life on Fire",
+          author: "River Selby",
+          price: 1200,
+          rating: 3.81,
+          category: "non-fiction",
+          cover:
+            "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1739100108i/219301091.jpg",
+        },
+        {
+          title: "Ghost Circus",
+          author: "Adrienne Kress, Jade Zhang",
+          price: 799,
           rating: 4,
+          category: "children",
           cover:
-            "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcQOnCZ9LKSpaDfpdyNKTTl0AHqgk1gdTfjGz3nXF6ySf6TVfLtt-1eWhc_B-gNZTPsG1H3cjQGhvACPsB0ykLirOaYMamjdIFckUYcNU93MDac5b06OsaUpFQ",
+            "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1740594745i/218681305.jpg",
         },
         {
-          title: "Atlas Maior of 1665",
-          author: "Joan Blaeu.",
-          price: 9555,
-          rating: 5,
-          cover:
-            "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcTlmLLV30y5fPCy4Zh3VeFGcQz2A9cd9qzexXTJckI44oYc0o79Usn0qdYV8ZesSmmCKEIO6BtNpDvd8qnlT9MSmwMiTaLUZMwfhl4qFnUF",
-        },
-        {
-          title: "Harry Potter Hardcover Boxed Set: Books 1-7 (Slipcase)",
-          author: "J. K. Rowling",
-          price: 12946,
+          title: "The Fellowship of the Ring",
+          author: "J.R.R. Tolkien",
+          price: 799,
           rating: 4,
+          category: "classics",
           cover:
-            "https://encrypted-tbn2.gstatic.com/shopping?q=tbn:ANd9GcQMqKMRHhg4I-gOIOByCI41p62QbWKjcecqIX8kI9gL4GfndRNOXpqFwxJbA8r7_YPsVNhwCEEemnVQxqH3Y-j7tAxqWclx4OvRcJNnFCu0hsflIJV12-PTMQ",
+            "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1654215925i/61215351.jpg",
         },
         {
-          title: "Daughters of Flood and Fury: The Stormbringer Saga, Book 2",
-          author: "Gabriella Buba",
-          price: 699,
-          rating: 0,
+          title: "Psylocke Vol. 1: Guardian",
+          author: "Alyssa Wong",
+          price: 799,
+          rating: 3.52,
+          category: "comics",
           cover:
-            "https://fullybookedonline.com/media/catalog/product/cache/0a2de3498e224400d43eef2fd945df47/9/7/9781803367828.jpg",
+            "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1728445659i/220240990.jpg",
         },
         {
-          title: "Absolute Wonder Woman Vol. 1: The Last Amazon",
-          author: "Kelly Thompson (Author); Hayden Sherman (Illustrator)",
-          price: 999,
-          rating: 5,
+          title: "Abundance",
+          author: "Ezra Klein, Derek Thompson",
+          price: 799,
+          rating: 4.02,
+          category: "business",
           cover:
-            "https://fullybookedonline.com/media/catalog/product/cache/c47981ce8877a2d4680934f7b4835fb3/9/7/9781799505303.jpg",
-        },
-        {
-          title: "Not Quite Dead Yet: A Novel, Export Edition",
-          author: "Kelly Thompson (Author); Hayden Sherman (Illustrator)",
-          price: 1064,
-          rating: 5,
-          cover:
-            "https://fullybookedonline.com/media/catalog/product/cache/c47981ce8877a2d4680934f7b4835fb3/9/7/9798217091591_1.jpg",
+            "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1737312514i/176444106.jpg",
         },
       ];
 
