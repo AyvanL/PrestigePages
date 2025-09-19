@@ -60,18 +60,6 @@
     </form>
   </div>
 
-  <!-- OTP Modal -->
-  <div class="modal" id="otpModal">
-    <div class="modal-content">
-      <h3>Enter OTP</h3>
-      <p>We sent a 6-digit code to your email</p>
-      <input type="text" id="otpInput" maxlength="6" placeholder="Enter OTP">
-      <button id="verifyOtpBtn">Verify</button>
-      <p id="otpMsg"></p>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
     import { 
@@ -96,12 +84,6 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // ✅ Init EmailJS
-    emailjs.init("V_oKhFcC3LwiidUSC"); // ⬅️ Replace with your Public Key
-
-    let generatedOtp = "";
-    let loggedInUser = null;
-
     // Handle forgot password
     const forgotPasswordLink = document.getElementById("forgotPassword");
     const emailInput = document.getElementById("email");
@@ -122,51 +104,24 @@
       }
     });
 
-    // ✅ Login + OTP with persistence
+    // Handle login with persistence
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
 
       try {
-        // ✅ Make login persistent across refresh & new tabs
+        // Make login persistent across refresh & new tabs
         await setPersistence(auth, browserLocalPersistence);
 
-        // Step 1: Try Firebase login
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        loggedInUser = userCredential.user;
+        // Attempt to sign in with Firebase
+        await signInWithEmailAndPassword(auth, email, password);
 
-        // Step 2: Generate OTP
-        generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-
-        // Step 3: Send OTP
-        await emailjs.send("service_i1rq2k4", "template_7qxudct", {
-          to_email: email,
-          otp: generatedOtp,
-          name: "user",
-        });
-
-        // Show modal only if email was sent
-        document.getElementById("otpModal").style.display = "flex";
-
+        // If login successful, redirect to homepage
+        window.location.href = "homepage-logged.html";
       } catch (error) {
         console.error("Login error:", error);
-        alert("❌ Login failed: " + (error.message || error.code || "Unknown error"));
-      }
-    });
-
-    // ✅ Verify OTP
-    document.getElementById("verifyOtpBtn").addEventListener("click", () => {
-      const enteredOtp = document.getElementById("otpInput").value.trim();
-      if (enteredOtp === generatedOtp) {
-        document.getElementById("otpMsg").textContent = "✅ Verified!";
-        
-        // 🔹 Save OTP verification flag so cart.html will know you’re verified
-        localStorage.setItem("otpVerified", "true");
-
-        window.location.href = "homepage-logged.html";
-      } else {
-        document.getElementById("otpMsg").textContent = "❌ Invalid OTP. Try again.";
+        alert("Wrong password or email");
       }
     });
 
@@ -181,4 +136,6 @@
     });
   </script>
 </body>
+</html>
+
 </html>
