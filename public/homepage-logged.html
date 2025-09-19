@@ -580,6 +580,9 @@
 
       // Load cart from Firestore
       await loadCartFromFirestore();
+      
+      // Render books after wishlist is loaded
+      renderBooks(BOOKS);
     } else {
       // Not logged in → redirect to login
       window.location.href = "login.html";
@@ -756,9 +759,10 @@
 
         const path = heart.querySelector("svg path");
         const userDocRef = doc(db, "users", user.uid);
+        const isCurrentlyActive = heart.classList.contains("active");
         
         try {
-          if (heart.classList.contains("active")) {
+          if (isCurrentlyActive) {
             // Remove from wishlist
             await updateDoc(userDocRef, {
               wishlist: arrayRemove(b)
@@ -778,13 +782,25 @@
         } catch (error) {
           // If wishlist field doesn't exist yet, create it
           try {
-            await setDoc(userDocRef, { wishlist: [b] }, { merge: true });
-            USER_WISHLIST.push(b);
-            heart.classList.add("active");
-            path.setAttribute("fill", "#FF0000");
+            if (!isCurrentlyActive) {
+              await setDoc(userDocRef, { wishlist: [b] }, { merge: true });
+              USER_WISHLIST.push(b);
+              heart.classList.add("active");
+              path.setAttribute("fill", "#FF0000");
+            } else {
+              throw error; // Re-throw if we were trying to remove
+            }
           } catch (err) {
             console.error("Failed to update wishlist:", err);
             alert("Failed to update wishlist");
+            // Revert visual state to match database state
+            if (isCurrentlyActive) {
+              heart.classList.add("active");
+              path.setAttribute("fill", "#FF0000");
+            } else {
+              heart.classList.remove("active");
+              path.setAttribute("fill", "#fff");
+            }
           }
         }
       });
@@ -838,7 +854,6 @@
 
   // boot
   document.getElementById("yr").textContent = new Date().getFullYear();
-  renderBooks(BOOKS);
 
   // --- category filtering ---
   document.querySelectorAll('input[name="category"]').forEach((radio) => {
