@@ -121,16 +121,26 @@ document
 
       if (docSnap.exists()) {
         const data = docSnap.data();
+
+        // Show in Profile Modal
         profileFirstName.textContent = data.firstName || "Not set";
         profileLastName.textContent = data.lastName || "Not set";
         profileEmail.textContent = user.email || "No email";
-        profileAddress.textContent = data.address || "Not set";
+        profileHouseno.textContent = data.houseNo || "Not set";
+        profileStreet.textContent = data.street || "Not set";
+        profileProvince.textContent = data.province || "Not set";
+        profileCity.textContent = data.city || "Not set";
+        profilePostal.textContent = data.postal || "Not set";
         profileMobile.textContent = data.mobile || "Not set";
 
         // Prefill edit form
         editFirstName.value = data.firstName || "";
         editLastName.value = data.lastName || "";
-        editAddress.value = data.address || "";
+        editHouseNo.value = data.houseNo || "";
+        editStreet.value = data.street || "";
+        editCity.value = data.city || "";
+        editProvince.value = data.province || "";
+        editPostal.value = data.postal || "";
         editMobile.value = data.mobile || "";
       }
     }
@@ -138,6 +148,7 @@ document
     profileModal.style.display = "flex";
   });
 
+// Close Profile Modal
 closeProfileBtn.addEventListener("click", () => {
   profileModal.style.display = "none";
 });
@@ -164,7 +175,11 @@ editProfileForm.addEventListener("submit", async (e) => {
     await updateDoc(docRef, {
       firstName: editFirstName.value,
       lastName: editLastName.value,
-      address: editAddress.value,
+      houseNo: editHouseNo.value,
+      street: editStreet.value,
+      city: editCity.value,
+      province: editProvince.value,
+      postal: editPostal.value,
       mobile: editMobile.value,
     });
 
@@ -173,7 +188,11 @@ editProfileForm.addEventListener("submit", async (e) => {
     // Refresh display
     profileFirstName.textContent = editFirstName.value;
     profileLastName.textContent = editLastName.value;
-    profileAddress.textContent = editAddress.value;
+    profileHouseno.textContent = editHouseNo.value;
+    profileStreet.textContent = editStreet.value;
+    profileProvince.textContent = editProvince.value;
+    profileCity.textContent = editCity.value;
+    profilePostal.textContent = editPostal.value;
     profileMobile.textContent = editMobile.value;
 
     editProfileModal.style.display = "none";

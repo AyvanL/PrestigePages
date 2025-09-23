@@ -41,7 +41,7 @@ onAuthStateChanged(auth, async (user) => {
       document.getElementById("shippingPhone").value = data.mobile || "";
 
       // Address fields (optional)
-      document.getElementById("shippingUnit").value = data.unit || "";
+      document.getElementById("shippingUnit").value = data.houseNo || "";
       document.getElementById("shippingStreet").value = data.street || "";
       document.getElementById("shippingCity").value = data.city || "";
       document.getElementById("shippingProvince").value = data.province || "";

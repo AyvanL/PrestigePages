@@ -307,38 +307,64 @@
         <span id="profileLastName">Loading...</span>
       </p>
       <p><strong>Email:</strong> <span id="profileEmail">Loading...</span></p>
-      <p>
-        <strong>Address:</strong> <span id="profileAddress">Not set</span>
-      </p>
       <p><strong>Mobile:</strong> <span id="profileMobile">Not set</span></p>
+      <p>
+        <strong>House No:</strong> <span id="profileHouseno">Not set</span>
+      </p>
+      <p>
+        <strong>Street Address:</strong> <span id="profileStreet">Not set</span>
+      </p>
+      <p>
+        <strong>Province:</strong> <span id="profileProvince">Not set</span>
+      </p>
+      <p>
+        <strong>City:</strong> <span id="profileCity">Not set</span>
+      </p>
+      <p>
+        <strong>Postal Code:</strong> <span id="profilePostal">Not set</span>
+      </p>
+      
 
       <button id="editProfileBtn" class="btn">Edit Profile</button>
     </div>
   </div>
 
   <!-- Edit Profile Modal -->
-  <div id="editProfileModal" class="modal">
-    <div class="modal-content">
-      <span class="close-btn" id="closeEdit">&times;</span>
-      <h2>Edit Profile</h2>
+<div id="editProfileModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" id="closeEdit">&times;</span>
+    <h2>Edit Profile</h2>
 
-      <form id="editProfileForm">
-        <label>First Name</label>
-        <input type="text" id="editFirstName" required />
+    <form id="editProfileForm">
+      <label>First Name</label>
+      <input type="text" id="editFirstName" required />
 
-        <label>Last Name</label>
-        <input type="text" id="editLastName" required />
+      <label>Last Name</label>
+      <input type="text" id="editLastName" required />
 
-        <label>Address</label>
-        <input type="text" id="editAddress" />
+      <label>Mobile</label>
+      <input type="text" id="editMobile" />
 
-        <label>Mobile Number</label>
-        <input type="text" id="editMobile" />
+      <label>House No</label>
+      <input type="text" id="editHouseNo" />
 
-        <button type="submit" class="btn">Save Changes</button>
-      </form>
-    </div>
+      <label>Street Address</label>
+      <input type="text" id="editStreet" />
+
+      <label>City</label>
+      <input type="text" id="editCity" />
+
+      <label>Province</label>
+      <input type="text" id="editProvince" />
+
+      <label>Postal Code</label>
+      <input type="text" id="editPostal" />
+
+      <button type="submit" class="btn">Save Changes</button>
+    </form>
   </div>
+</div>
+
 
   <!-- Wishlist Modal -->
   <div id="wishlistModal" class="modal">
