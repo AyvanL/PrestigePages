@@ -107,16 +107,21 @@
         </div>
         <hr>
         <div class="inputs">
-        <input type="text" placeholder="Full Name" required />
-        <input type="email" placeholder="Email" required />
-        <input type="tel" placeholder="Phone Number" required />
-        <input type="text" placeholder="Unit #" required />
-        <input type="text" placeholder="Street Address" required />
-        <input type="text" placeholder="City" required />
-        <input type="text" placeholder="Province" required />
-        <input type="text" placeholder="Postal Code" required /><br>
+        <form id="shippingForm">
+  <input type="text" id="shippingFirstName" placeholder="Full Name" required />
+  <input type="email" id="shippingEmail" placeholder="Email" required />
+  <input type="tel" id="shippingPhone" placeholder="Phone Number" required />
+  <input type="text" id="shippingUnit" placeholder="Unit #" required />
+  <input type="text" id="shippingStreet" placeholder="Street Address" required />
+  <input type="text" id="shippingCity" placeholder="City" required />
+  <input type="text" id="shippingProvince" placeholder="Province" required />
+  <input type="text" id="shippingPostal" placeholder="Postal Code" required />
+  <button type="submit" class="conbtn">Continue</button>
+</form>
+
+
         </div>
-        <button class="conbtn">Continue</button>
+        
       </div>
 
       <div class="order">
@@ -126,5 +131,6 @@
     </div>
 
     <script type="module" src="js/homepage.js"></script>
+    <script type="module" src="js/checkout.js"></script>
   </body>
 </html>
