@@ -71,17 +71,20 @@ async function updateCart() {
   let total = 0;
   cart.forEach((item) => {
     const li = document.createElement("li");
-    li.textContent = `${item.title} - ₱${item.price} x ${item.qty}`;
-    cartList.appendChild(li);
     li.innerHTML = `
-  <img src="${item.cover}" alt="${item.title}" width="40" style="margin-right:8px;vertical-align:middle;">
-  <span><strong>${item.title}</strong> by ${item.author} - ₱${item.price} x ${item.qty}</span>
-`;
-
+      <img src="${item.cover}" alt="${item.title}" class="book-cover">
+      <div class="book-details">
+        <div class="book-title">${item.title}</div>
+        <div class="book-author">by ${item.author}</div>
+        <div class="book-price">₱${item.price}</div>
+        <div class="book-quantity">Quantity: ${item.qty}</div>
+      </div>
+    `;
+    cartList.appendChild(li);
     total += item.price * item.qty;
   });
 
-  cartTotal.innerHTML = `<strong>Total: ₱${total}</strong>`;
+  cartTotal.innerHTML = `<strong>Total: ₱${total.toLocaleString()}</strong>`;
 }
 
 // ✅ Watch auth state
