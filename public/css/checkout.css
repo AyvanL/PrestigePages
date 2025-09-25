@@ -239,9 +239,7 @@ input{
 
 .inputs{
     margin-left: 20px;
-     /* Scrollability */
-    max-height: 50vh;
-    overflow-y: auto;
+ 
 }
 
 .conbtn{
