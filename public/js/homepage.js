@@ -586,16 +586,16 @@ async function updateCart() {
     div.classList.add("cart-item");
 
     div.innerHTML = `
-            <img src="${item.cover}" alt="${item.title}">
+            <img src="${item.cover}" alt="${item.title}" style="width: 60px; height: 90px; object-fit: cover; border-radius: 6px;">
             <div class="cart-item-details">
-                            <h4>${item.title}</h4>
-              <p>${item.author || "No Brand"}</p>
+              <h4 style="margin-left: 20px">${item.title}</h4>
+              <p style="margin-left: 20px">${item.author || "No Brand"}</p>
             </div>
             <div class="cart-item-price">₱${item.price.toFixed(2)}</div>
             <div class="cart-qty">
-              <button class="decrease">-</button>
+              <button class="decrease"><span>-</span></button>
               <input type="text" value="${item.qty}" readonly>
-              <button class="increase">+</button>
+              <button class="increase"><span>+</span></button>
             </div>
             <span class="cart-remove">🗑</span>
           `;
@@ -755,3 +755,6 @@ window.addEventListener("click", (e) => {
         modal.style.display = "none";
       }
     };
+
+
+
