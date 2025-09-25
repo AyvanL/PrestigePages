@@ -218,6 +218,7 @@ window.addEventListener("click", function () {
   }
 });
 
+
 // Check if user is logged in
 onAuthStateChanged(auth, async (user) => {
   if (user) {
