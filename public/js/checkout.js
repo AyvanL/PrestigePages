@@ -8,6 +8,8 @@ import {
   getFirestore,
   doc,
   getDoc,
+  updateDoc,
+  arrayUnion,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Firebase Config
@@ -52,7 +54,7 @@ async function loadCartFromFirestore() {
     document.getElementById("shippingProvince").value = data.province || "";
     document.getElementById("shippingPostal").value = data.postal || "";
 
-    // --- Load cart ---
+    // --- Load cart --- 
     if (data.cart && Array.isArray(data.cart)) {
       cart = data.cart;
       await updateCart();
@@ -86,6 +88,50 @@ async function updateCart() {
 
   cartTotal.innerHTML = `<strong>Total: ₱${total.toLocaleString()}</strong>`;
 }
+
+// ✅ Save transaction when form is submitted
+document.getElementById("shippingForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const user = auth.currentUser;
+  if (!user) {
+    alert("You must be logged in to continue.");
+    return;
+  }
+
+  const transaction = {
+    fullName: document.getElementById("shippingFirstName").value,
+    email: document.getElementById("shippingEmail").value,
+    phone: document.getElementById("shippingPhone").value,
+    unit: document.getElementById("shippingUnit").value,
+    street: document.getElementById("shippingStreet").value,
+    city: document.getElementById("shippingCity").value,
+    province: document.getElementById("shippingProvince").value,
+    postal: document.getElementById("shippingPostal").value,
+    cart: cart,
+    total: cart.reduce((sum, item) => sum + item.price * item.qty, 0),
+    timestamp: new Date().toISOString(),
+  };
+
+  try {
+    const userDocRef = doc(db, "users", user.uid);
+
+    // ✅ Append transaction and clear cart in Firestore
+    await updateDoc(userDocRef, {
+      transactions: arrayUnion(transaction),
+      cart: [], // clear cart in Firestore
+    });
+
+    // ✅ Reset local cart + UI
+    cart = [];
+    await updateCart();
+
+    alert("Transaction saved and cart cleared!");
+  } catch (error) {
+    console.error("Error saving transaction:", error);
+    alert("Failed to save transaction. Check console for details.");
+  }
+});
 
 // ✅ Watch auth state
 onAuthStateChanged(auth, async (user) => {

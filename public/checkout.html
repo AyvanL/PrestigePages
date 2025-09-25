@@ -5,161 +5,220 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PrestigePages - Check out</title>
     <link rel="stylesheet" href="css/checkout.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/homepage.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/homepage.css" />
   </head>
   <body>
-<!-- Header -->
-  <header class="site-header">
-    <div class="container nav">
-      <button class="icon-btn hamburger" id="navToggle" aria-label="Open menu">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3 6h18M3 12h18M3 18h18" stroke="#5f5a54" stroke-width="2" stroke-linecap="round" />
-        </svg>
-      </button>
-      <div class="brand">PrestigePages</div>
-      <nav class="nav-links" aria-label="Main">
-        <a href="homepage-logged.html">Home</a>
-        <a href="#popular">Store</a>
-        <a href="about-us-logged.html">About us</a>
-      </nav>
+    <!-- Header -->
+    <header class="site-header">
+      <div class="container nav">
+        <button
+          class="icon-btn hamburger"
+          id="navToggle"
+          aria-label="Open menu"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M3 6h18M3 12h18M3 18h18"
+              stroke="#5f5a54"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+        <div class="brand">PrestigePages</div>
+        <nav class="nav-links" aria-label="Main">
+          <a href="homepage-logged.html">Home</a>
+          <a href="#popular">Store</a>
+          <a href="about-us-logged.html">About us</a>
+        </nav>
 
-      <div class="nav-spacer"></div>
+        <div class="nav-spacer"></div>
 
-      <div class="actions">
-        
-
-        <div class="dropdown">
-          <div class="dropdown-trigger">
-            <button class="dropbtn" id="welcomeMessage">Loading....</button>
-            <img src="images/down-arrow.png" alt="arrow" width="30" class="dropdown-arrow" />
-          </div>
-          <div class="dropdown-content">
-            <a href="profile.html">Profile</a>
-            <a href="#" id="logoutBtn">Logout</a>
+        <div class="actions">
+          <div class="dropdown">
+            <div class="dropdown-trigger">
+              <button class="dropbtn" id="welcomeMessage">Loading....</button>
+              <img
+                src="images/down-arrow.png"
+                alt="arrow"
+                width="30"
+                class="dropdown-arrow"
+              />
+            </div>
+            <div class="dropdown-content">
+              <a href="profile.html">Profile</a>
+              <a href="#" id="logoutBtn">Logout</a>
+            </div>
           </div>
         </div>
       </div>
+    </header>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="modal">
+      <div class="modal-content">
+        <span id="closeProfile" class="close-btn">&times;</span>
+
+        <h2>Your Profile</h2>
+
+        <p>
+          <strong>First Name:</strong>
+          <span id="profileFirstName">Loading...</span>
+        </p>
+        <p>
+          <strong>Last Name:</strong>
+          <span id="profileLastName">Loading...</span>
+        </p>
+        <p><strong>Email:</strong> <span id="profileEmail">Loading...</span></p>
+        <p><strong>Mobile:</strong> <span id="profileMobile">Not set</span></p>
+        <p>
+          <strong>House No:</strong> <span id="profileHouseno">Not set</span>
+        </p>
+        <p>
+          <strong>Street Address:</strong>
+          <span id="profileStreet">Not set</span>
+        </p>
+        <p>
+          <strong>Province:</strong> <span id="profileProvince">Not set</span>
+        </p>
+        <p><strong>City:</strong> <span id="profileCity">Not set</span></p>
+        <p>
+          <strong>Postal Code:</strong> <span id="profilePostal">Not set</span>
+        </p>
+
+        <button id="editProfileBtn" class="btn">Edit Profile</button>
+      </div>
     </div>
-  </header>  
 
-  <!-- Profile Modal -->
-  <div id="profileModal" class="modal">
-    <div class="modal-content">
-      <span id="closeProfile" class="close-btn">&times;</span>
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="modal">
+      <div class="modal-content">
+        <span class="close-btn" id="closeEdit">&times;</span>
+        <h2>Edit Profile</h2>
 
-      <h2>Your Profile</h2>
+        <form id="editProfileForm">
+          <label>First Name</label>
+          <input type="text" id="editFirstName" required />
 
-      <p>
-        <strong>First Name:</strong>
-        <span id="profileFirstName">Loading...</span>
-      </p>
-      <p>
-        <strong>Last Name:</strong>
-        <span id="profileLastName">Loading...</span>
-      </p>
-      <p><strong>Email:</strong> <span id="profileEmail">Loading...</span></p>
-      <p><strong>Mobile:</strong> <span id="profileMobile">Not set</span></p>
-      <p>
-        <strong>House No:</strong> <span id="profileHouseno">Not set</span>
-      </p>
-      <p>
-        <strong>Street Address:</strong> <span id="profileStreet">Not set</span>
-      </p>
-      <p>
-        <strong>Province:</strong> <span id="profileProvince">Not set</span>
-      </p>
-      <p>
-        <strong>City:</strong> <span id="profileCity">Not set</span>
-      </p>
-      <p>
-        <strong>Postal Code:</strong> <span id="profilePostal">Not set</span>
-      </p>
-      
+          <label>Last Name</label>
+          <input type="text" id="editLastName" required />
 
-      <button id="editProfileBtn" class="btn">Edit Profile</button>
+          <label>Mobile</label>
+          <input type="text" id="editMobile" />
+
+          <label>House No</label>
+          <input type="text" id="editHouseNo" />
+
+          <label>Street Address</label>
+          <input type="text" id="editStreet" />
+
+          <label>City</label>
+          <input type="text" id="editCity" />
+
+          <label>Province</label>
+          <input type="text" id="editProvince" />
+
+          <label>Postal Code</label>
+          <input type="text" id="editPostal" />
+
+          <button type="submit" class="btn">Save Changes</button>
+        </form>
+      </div>
     </div>
-  </div>
 
-  <!-- Edit Profile Modal -->
-<div id="editProfileModal" class="modal">
-  <div class="modal-content">
-    <span class="close-btn" id="closeEdit">&times;</span>
-    <h2>Edit Profile</h2>
-
-    <form id="editProfileForm">
-      <label>First Name</label>
-      <input type="text" id="editFirstName" required />
-
-      <label>Last Name</label>
-      <input type="text" id="editLastName" required />
-
-      <label>Mobile</label>
-      <input type="text" id="editMobile" />
-
-      <label>House No</label>
-      <input type="text" id="editHouseNo" />
-
-      <label>Street Address</label>
-      <input type="text" id="editStreet" />
-
-      <label>City</label>
-      <input type="text" id="editCity" />
-
-      <label>Province</label>
-      <input type="text" id="editProvince" />
-
-      <label>Postal Code</label>
-      <input type="text" id="editPostal" />
-
-      <button type="submit" class="btn">Save Changes</button>
-    </form>
-  </div>
-</div>
- 
     <div class="content">
-    <div class="containers">
-      <div class="checkout">
-        <img src="images/Logo.png" alt="logo" class="logo" style="width: 80%; max-width: 250px;">
-        <div class="header">
-          <p><span style="color: brown;">1. Shipping</span></p>
-          <p>2. Delivery</p>
-          <p>3. Payment</p>
-            
+      <div class="containers">
+        <div class="checkout">
+          <img
+            src="images/Logo.png"
+            alt="logo"
+            class="logo"
+            style="width: 80%; max-width: 250px"
+          />
+          <div class="header">
+            <p><span style="color: brown">1. Shipping</span></p>
+            <p>2. Delivery</p>
+            <p>3. Payment</p>
+          </div>
+          <hr />
+          <div class="inputs">
+            <form id="shippingForm">
+              <input
+                type="text"
+                id="shippingFirstName"
+                placeholder="Full Name"
+                required
+              />
+              <input
+                type="email"
+                id="shippingEmail"
+                placeholder="Email"
+                required
+              />
+              <input
+                type="tel"
+                id="shippingPhone"
+                placeholder="Phone Number"
+                required
+              />
+              <input
+                type="text"
+                id="shippingUnit"
+                placeholder="Unit #"
+                required
+              />
+              <input
+                type="text"
+                id="shippingStreet"
+                placeholder="Street Address"
+                required
+              />
+              <input
+                type="text"
+                id="shippingCity"
+                placeholder="City"
+                required
+              />
+              <input
+                type="text"
+                id="shippingProvince"
+                placeholder="Province"
+                required
+              />
+              <input
+                type="text"
+                id="shippingPostal"
+                placeholder="Postal Code"
+                required
+              />
+              <button type="submit" class="conbtn">Continue</button>
+            </form>
+          </div>
         </div>
-        <hr>
-        <div class="inputs">
-        <form id="shippingForm">
-  <input type="text" id="shippingFirstName" placeholder="Full Name" required />
-  <input type="email" id="shippingEmail" placeholder="Email" required />
-  <input type="tel" id="shippingPhone" placeholder="Phone Number" required />
-  <input type="text" id="shippingUnit" placeholder="Unit #" required />
-  <input type="text" id="shippingStreet" placeholder="Street Address" required />
-  <input type="text" id="shippingCity" placeholder="City" required />
-  <input type="text" id="shippingProvince" placeholder="Province" required />
-  <input type="text" id="shippingPostal" placeholder="Postal Code" required />
-  <button type="submit" class="conbtn">Continue</button>
-</form>
 
-
+        <div class="order">
+          <h2>Your Order</h2>
+          <div class="order-items">
+            <ul id="cart-list" class="book-list"></ul>
+          </div>
+          <div class="order-summary">
+            <hr />
+            <p id="cart-total"><strong>Total: ₱0</strong></p>
+          </div>
         </div>
-        
       </div>
-
-      <div class="order">
-        <h2>Your Order</h2>
-        <div class="order-items">
-          <ul id="cart-list" class="book-list"></ul>
-        </div>
-        <div class="order-summary">
-          <hr>
-          <p id="cart-total"><strong>Total: ₱0</strong></p>
-        </div>
-      </div>
-
-    </div>
     </div>
 
     <script type="module" src="js/homepage.js"></script>
