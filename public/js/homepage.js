@@ -588,14 +588,14 @@ async function updateCart() {
     div.innerHTML = `
             <img src="${item.cover}" alt="${item.title}">
             <div class="cart-item-details">
-                            <h4>${item.title}</h4>
-              <p>${item.author || "No Brand"}</p>
+              <h4 style="margin-left: 20px">${item.title}</h4>
+              <p style="margin-left: 20px">${item.author || "No Brand"}</p>
             </div>
             <div class="cart-item-price">₱${item.price.toFixed(2)}</div>
             <div class="cart-qty">
-              <button class="decrease">-</button>
+              <button class="decrease"><span>-</span></button>
               <input type="text" value="${item.qty}" readonly>
-              <button class="increase">+</button>
+              <button class="increase"><span>+</span></button>
             </div>
             <span class="cart-remove">🗑</span>
           `;
