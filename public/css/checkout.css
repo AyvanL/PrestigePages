@@ -207,13 +207,16 @@ body {
 
 }
 
-.checkout{
+.checkout {
     width: 80%;
     max-width: 500px;
     background-color: #dbc6a0;
     padding-bottom: 20px;
 
+   
+    
 }
+
 
 .order{
     width: 80%;
@@ -236,6 +239,10 @@ input{
 
 .inputs{
     margin-left: 20px;
+
+        /* Scrollability */
+    max-height: 50vh;
+    overflow-y: auto;
 }
 
 .conbtn{

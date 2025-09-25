@@ -127,6 +127,7 @@ document.getElementById("shippingForm").addEventListener("submit", async (e) => 
     await updateCart();
 
     alert("Transaction saved and cart cleared!");
+    window.location.href = "checkout-deliv.html";
   } catch (error) {
     console.error("Error saving transaction:", error);
     alert("Failed to save transaction. Check console for details.");
