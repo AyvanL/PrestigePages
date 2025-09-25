@@ -586,7 +586,7 @@ async function updateCart() {
     div.classList.add("cart-item");
 
     div.innerHTML = `
-            <img src="${item.cover}" alt="${item.title}">
+            <img src="${item.cover}" alt="${item.title}" style="width: 60px; height: 90px; object-fit: cover; border-radius: 6px;">
             <div class="cart-item-details">
               <h4 style="margin-left: 20px">${item.title}</h4>
               <p style="margin-left: 20px">${item.author || "No Brand"}</p>
