@@ -265,6 +265,14 @@ body {
   gap: 5px;
   cursor: pointer;
 }
+
+.dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
 .dropbtn {
   background-color: transparent;
   border: none;
@@ -273,18 +281,12 @@ body {
   color: #333;
   padding: 10px;
 }
+
 .welcomeMessage {
   color: #000;
   text-decoration: underline;
   font-weight: bold;
 }   
-
-.dropdown-trigger {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-}
 
 .dropdown-arrow {
   transition: transform 0.3s ease;
