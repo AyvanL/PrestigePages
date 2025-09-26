@@ -207,16 +207,13 @@ body {
 
 }
 
-.checkout {
+.checkout{
     width: 80%;
     max-width: 500px;
     background-color: #dbc6a0;
     padding-bottom: 20px;
 
-   
-    
 }
-
 
 .order{
     width: 80%;
@@ -239,10 +236,6 @@ input{
 
 .inputs{
     margin-left: 20px;
-
-        /* Scrollability */
-    max-height: 50vh;
-    overflow-y: auto;
 }
 
 .conbtn{
@@ -273,6 +266,48 @@ hr {
 .logo{
     margin: 10px 10px;
     padding-bottom: 15px;
+}
+
+/* ===== Pop-in Animations on Page Open ===== */
+@keyframes popIn {
+  0%   { opacity: 0; transform: scale(.96); filter: blur(2px); }
+  60%  { opacity: 1; transform: scale(1.01); filter: blur(0); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Hide before ready to avoid flash */
+body:not(.page-ready) .containers,
+body:not(.page-ready) .checkout,
+body:not(.page-ready) .order,
+body:not(.page-ready) .book-list li {
+  opacity: 0;
+}
+
+/* When ready, animate in */
+body.page-ready .containers { animation: popIn .60s cubic-bezier(.2,.65,.25,1) both; }
+body.page-ready .checkout { animation: popIn .70s cubic-bezier(.2,.65,.25,1) .10s both; }
+body.page-ready .order { animation: popIn .75s cubic-bezier(.2,.65,.25,1) .18s both; }
+
+/* Stagger items */
+body.page-ready .book-list li { animation: popIn .48s ease-out both; }
+body.page-ready .book-list li:nth-child(1) { animation-delay: .20s }
+body.page-ready .book-list li:nth-child(2) { animation-delay: .26s }
+body.page-ready .book-list li:nth-child(3) { animation-delay: .32s }
+body.page-ready .book-list li:nth-child(4) { animation-delay: .38s }
+body.page-ready .book-list li:nth-child(5) { animation-delay: .44s }
+body.page-ready .book-list li:nth-child(6) { animation-delay: .50s }
+body.page-ready .book-list li:nth-child(7) { animation-delay: .56s }
+body.page-ready .book-list li:nth-child(8) { animation-delay: .62s }
+body.page-ready .book-list li:nth-child(9) { animation-delay: .68s }
+body.page-ready .book-list li:nth-child(10) { animation-delay: .74s }
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  body:not(.page-ready) .containers,
+  body:not(.page-ready) .checkout,
+  body:not(.page-ready) .order,
+  body:not(.page-ready) .book-list li { opacity: 1; filter: none; transform: none; }
 }
 
 /* Order Summary Styles with Book Layout */
