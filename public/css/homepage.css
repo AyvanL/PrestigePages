@@ -731,31 +731,112 @@ footer {
   flex-direction: column;
 }
 
-#profile-modal {
-  display: none; /* hidden by default */
+/* === Profile Modal (scoped) === */
+
+/* Overlay */
+#profileModal.modal {
+  display: none; /* Show with JS */
   position: fixed;
   z-index: 1000;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
-  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
   align-items: center;
   justify-content: center;
 }
 
-#profile-modal .modal-content {
- width: 400px;
-  max-width: 90%;
+/* Modal box */
+#profileModal .modal-content {
   background: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: var(--shadow);
-  margin: auto; /* centers it */
-  max-height: 90vh; 
-  overflow-y: auto; /* scroll only if content is long */
+  color: #333;
+  width: 90%;
+  max-width: 500px;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  position: relative;
+  animation: profileModalFadeInUp 0.3s ease-out;
 }
+
+/* Close button */
+#profileModal .close-btn {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #888;
+  transition: color 0.2s ease;
+}
+#profileModal .close-btn:hover {
+  color: #000;
+}
+
+/* Heading */
+#profileModal h2 {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+/* Profile info layout */
+#profileModal .profile-info p {
+  background: #f8f8f8;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+/* Button */
+#profileModal .btn {
+  display: inline-block;
+  width: 100%;
+  padding: 0.75rem;
+  background: #007bff;
+  color: #fff;
+  font-weight: 600;
+  text-align: center;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+#profileModal .btn:hover {
+  background: #0056b3;
+}
+
+/* Animation */
+@keyframes profileModalFadeInUp {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive tweaks */
+@media (max-width: 480px) {
+  #profileModal .modal-content {
+    padding: 1.5rem;
+  }
+  #profileModal .profile-info p {
+    font-size: 0.85rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 
 
 /* Close button */
