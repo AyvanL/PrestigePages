@@ -14,17 +14,7 @@ import {
   getDoc,
   deleteDoc,
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
-// Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyCC_14beDBhudrtoAIFqc29TCMY5zoa4AA",
-  authDomain: "prestige-pages.firebaseapp.com",
-  projectId: "prestige-pages",
-  storageBucket: "prestige-pages.appspot.com",
-  messagingSenderId: "1065922943021",
-  appId: "1:1065922943021:web:e5829dd09e206063b500a4",
-  measurementId: "G-V0E6PXN1Z5",
-};
+import { firebaseConfig } from "./firebase-config.js";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
