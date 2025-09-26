@@ -1,0 +1,15 @@
+{
+  "name": "prestigepages-bookstore",
+  "version": "1.0.0",
+  "description": "Premium book store application with Firebase authentication",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "path": "^0.12.7"
+  },
+  "type": "module"
+}
