@@ -117,6 +117,7 @@ document
         profileEmail.textContent = user.email || "No email";
         profileHouseno.textContent = data.houseNo || "Not set";
         profileStreet.textContent = data.street || "Not set";
+        profileBaranggay.textContent = data.baranggay || "Not set";
         profileProvince.textContent = data.province || "Not set";
         profileCity.textContent = data.city || "Not set";
         profilePostal.textContent = data.postal || "Not set";
@@ -127,6 +128,7 @@ document
         editLastName.value = data.lastName || "";
         editHouseNo.value = data.houseNo || "";
         editStreet.value = data.street || "";
+        editBaranggay.value = data.baranggay || "";
         editCity.value = data.city || "";
         editProvince.value = data.province || "";
         editPostal.value = data.postal || "";
@@ -166,6 +168,7 @@ editProfileForm.addEventListener("submit", async (e) => {
       lastName: editLastName.value,
       houseNo: editHouseNo.value,
       street: editStreet.value,
+      baranggay: editBaranggay.value,
       city: editCity.value,
       province: editProvince.value,
       postal: editPostal.value,
@@ -179,8 +182,9 @@ editProfileForm.addEventListener("submit", async (e) => {
     profileLastName.textContent = editLastName.value;
     profileHouseno.textContent = editHouseNo.value;
     profileStreet.textContent = editStreet.value;
-    profileProvince.textContent = editProvince.value;
+    profileBaranggay.textContent = editBaranggay.value;
     profileCity.textContent = editCity.value;
+    profileProvince.textContent = editProvince.value;
     profilePostal.textContent = editPostal.value;
     profileMobile.textContent = editMobile.value;
 
@@ -332,10 +336,27 @@ const el = (tag, cls, html) => {
 };
 
 const stars = (n) => {
-  const full = "★".repeat(Math.max(0, Math.min(5, n)));
-  const empty = "☆".repeat(5 - Math.max(0, Math.min(5, n)));
-  return `<span class="rating" aria-label="${n} out of 5 stars">${full}${empty}</span>`;
+  // Default to 5 if null/undefined/NaN
+  let rating = (n === undefined || n === null) ? 5 : Number(n);
+
+  // Clamp to 0–5 for display (but keep exact for text)
+  const clamped = Math.max(0, Math.min(5, rating));
+  const fullStars = Math.floor(clamped); // only full stars
+  const emptyStars = 5 - fullStars;
+
+  const full = "★".repeat(fullStars);
+  const empty = "☆".repeat(emptyStars);
+
+  // Show exact rating text next to stars (1 decimal if needed)
+  const ratingText = `${rating.toFixed(1)}/5`;
+
+  return `
+    <span class="rating" aria-label="${ratingText}">
+      ${full}${empty} <span class="rating-text">- ${ratingText}</span>
+    </span>
+  `;
 };
+
 
 function renderBooks(list) {
   const grid = document.getElementById("book-grid");

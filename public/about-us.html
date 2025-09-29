@@ -11,6 +11,63 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/about-us.css" />
+
+    <style>
+    /* Fade-in animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Apply fade-in to sections */
+    .fade-in {
+      opacity: 0;
+      animation: fadeIn 1s ease forwards;
+    }
+
+    .site-header {
+      animation: fadeIn 0.8s ease forwards;
+    }
+
+    .hero {
+      opacity: 0;
+      animation: fadeIn 1s ease 0.2s forwards;
+    }
+
+    .features {
+      opacity: 0;
+      animation: fadeIn 1s ease 0.4s forwards;
+    }
+
+    #popular {
+      opacity: 0;
+      animation: fadeIn 1s ease 0.6s forwards;
+    }
+
+    .card {
+      opacity: 0;
+      animation: fadeIn 0.8s ease forwards;
+    }
+
+    /* Additional animations for cart/wishlist */
+    #cart-modal,
+    #wishlist-modal {
+      opacity: 0;
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    .welcome-text {
+      opacity: 0;
+      animation: fadeIn 1s ease 0.3s forwards;
+    }
+  </style>
   </head>
   <body>
     <!-- Header -->
@@ -39,14 +96,15 @@
         <div class="brand">PrestigePages</div>
         <nav class="nav-links" aria-label="Main">
           <a href="index.html">Home</a>
-          <a href="index.html">Store</a>
+          <a href="index.html#popular">Store</a>
           <a href="about-us.html">About us</a>
+          <a href="faq.html">FAQ</a>
         </nav>
 
         <div class="nav-spacer"></div>
 
         <div class="actions">
-          <button class="icon-btn" aria-label="Wishlist">
+          <button class="icon-btn" aria-label="Wishlist" onclick="window.location.href='login.html';">
             <svg
               width="20"
               height="20"
@@ -63,7 +121,7 @@
             </svg>
           </button>
 
-          <button class="icon-btn" aria-label="Cart">
+          <button class="icon-btn" aria-label="Cart" onclick="window.location.href='login.html';">
             <svg
               width="20"
               height="20"

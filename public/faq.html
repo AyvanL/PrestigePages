@@ -6,115 +6,210 @@
   <title>FAQs</title>
   <link rel="stylesheet" href="css/faq.css">
   <link rel="stylesheet" href="css/homepage.css">
+
+  <style>
+    /* Fade-in animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Apply fade-in to sections */
+    .fade-in {
+      opacity: 0;
+      animation: fadeIn 1s ease forwards;
+    }
+
+    .site-header {
+      animation: fadeIn 0.8s ease forwards;
+    }
+
+    main {
+      opacity: 0;
+      animation: fadeIn 1s ease 0.2s forwards;
+    }
+
+    .features {
+      opacity: 0;
+      animation: fadeIn 1s ease 0.4s forwards;
+    }
+
+    #popular {
+      opacity: 0;
+      animation: fadeIn 1s ease 0.6s forwards;
+    }
+
+    .card {
+      opacity: 0;
+      animation: fadeIn 0.8s ease forwards;
+    }
+
+    /* Additional animations for cart/wishlist */
+    #cart-modal,
+    #wishlist-modal {
+      opacity: 0;
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    .welcome-text {
+      opacity: 0;
+      animation: fadeIn 1s ease 0.3s forwards;
+    }
+  </style>
+  
 </head>
 <body>
   <!-- Header -->
   <header class="site-header">
-    <div class="container nav">
-      <button class="icon-btn hamburger" id="navToggle" aria-label="Open menu">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3 6h18M3 12h18M3 18h18" stroke="#5f5a54" stroke-width="2" stroke-linecap="round" />
-        </svg>
-      </button>
-      <div class="brand">PrestigePages</div>
-      <nav class="nav-links" aria-label="Main">
-        <a href="homepage-logged.html">Home</a>
-        <a href="homepage-logged.html">Store</a>
-        <a href="about-us-logged.html">About us</a>
-        <a href="faq.html">FAQ</a>
-      </nav>
-
-      <div class="nav-spacer"></div>
-
-      <div class="actions">
-        <button class="icon-btn" aria-label="Wishlist">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <div class="container nav">
+        <button
+          class="icon-btn hamburger"
+          id="navToggle"
+          aria-label="Open menu"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
             <path
-              d="M12.1 20.3 4.7 13c-2.6-2.6-1.9-6.9 1.6-8.5 1.7-.8 3.7-.5 5.1.7 1.4-1.2 3.4-1.5 5.1-.7 3.5 1.6 4.2 5.9 1.6 8.5l-7.3 7.3Z"
-              stroke="#7E6E5B" stroke-width="1.6" fill="#fff" />
+              d="M3 6h18M3 12h18M3 18h18"
+              stroke="#5f5a54"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
           </svg>
         </button>
+        <div class="brand">PrestigePages</div>
+        <nav class="nav-links" aria-label="Main">
+          <a href="index.html">Home</a>
+          <a href="index.html#popul">Store</a>
+          <a href="about-us.html">About us</a>
+          <a href="faq.html">FAQ</a>
+        </nav>
 
-        <button class="icon-btn" aria-label="Cart" id="cartBtn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 3h2l2.4 12.3a2 2 0 0 0 2 1.7h6.9a2 2 0 0 0 2-1.6L21 7H6" stroke="#7E6E5B" stroke-width="1.6"
-              stroke-linecap="round" stroke-linejoin="round" />
-            <circle cx="10" cy="20" r="1.5" fill="#7E6E5B" />
-            <circle cx="17" cy="20" r="1.5" fill="#7E6E5B" />
-          </svg>
-          <span id="cartCount" class="badge">0</span>
-          <!-- ✅ badge -->
-        </button>
+        <div class="nav-spacer"></div>
 
-    <div class="dropdown">
-          <div class="dropdown-trigger">
-            <button class="dropbtn" id="welcomeMessage">Loading....</button>
-            <img src="images/down-arrow.png" alt="arrow" width="30" class="dropdown-arrow" />
-          </div>
-          <div class="dropdown-content">
-            <a href="profile.html">Profile</a>
-            <a href="#" id="logoutBtn">Logout</a>
-          </div>
+        <div class="actions">
+          <button class="icon-btn" aria-label="Wishlist" onclick="window.location.href='login.html';">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12.1 20.3 4.7 13c-2.6-2.6-1.9-6.9 1.6-8.5 1.7-.8 3.7-.5 5.1.7 1.4-1.2 3.4-1.5 5.1-.7 3.5 1.6 4.2 5.9 1.6 8.5l-7.3 7.3Z"
+                stroke="#7E6E5B"
+                stroke-width="1.6"
+                fill="#fff"
+              />
+            </svg>
+          </button>
+
+          <button class="icon-btn" aria-label="Cart" onclick="window.location.href='login.html';">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M3 3h2l2.4 12.3a2 2 0 0 0 2 1.7h6.9a2 2 0 0 0 2-1.6L21 7H6"
+                stroke="#7E6E5B"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="10" cy="20" r="1.5" fill="#7E6E5B" />
+              <circle cx="17" cy="20" r="1.5" fill="#7E6E5B" />
+            </svg>
+          </button>
+
+          <nav class="nav-links" aria-label="Main">
+            <a href="login.html">Log In</a>
+            <a href="signup.html">Sign Up</a>
+          </nav>
         </div>
       </div>
-    </div>
-  </header>  
+    </header>  
 
   <div class="nav-spacer"></div>
 
   <main>
-    <h2>FREQUENTLY ASKED QUESTIONS</h2>
-    <details>
-      <summary>What shipping service do you use?</summary>
-      <p>We use trusted courier services to ensure fast and reliable delivery.</p>
-    </details>
+  <h2>FREQUENTLY ASKED QUESTIONS</h2>
 
-    <details>
-      <summary>When will my order arrive?</summary>
-      <p>Orders typically arrive within 3–5 business days.</p>
-    </details>
+  <div class="faq-contact-container">
+    <!-- LEFT: FAQ -->
+    <div class="faq-column">
+      <details>
+        <summary>What shipping service do you use?</summary>
+        <p>We use trusted courier services to ensure fast and reliable delivery.</p>
+      </details>
+      <details>
+        <summary>When will my order arrive?</summary>
+        <p>Orders typically arrive within 3–5 business days.</p>
+      </details>
+      <details>
+        <summary>Do you offer local collection?</summary>
+        <p>Yes, local collection is available at selected locations.</p>
+      </details>
+      <details>
+        <summary>When can I pick up my click and collect order?</summary>
+        <p>Click & collect orders are usually ready within 24 hours.</p>
+      </details>
+      <details>
+        <summary>How much is shipping?</summary>
+        <p>Shipping costs depend on your location and order size.</p>
+      </details>
+      <details>
+        <summary>How can I track my delivery?</summary>
+        <p>You will receive a tracking link once your order has been dispatched.</p>
+      </details>
+      <details>
+        <summary>Do you deliver overseas?</summary>
+        <p>Yes, we ship internationally. Delivery times vary by country.</p>
+      </details>
+    </div>
 
-    <details>
-      <summary>Do you offer local collection?</summary>
-      <p>Yes, local collection is available at selected locations.</p>
-    </details>
+    <!-- RIGHT: CONTACT FORM -->
+    <div class="contact-column">
+      <h3 class="feature-title">Contact Us</h3>
+      <form>
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Name" name="name">
+        </div>
+        <div class="form-group">
+          <input type="email" class="form-control" placeholder="Email Address" name="email">
+        </div>
+        <div class="form-group">
+          <textarea class="form-control" rows="6" placeholder="Message"></textarea>
+        </div>
+        <input type="submit" class="btn btn-secondary btn-block" value="Send">
+      </form>
+    </div>
+  </div>
+</main>
 
-    <details>
-      <summary>When can I pick up my click and collect order?</summary>
-      <p>Click & collect orders are usually ready within 24 hours.</p>
-    </details>
 
-    <details>
-      <summary>How much is shipping?</summary>
-      <p>Shipping costs depend on your location and order size.</p>
-    </details>
-
-    <details>
-      <summary>How can I track my delivery?</summary>
-      <p>You will receive a tracking link once your order has been dispatched.</p>
-    </details>
-
-    <details>
-      <summary>Do you deliver overseas?</summary>
-      <p>Yes, we ship internationally. Delivery times vary by country.</p>
-    </details>
-  </main>
 
   <footer>
-    <div style="width: 20em; margin: auto;">
-    <h3 class="feature-title">Contact Us</h3>
-    <form>
-      <div class="form-group">
-        <input type="text" class="form-control" placeholder="Name" name="name">
+    <div class="container">
+      <div style="display: flex; gap: 14px; align-items: center">
+        <div class="brand">PrestigePages.com</div>
+        <span>© <span id="yr"></span> • All rights reserved</span>
       </div>
-      <div class="form-group">
-        <input type="email" class="form-control" placeholder="Email Address" name="email">
-      </div>
-      <div class="form-group">
-        <textarea class="form-control" rows="4" placeholder="Message" style="border-radius: 15%;"></textarea>
-      </div>
-      <input type="submit" class="btn btn-secondary btn-block" value="Send" name="">
-    </form>
     </div>
   </footer>
   <script type="module" src="js/homepage.js"></script>

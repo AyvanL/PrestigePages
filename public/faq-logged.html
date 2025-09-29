@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/faq.css">
   <link rel="stylesheet" href="css/homepage.css" />
   <style>
     /* Fade-in animations */
@@ -53,6 +54,39 @@
       animation: fadeIn 0.8s ease forwards;
     }
 
+    /* Stagger card animations */
+    #book-grid .card:nth-child(1) {
+      animation-delay: 0.7s;
+    }
+
+    #book-grid .card:nth-child(2) {
+      animation-delay: 0.8s;
+    }
+
+    #book-grid .card:nth-child(3) {
+      animation-delay: 0.9s;
+    }
+
+    #book-grid .card:nth-child(4) {
+      animation-delay: 1.0s;
+    }
+
+    #book-grid .card:nth-child(5) {
+      animation-delay: 1.1s;
+    }
+
+    #book-grid .card:nth-child(6) {
+      animation-delay: 1.2s;
+    }
+
+    #book-grid .card:nth-child(7) {
+      animation-delay: 1.3s;
+    }
+
+    #book-grid .card:nth-child(8) {
+      animation-delay: 1.4s;
+    }
+
     /* Additional animations for cart/wishlist */
     #cart-modal,
     #wishlist-modal {
@@ -64,6 +98,25 @@
       opacity: 0;
       animation: fadeIn 1s ease 0.3s forwards;
     }
+
+    .card { 
+      display:flex; 
+      gap:12px; 
+      border:1px solid #eee; 
+      border-radius:8px; 
+      align-items:center; 
+    }
+
+    .card-body { 
+      flex:1; 
+    }
+
+    .byline { 
+      color:#666; 
+      font-size:0.9rem; 
+      margin-bottom:6px; 
+    }
+    
   </style>
 </head>
 
@@ -121,74 +174,63 @@
   </header>  
 
   <main>
-    <!-- Hero -->
-    <section class="hero">
-      <div class="container hero-inner">
-        <div class="hero-copy">
-          <h1>About Us</h1>
-          <p style="text-align: justify;">
-          <b>PrestigePages</b> is a digital purchasing system built to simplify how libraries, bookstores, and readers handle book transactions. 
-           The platform makes it easy to browse detailed catalogs, purchase books securely, and manage collections with ease. 
-           By streamlining the entire process, PrestigePages helps readers gain quicker access to books while ensuring a smooth,
-           permanent purchasing experience.
-          </p>
+    <h2>FREQUENTLY ASKED QUESTIONS</h2>
 
-          <br>
+  <div class="faq-contact-container">
+    <!-- LEFT: FAQ -->
+    <div class="faq-column">
+      <details>
+        <summary>What shipping service do you use?</summary>
+        <p>We use trusted courier services to ensure fast and reliable delivery.</p>
+      </details>
+      <details>
+        <summary>When will my order arrive?</summary>
+        <p>Orders typically arrive within 3–5 business days.</p>
+      </details>
+      <details>
+        <summary>Do you offer local collection?</summary>
+        <p>Yes, local collection is available at selected locations.</p>
+      </details>
+      <details>
+        <summary>When can I pick up my click and collect order?</summary>
+        <p>Click & collect orders are usually ready within 24 hours.</p>
+      </details>
+      <details>
+        <summary>How much is shipping?</summary>
+        <p>Shipping costs depend on your location and order size.</p>
+      </details>
+      <details>
+        <summary>How can I track my delivery?</summary>
+        <p>You will receive a tracking link once your order has been dispatched.</p>
+      </details>
+      <details>
+        <summary>Do you deliver overseas?</summary>
+        <p>Yes, we ship internationally. Delivery times vary by country.</p>
+      </details>
+    </div>
 
-          <p style="text-align: justify;">
-            For staff and administrators, PrestigePages offers powerful tools for managing inventory, tracking sales, overseeing users,
-            and sending notifications—all within a single organized dashboard. With features like advanced search, filtering, 
-            and secure payment integration, the system eliminates manual paperwork and delivers a smarter, faster,
-            and more user-friendly way to manage books.
-          </p>
-
+    <!-- RIGHT: CONTACT FORM -->
+    <div class="contact-column">
+      <h3 class="feature-title">Contact Us</h3>
+      <form>
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Name" name="name">
         </div>
-        <div class="hero-art">
-          <div class="stack">
-            <img alt="Book stack" src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=700&auto=format&fit=crop"/>
-          </div>
-          <div class="blob" aria-hidden="true"></div>
+        <div class="form-group">
+          <input type="email" class="form-control" placeholder="Email Address" name="email">
         </div>
-      </div>
-    </section>
-
-    <!-- Feature bar -->
-    <section class="features">
-      <div class="container feature-row">
-        <div class="feature">
-          <div class="badge" aria-hidden>
-            <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2 3 6v6c0 5 3.8 9.7 9 10 5.2-.3 9-5 9-10V6l-9-4Z" fill="#F6E8C8" stroke="#C89B3C"/><path d="m8.5 12 2.3 2.3 4.7-4.7" fill="none" stroke="#3F7A3B" stroke-width="2" stroke-linecap="round"/></svg>
-          </div>
-          <div>
-            <h4>Certified</h4>
-            <p>Authentic editions from the publisher</p>
-          </div>
+        <div class="form-group">
+          <textarea class="form-control" rows="6" placeholder="Message"></textarea>
         </div>
-        <div class="feature">
-          <div class="badge" aria-hidden>
-            <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="8" width="18" height="12" rx="2" fill="#F6E8C8" stroke="#C89B3C"/><path d="M7 8V6a5 5 0 0 1 10 0v2" stroke="#7E6E5B" stroke-width="2" fill="none"/></svg>
-          </div>
-          <div>
-            <h4>Secure</h4>
-            <p>Encrypted checkout and privacy first</p>
-          </div>
-        </div>
-        <div class="feature">
-          <div class="badge" aria-hidden>
-            <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 14h16l2 4H5l-2-4Z" fill="#F6E8C8" stroke="#C89B3C"/><path d="M7 14V9h12l2 5" fill="none" stroke="#7E6E5B"/><circle cx="8" cy="19" r="1.6" fill="#7E6E5B"/><circle cx="18" cy="19" r="1.6" fill="#7E6E5B"/></svg>
-          </div>
-          <div>
-            <h4>Shipping</h4>
-            <p>Fast, reliable worldwide delivery</p>
-          </div>
-        </div>
-      </div>
-    </section>
+        <input type="submit" class="btn btn-secondary btn-block" value="Send">
+      </form>
+    </div>
+  </div>
   </main>
 
-  <footer style="background-color: #222222;">
+  <footer style="border-color: #222222">
     <div class="container">
-      <div style="display:flex; gap:14px; align-items:center;">
+      <div style="display: flex; gap: 14px; align-items: center">
         <div class="brand">PrestigePages.com</div>
         <span>© <span id="yr"></span> • All rights reserved</span>
       </div>
@@ -208,8 +250,9 @@
         <p><strong>Mobile:</strong> <span id="profileMobile">Not set</span></p>
         <p><strong>House No:</strong> <span id="profileHouseno">Not set</span></p>
         <p><strong>Street Address:</strong> <span id="profileStreet">Not set</span></p>
-        <p><strong>Province:</strong> <span id="profileProvince">Not set</span></p>
+        <p><strong>Baranggay:</strong> <span id="profileBaranggay">Not set</span></p>
         <p><strong>City:</strong> <span id="profileCity">Not set</span></p>
+        <p><strong>Province:</strong> <span id="profileProvince">Not set</span></p>
         <p><strong>Postal Code:</strong> <span id="profilePostal">Not set</span></p>
       </div>
 
@@ -245,6 +288,10 @@
         <input type="text" id="editStreet" />
       </div>
       <div class="form-group">
+        <label for="editBaranggay">Baranggay</label>
+        <input type="text" id="editBaranggay" />
+      </div>
+      <div class="form-group">
         <label for="editCity">City</label>
         <input type="text" id="editCity" />
       </div>
@@ -261,7 +308,6 @@
     </form>
   </div>
 </div>
-
 
   <!-- Wishlist Modal -->
   <div id="wishlistModal" class="modal">
@@ -285,8 +331,6 @@
       <div id="cartTotal"></div>
       <!-- Cart Modal -->
       <button onclick="window.location.href='checkout.html'" class="checkout">Proceed to Checkout</button>
-
-
     </div>
   </div>
 

@@ -7,9 +7,7 @@
   <title>PestigePages — Premium Books</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
-    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/homepage.css" />
   <style>
     /* Fade-in animations */
@@ -99,6 +97,25 @@
       opacity: 0;
       animation: fadeIn 1s ease 0.3s forwards;
     }
+
+    .card { 
+      display:flex; 
+      gap:12px; 
+      border:1px solid #eee; 
+      border-radius:8px; 
+      align-items:center; 
+    }
+
+    .card-body { 
+      flex:1; 
+    }
+
+    .byline { 
+      color:#666; 
+      font-size:0.9rem; 
+      margin-bottom:6px; 
+    }
+    
   </style>
 </head>
 
@@ -116,7 +133,7 @@
         <a href="homepage-logged.html">Home</a>
         <a href="#popular">Store</a>
         <a href="about-us-logged.html">About us</a>
-        <a href="faq.html">FAQ</a>
+        <a href="faq-logged.html">FAQ</a>
       </nav>
 
       <div class="nav-spacer"></div>
@@ -169,7 +186,7 @@
           </p>
           <div class="cta">
             <a href="#popular" class="btn">Shop Now</a>
-            <a href="#about" class="btn secondary">Learn more</a>
+            <a href="about-us-logged.html" class="btn secondary">Learn more</a>
           </div>
         </div>
         <div class="hero-art fade-in">
@@ -227,7 +244,7 @@
     </section>
 
     <!-- Popular books -->
-    <section id="popular" class="container popular-section fade-in">
+    <section id="popular" class="container popular-section fade-in" style="padding-top: 5rem">
       <div class="popular-header">
         <h2>Our Popular Books</h2>
 
@@ -305,8 +322,9 @@
         <p><strong>Mobile:</strong> <span id="profileMobile">Not set</span></p>
         <p><strong>House No:</strong> <span id="profileHouseno">Not set</span></p>
         <p><strong>Street Address:</strong> <span id="profileStreet">Not set</span></p>
-        <p><strong>Province:</strong> <span id="profileProvince">Not set</span></p>
+        <p><strong>Baranggay:</strong> <span id="profileBaranggay">Not set</span></p>
         <p><strong>City:</strong> <span id="profileCity">Not set</span></p>
+        <p><strong>Province:</strong> <span id="profileProvince">Not set</span></p>
         <p><strong>Postal Code:</strong> <span id="profilePostal">Not set</span></p>
       </div>
 
@@ -318,22 +336,51 @@
   <!-- Edit Profile Modal -->
 <div id="editProfileModal" class="modal">
   <div class="modal-content">
-    <h2>Edit Profile <span class="close-btn" id="closeEdit">&times;</span> </h2>
+    <h2>Edit Profile <span class="close-btn" id="closeEdit">&times;</span></h2>
 
     <form id="editProfileForm">
-      <label>First Name</label> <input type="text" id="editFirstName" required />
-      <label>Last Name</label> <input type="text" id="editLastName" required />
-      <label>Mobile</label> <input type="text" id="editMobile" />
-      <label>House No</label> <input type="text" id="editHouseNo" />
-      <label>Street Address</label> <input type="text" id="editStreet" />
-      <label>City</label> <input type="text" id="editCity" />
-      <label>Province</label> <input type="text" id="editProvince" />
-      <label>Postal Code</label> <input type="text" id="editPostal" />
+      <div class="form-group">
+        <label for="editFirstName">First Name</label>
+        <input type="text" id="editFirstName" required />
+      </div>
+      <div class="form-group">
+        <label for="editLastName">Last Name</label>
+        <input type="text" id="editLastName" required />
+      </div>
+      <div class="form-group">
+        <label for="editMobile">Mobile</label>
+        <input type="text" id="editMobile" />
+      </div>
+      <div class="form-group">
+        <label for="editHouseNo">House No</label>
+        <input type="text" id="editHouseNo" />
+      </div>
+      <div class="form-group">
+        <label for="editStreet">Street Address</label>
+        <input type="text" id="editStreet" />
+      </div>
+      <div class="form-group">
+        <label for="editBaranggay">Baranggay</label>
+        <input type="text" id="editBaranggay" />
+      </div>
+      <div class="form-group">
+        <label for="editCity">City</label>
+        <input type="text" id="editCity" />
+      </div>
+      <div class="form-group">
+        <label for="editProvince">Province</label>
+        <input type="text" id="editProvince" />
+      </div>
+      <div class="form-group">
+        <label for="editPostal">Postal Code</label>
+        <input type="text" id="editPostal" />
+      </div>
 
       <button type="submit" class="btn">Save Changes</button>
     </form>
   </div>
 </div>
+
 
 
   <!-- Wishlist Modal -->
@@ -358,8 +405,6 @@
       <div id="cartTotal"></div>
       <!-- Cart Modal -->
       <button onclick="window.location.href='checkout.html'" class="checkout">Proceed to Checkout</button>
-
-
     </div>
   </div>
 

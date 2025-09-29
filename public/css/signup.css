@@ -275,6 +275,34 @@ a{
          display:none;
     }
 
+    /* Fade-in animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Apply fade-in to sections */
+    .fade-in {
+      opacity: 0;
+      animation: fadeIn 1s ease forwards;
+    }
+
+    .site-header {
+      animation: fadeIn 0.8s ease forwards;
+    }
+
+    div.containers {
+      opacity: 0;
+      animation: fadeIn 1s ease 0.2s forwards;
+    }
+
 /* --- Responsive ------------------------------------------------------ */
 @media (max-width: 980px) {
   .nav-links { display: none; }

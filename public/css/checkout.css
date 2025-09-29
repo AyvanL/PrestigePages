@@ -235,7 +235,14 @@ input{
 }
 
 .inputs{
-    margin-left: 20px;
+  padding: 1px 10px;
+        /* Scrollability */
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+p{
+  margin-left: 5px;
 }
 
 .conbtn{
@@ -421,3 +428,92 @@ body.page-ready .book-list li:nth-child(10) { animation-delay: .74s }
   align-items: center;
   gap: 10px;
 }
+
+/*dropdowm of delivery option and payment method*/
+.label {
+  margin-top: 20px;
+  font-weight: 500;
+  font-size: 15px;
+  color: #333;
+}
+
+.modern-select {
+  width: 80%;
+  max-width: 300px;
+  height: 45px;
+  padding: 10px 15px;
+  font-size: 15px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  background: #f9f9f9;
+  color: #333;
+  transition: all 0.3s ease;
+  appearance: none; /* removes default arrow */
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='none' stroke='%23666' stroke-width='2' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  cursor: pointer;
+}
+
+/* Hover effect */
+.modern-select:hover {
+  border-color: #c89b3c;
+  background-color: #fff;
+}
+
+/* Focus effect */
+.modern-select:focus {
+  border-color: #c89b3c;
+  box-shadow: 0 0 8px rgba(200, 155, 60, 0.4);
+  outline: none;
+}
+
+/* Disabled placeholder */
+.modern-select option[disabled] {
+  color: #aaa;
+}
+
+.modern-select:invalid {
+  color: #999; /* placeholder color */
+}
+
+.modern-select option {
+  color: #333; /* normal option color */
+}
+
+.order-summary {
+  display: grid;
+  gap: 8px;
+}
+
+.summary-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.summary-row.total {
+  border-top: 1px solid rgba(0,0,0,0.08);
+  margin-top: 6px;
+  padding-top: 10px;
+}
+
+.summary-label {
+  color: #5f5a54;
+  font-weight: 600;
+}
+
+.summary-method {
+  color: #7E6E5B;
+  margin-left: 6px;
+  margin-right: auto; /* keep label+method on the left */
+}
+
+.summary-amount {
+  font-weight: 700;
+  color: #C89B3C; /* same accent as Total */
+}
+
