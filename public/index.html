@@ -260,34 +260,49 @@
         </div>
       </section>
       <!-- Popular books -->
-      <section id="popular" class="container">
-        <div class="section-head">
+      <section id="popular" class="container popular-section fade-in">
+        <div class="popular-header">
           <h2>Our Popular Books</h2>
 
           <!-- Search Input -->
           <div class="search" role="search">
             <input id="searchInput" type="search" placeholder="Search books…" />
-
-            <svg
-              aria-hidden
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
+            <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="11" cy="11" r="7" stroke="#A89983" stroke-width="2" />
-              <path
-                d="m20 20-3.5-3.5"
-                stroke="#A89983"
-                stroke-width="2"
-                stroke-linecap="round"
-              />
+              <path d="m20 20-3.5-3.5" stroke="#A89983" stroke-width="2" stroke-linecap="round" />
             </svg>
           </div>
-          <a class="see-all" href="#">See all</a>
         </div>
-        <div id="book-grid" class="grid" aria-live="polite"></div>
+
+        <div class="content-wrapper">
+          <!-- Sidebar -->
+          <aside class="sidebar">
+            <h3>Categories</h3>
+            <label><input type="radio" name="category" value="all" checked /> See All</label><br />
+            <label><input type="radio" name="category" value="romance" /> Romance</label><br />
+            <label><input type="radio" name="category" value="mystery" /> Mystery</label><br />
+            <label><input type="radio" name="category" value="science" /> Science</label><br />
+            <label><input type="radio" name="category" value="non-fiction" /> Non-Fiction</label><br />
+            <label><input type="radio" name="category" value="children" /> Children's Books</label><br />
+            <label><input type="radio" name="category" value="classics" /> Classics</label><br />
+            <label><input type="radio" name="category" value="comics" /> Comics</label><br />
+            <label><input type="radio" name="category" value="business" /> Business</label>
+            <hr />
+            <h3>Price Range</h3>
+            <div class="price-range">
+              <label for="minPrice">Min: ₱<span id="minPriceVal">0</span></label>
+              <input type="range" id="minPrice" min="0" max="2000" step="50" value="0" />
+
+              <label for="maxPrice">Max: ₱<span id="maxPriceVal">2000</span></label>
+              <input type="range" id="maxPrice" min="0" max="2000" step="50" value="2000" />
+            </div>
+          </aside>
+
+          <!-- Main content -->
+          <div class="main-content">
+            <div id="book-grid" class="grid" aria-live="polite"></div>
+          </div>
+        </div>
       </section>
     </main>
 
@@ -478,14 +493,63 @@
         });
       }
 
-      // search filtering
+      // Filtering state
+      const state = {
+        q: "",
+        category: "all",
+        minPrice: 0,
+        maxPrice: 2000,
+      };
+
+      function applyFilters() {
+        const q = state.q.toLowerCase().trim();
+        const list = BOOKS.filter((b) => {
+          const matchesQ = (b.title + " " + b.author)
+            .toLowerCase()
+            .includes(q);
+          const matchesCat = state.category === "all" || b.category === state.category;
+          const matchesPrice = b.price >= state.minPrice && b.price <= state.maxPrice;
+          return matchesQ && matchesCat && matchesPrice;
+        });
+        renderBooks(list);
+      }
+
+      // Search filter
       const searchInput = document.getElementById("searchInput");
       searchInput.addEventListener("input", (e) => {
-        const q = e.target.value.toLowerCase().trim();
-        const filtered = BOOKS.filter((b) =>
-          (b.title + " " + b.author).toLowerCase().includes(q)
-        );
-        renderBooks(filtered);
+        state.q = e.target.value || "";
+        applyFilters();
+      });
+
+      // Category filter
+      document.querySelectorAll('input[name="category"]').forEach((el) => {
+        el.addEventListener("change", (e) => {
+          state.category = e.target.value;
+          applyFilters();
+        });
+      });
+
+      // Price range filter
+      const minEl = document.getElementById("minPrice");
+      const maxEl = document.getElementById("maxPrice");
+      const minVal = document.getElementById("minPriceVal");
+      const maxVal = document.getElementById("maxPriceVal");
+      const clamp = () => {
+        if (state.minPrice > state.maxPrice) state.minPrice = state.maxPrice;
+        minEl.value = String(state.minPrice);
+        maxEl.value = String(state.maxPrice);
+      };
+      minEl.addEventListener("input", (e) => {
+        state.minPrice = parseInt(e.target.value, 10) || 0;
+        minVal.textContent = state.minPrice;
+        clamp();
+        applyFilters();
+      });
+      maxEl.addEventListener("input", (e) => {
+        state.maxPrice = parseInt(e.target.value, 10) || 2000;
+        maxVal.textContent = state.maxPrice;
+        clamp();
+        applyFilters();
       });
 
       // mobile nav demo (expand inline links under header)
@@ -511,7 +575,7 @@
 
       // boot
       document.getElementById("yr").textContent = new Date().getFullYear();
-      renderBooks(BOOKS);
+  renderBooks(BOOKS);
     </script>
   </body>
 </html>
