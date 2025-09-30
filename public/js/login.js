@@ -3,6 +3,8 @@ import {
   getAuth,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
+  setPersistence,
+  browserLocalPersistence,
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {
   getFunctions,
@@ -29,60 +31,78 @@ const forgotPasswordLink = document.getElementById("forgotPassword");
 const emailInput = document.getElementById("email");
 const msgBox = document.getElementById("message");
 
-forgotPasswordLink.addEventListener("click", async (e) => {
-  e.preventDefault();
-  const email = emailInput.value.trim();
+if (forgotPasswordLink) {
+  forgotPasswordLink.addEventListener("click", async (e) => {
+    e.preventDefault();
+    const email = emailInput?.value?.trim() || "";
 
-  if (!email) {
-    msgBox.textContent = "Please enter your email first.";
-    return;
-  }
+    if (!email) {
+      if (msgBox) msgBox.textContent = "Please enter your email first.";
+      return;
+    }
 
-  try {
-    await sendPasswordResetEmail(auth, email);
-    msgBox.textContent = "✅ Reset link sent! Check your email.";
-  } catch (error) {
-    console.error("Login error:", error.code, error.message);
-    alert("❌ " + error.message);
-  }
-});
+    try {
+      await sendPasswordResetEmail(auth, email);
+      if (msgBox) msgBox.textContent = "✅ Reset link sent! Check your email.";
+    } catch (error) {
+      console.error("Login error:", error.code, error.message);
+      alert("❌ " + (error.message || error.code || "Failed to send reset link"));
+    }
+  });
+}
 
 // Login handler
-document.getElementById("loginForm").addEventListener("submit", async (e) => {
+document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+  const email = document.getElementById("email")?.value?.trim() || "";
+  const password = document.getElementById("password")?.value || "";
 
   try {
+    // Persist session across refresh & new tabs
+    await setPersistence(auth, browserLocalPersistence);
+
+    // Sign in
     await signInWithEmailAndPassword(auth, email, password);
 
-    // Request OTP from backend
-    await sendEmailOTP({ email });
+    // OTP flow only if OTP UI exists
+    const otpModal = document.getElementById("otpModal");
+    const verifyBtn = document.getElementById("verifyOtpBtn");
+    const otpInput = document.getElementById("otpInput");
 
-    // Show modal
-    document.getElementById("otpModal").style.display = "flex";
-    localStorage.setItem("pendingEmail", email);
+    if (otpModal && verifyBtn && otpInput) {
+      // Request OTP from backend
+      await sendEmailOTP({ email });
+      otpModal.style.display = "flex";
+      localStorage.setItem("pendingEmail", email);
+    } else {
+      // Fallback: no OTP UI present, proceed directly
+      window.location.href = "homepage-logged.html";
+    }
   } catch (error) {
+    console.error("Login error:", error);
     alert("❌ Login failed: wrong email or password.");
   }
 });
 
 // Verify OTP
-document.getElementById("verifyOtpBtn").addEventListener("click", async () => {
+const verifyBtn = document.getElementById("verifyOtpBtn");
+if (verifyBtn) verifyBtn.addEventListener("click", async () => {
   const email = localStorage.getItem("pendingEmail");
-  const enteredOtp = document.getElementById("otpInput").value.trim();
+  const enteredOtp = document.getElementById("otpInput")?.value?.trim() || "";
   const docRef = doc(db, "emailOtps", email);
   const snapshot = await getDoc(docRef);
 
   if (!snapshot.exists()) {
-    document.getElementById("otpMessage").textContent = "❌ No code found.";
+    const msg = document.getElementById("otpMessage");
+    if (msg) msg.textContent = "❌ No code found.";
     return;
   }
 
   const { otp, expiresAt } = snapshot.data();
 
   if (Date.now() > expiresAt) {
-    document.getElementById("otpMessage").textContent = "❌ Code expired.";
+    const msg = document.getElementById("otpMessage");
+    if (msg) msg.textContent = "❌ Code expired.";
     await deleteDoc(docRef);
     return;
   }
@@ -92,22 +112,25 @@ document.getElementById("verifyOtpBtn").addEventListener("click", async () => {
     alert("✅ Login successful!");
     window.location.href = "homepage-logged.html";
   } else {
-    document.getElementById("otpMessage").textContent = "❌ Invalid code.";
+    const msg = document.getElementById("otpMessage");
+    if (msg) msg.textContent = "❌ Invalid code.";
   }
 });
 
 // Password toggle
 const passwordInput = document.getElementById("password");
 const toggleIcon = document.getElementById("togglePassword");
-toggleIcon.addEventListener("click", () => {
-  const isHidden = passwordInput.type === "password";
-  passwordInput.type = isHidden ? "text" : "password";
-  toggleIcon.classList.toggle("fa-eye");
-  toggleIcon.classList.toggle("fa-eye-slash");
-});
+if (passwordInput && toggleIcon) {
+  toggleIcon.addEventListener("click", () => {
+    const isHidden = passwordInput.type === "password";
+    passwordInput.type = isHidden ? "text" : "password";
+    toggleIcon.classList.toggle("fa-eye");
+    toggleIcon.classList.toggle("fa-eye-slash");
+  });
+}
 
 // Mobile nav
-document.getElementById("navToggle").addEventListener("click", () => {
+document.getElementById("navToggle")?.addEventListener("click", () => {
   const existing = document.getElementById("mobileMenu");
   if (existing) {
     existing.remove();
