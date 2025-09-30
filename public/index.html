@@ -100,7 +100,7 @@
         <div class="nav-spacer"></div>
 
         <div class="actions">
-          <button class="icon-btn" aria-label="Wishlist" onclick="window.location.href='login.html';">
+          <button class="icon-btn" aria-label="Wishlist">
             <svg
               width="20"
               height="20"
@@ -117,7 +117,7 @@
             </svg>
           </button>
 
-          <button class="icon-btn" aria-label="Cart" onclick="window.location.href='login.html';">
+          <a href="login.html" class="icon-btn" aria-label="Cart">
             <svg
               width="20"
               height="20"
@@ -135,7 +135,7 @@
               <circle cx="10" cy="20" r="1.5" fill="#7E6E5B" />
               <circle cx="17" cy="20" r="1.5" fill="#7E6E5B" />
             </svg>
-          </button>
+          </a>
 
           <nav class="nav-links" aria-label="Main">
             <a href="login.html">Log In</a>
@@ -177,7 +177,7 @@
       <!-- Feature bar -->
       <section class="features">
         <div class="container feature-row">
-          <div class="feature fade-in">
+          <div class="feature">
             <div class="badge" aria-hidden>
               <svg
                 width="22"
@@ -205,7 +205,7 @@
             </div>
           </div>
           <div class="feature">
-            <div class="badge" aria-hidden>
+            <div class="feature-badge" aria-hidden>
               <svg
                 width="22"
                 height="22"
@@ -259,9 +259,8 @@
           </div>
         </div>
       </section>
-
       <!-- Popular books -->
-      <section id="popular" class="container" style="padding-top: 3rem">
+      <section id="popular" class="container">
         <div class="section-head">
           <h2>Our Popular Books</h2>
 
@@ -307,7 +306,18 @@
         getAuth,
         onAuthStateChanged,
       } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-      import { firebaseConfig } from "./js/firebase-config.js";
+
+      // Firebase config
+      const firebaseConfig = {
+        apiKey: "AIzaSyCC_14beDBhudrtoAIFqc29TCMY5zoa4AA",
+        authDomain: "prestige-pages.firebaseapp.com",
+        databaseURL: "https://prestige-pages-default-rtdb.firebaseio.com",
+        projectId: "prestige-pages",
+        storageBucket: "prestige-pages.appspot.com",
+        messagingSenderId: "1065922943021",
+        appId: "1:1065922943021:web:e5829dd09e206063b500a4",
+        measurementId: "G-V0E6PXN1Z5",
+      };
 
       // Initialize Firebase
       const app = initializeApp(firebaseConfig);
@@ -405,26 +415,10 @@
       };
 
       const stars = (n) => {
-        // Default to 5 if null/undefined/NaN
-        let rating = (n === undefined || n === null) ? 5 : Number(n);
-
-        // Clamp to 0–5 for display (but keep exact for text)
-        const clamped = Math.max(0, Math.min(5, rating));
-        const fullStars = Math.floor(clamped); // only full stars
-        const emptyStars = 5 - fullStars;
-
-        const full = "★".repeat(fullStars);
-        const empty = "☆".repeat(emptyStars);
-
-        // Show exact rating text next to stars (1 decimal if needed)
-        const ratingText = `${rating.toFixed(1)}/5`;
-
-        return `
-        <span class="rating" aria-label="${ratingText}">
-        ${full}${empty} <span class="rating-text">- ${ratingText}</span>
-        </span>
-        `;
-     };
+        const full = "★".repeat(Math.max(0, Math.min(5, n)));
+        const empty = "☆".repeat(5 - Math.max(0, Math.min(5, n)));
+        return `<span class="rating" aria-label="${n} out of 5 stars">${full}${empty}</span>`;
+      };
 
       function renderBooks(list) {
         const grid = document.getElementById("book-grid");

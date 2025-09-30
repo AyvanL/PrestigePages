@@ -7,7 +7,9 @@
   <title>PestigePages — Premium Books</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="css/homepage.css" />
   <style>
     /* Fade-in animations */
@@ -97,25 +99,6 @@
       opacity: 0;
       animation: fadeIn 1s ease 0.3s forwards;
     }
-
-    .card { 
-      display:flex; 
-      gap:12px; 
-      border:1px solid #eee; 
-      border-radius:8px; 
-      align-items:center; 
-    }
-
-    .card-body { 
-      flex:1; 
-    }
-
-    .byline { 
-      color:#666; 
-      font-size:0.9rem; 
-      margin-bottom:6px; 
-    }
-    
   </style>
 </head>
 
@@ -154,7 +137,7 @@
             <circle cx="10" cy="20" r="1.5" fill="#7E6E5B" />
             <circle cx="17" cy="20" r="1.5" fill="#7E6E5B" />
           </svg>
-          <span id="cartCount" class="badge">0</span>
+          <span id="cartCount" class="cart-badge">0</span>
           <!-- ✅ badge -->
         </button>
 
@@ -200,51 +183,93 @@
     </section>
 
     <!-- Feature bar -->
-    <section class="features">
-      <div class="container feature-row">
-        <div class="feature">
-          <div class="badge" aria-hidden>
-            <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2 3 6v6c0 5 3.8 9.7 9 10 5.2-.3 9-5 9-10V6l-9-4Z" fill="#F6E8C8" stroke="#C89B3C" />
-              <path d="m8.5 12 2.3 2.3 4.7-4.7" fill="none" stroke="#3F7A3B" stroke-width="2" stroke-linecap="round" />
-            </svg>
+      <section class="features">
+        <div class="container feature-row">
+          <div class="feature">
+            <div class="badge" aria-hidden>
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 2 3 6v6c0 5 3.8 9.7 9 10 5.2-.3 9-5 9-10V6l-9-4Z"
+                  fill="#F6E8C8"
+                  stroke="#C89B3C"
+                />
+                <path
+                  d="m8.5 12 2.3 2.3 4.7-4.7"
+                  fill="none"
+                  stroke="#3F7A3B"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+            <div>
+              <h4>Certified</h4>
+              <p>Authentic editions from the publisher</p>
+            </div>
           </div>
-          <div>
-            <h4>Certified</h4>
-            <p>Authentic editions from the publisher</p>
+          <div class="feature">
+            <div class="feature-badge" aria-hidden="true">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  x="3"
+                  y="8"
+                  width="18"
+                  height="12"
+                  rx="2"
+                  fill="#F6E8C8"
+                  stroke="#C89B3C"
+                />
+                <path
+                  d="M7 8V6a5 5 0 0 1 10 0v2"
+                  stroke="#7E6E5B"
+                  stroke-width="2"
+                  fill="none"
+                />
+              </svg>
+            </div>
+            <div>
+              <h4>Secure</h4>
+              <p>Encrypted checkout and privacy‑first</p>
+            </div>
+          </div>
+          <div class="feature">
+            <div class="badge" aria-hidden>
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M3 14h16l2 4H5l-2-4Z"
+                  fill="#F6E8C8"
+                  stroke="#C89B3C"
+                />
+                <path d="M7 14V9h12l2 5" fill="none" stroke="#7E6E5B" />
+                <circle cx="8" cy="19" r="1.6" fill="#7E6E5B" />
+                <circle cx="18" cy="19" r="1.6" fill="#7E6E5B" />
+              </svg>
+            </div>
+            <div>
+              <h4>Shipping</h4>
+              <p>Fast, reliable worldwide delivery</p>
+            </div>
           </div>
         </div>
-        <div class="feature">
-          <div class="badge" aria-hidden>
-            <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <rect x="3" y="8" width="18" height="12" rx="2" fill="#F6E8C8" stroke="#C89B3C" />
-              <path d="M7 8V6a5 5 0 0 1 10 0v2" stroke="#7E6E5B" stroke-width="2" fill="none" />
-            </svg>
-          </div>
-          <div>
-            <h4>Secure</h4>
-            <p>Encrypted checkout and privacy‑first</p>
-          </div>
-        </div>
-        <div class="feature">
-          <div class="badge" aria-hidden>
-            <svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 14h16l2 4H5l-2-4Z" fill="#F6E8C8" stroke="#C89B3C" />
-              <path d="M7 14V9h12l2 5" fill="none" stroke="#7E6E5B" />
-              <circle cx="8" cy="19" r="1.6" fill="#7E6E5B" />
-              <circle cx="18" cy="19" r="1.6" fill="#7E6E5B" />
-            </svg>
-          </div>
-          <div>
-            <h4>Shipping</h4>
-            <p>Fast, reliable worldwide delivery</p>
-          </div>
-        </div>
-      </div>
-    </section>
+      </section>
 
     <!-- Popular books -->
-    <section id="popular" class="container popular-section fade-in" style="padding-top: 5rem">
+    <section id="popular" class="container popular-section fade-in">
       <div class="popular-header">
         <h2>Our Popular Books</h2>
 
@@ -312,69 +337,71 @@
   <!-- Profile Modal -->
   <div id="profileModal" class="modal">
     <div class="modal-content">
-      
-      <h2>Your Profile <span id="closeProfile" class="close-btn">&times;</span> </h2>
+      <span id="closeProfile" class="close-btn">&times;</span>
 
-      <div class="profile-info">
-        <p><strong>First Name:</strong> <span id="profileFirstName">Loading...</span></p>
-        <p><strong>Last Name:</strong> <span id="profileLastName">Loading...</span></p>
-        <p><strong>Email:</strong> <span id="profileEmail">Loading...</span></p>
-        <p><strong>Mobile:</strong> <span id="profileMobile">Not set</span></p>
-        <p><strong>House No:</strong> <span id="profileHouseno">Not set</span></p>
-        <p><strong>Street Address:</strong> <span id="profileStreet">Not set</span></p>
-        <p><strong>Baranggay:</strong> <span id="profileBaranggay">Not set</span></p>
-        <p><strong>City:</strong> <span id="profileCity">Not set</span></p>
-        <p><strong>Province:</strong> <span id="profileProvince">Not set</span></p>
-        <p><strong>Postal Code:</strong> <span id="profilePostal">Not set</span></p>
-      </div>
+      <h2>Your Profile</h2>
+
+      <p>
+        <strong>First Name:</strong>
+        <span id="profileFirstName">Loading...</span>
+      </p>
+      <p>
+        <strong>Last Name:</strong>
+        <span id="profileLastName">Loading...</span>
+      </p>
+      <p><strong>Email:</strong> <span id="profileEmail">Loading...</span></p>
+      <p><strong>Mobile:</strong> <span id="profileMobile">Not set</span></p>
+      <p>
+        <strong>House No:</strong> <span id="profileHouseno">Not set</span>
+      </p>
+      <p>
+        <strong>Street Address:</strong> <span id="profileStreet">Not set</span>
+      </p>
+      <p>
+        <strong>Province:</strong> <span id="profileProvince">Not set</span>
+      </p>
+      <p>
+        <strong>City:</strong> <span id="profileCity">Not set</span>
+      </p>
+      <p>
+        <strong>Postal Code:</strong> <span id="profilePostal">Not set</span>
+      </p>
+      
 
       <button id="editProfileBtn" class="btn">Edit Profile</button>
     </div>
   </div>
 
-
   <!-- Edit Profile Modal -->
 <div id="editProfileModal" class="modal">
   <div class="modal-content">
-    <h2>Edit Profile <span class="close-btn" id="closeEdit">&times;</span></h2>
+    <span class="close-btn" id="closeEdit">&times;</span>
+    <h2>Edit Profile</h2>
 
     <form id="editProfileForm">
-      <div class="form-group">
-        <label for="editFirstName">First Name</label>
-        <input type="text" id="editFirstName" required />
-      </div>
-      <div class="form-group">
-        <label for="editLastName">Last Name</label>
-        <input type="text" id="editLastName" required />
-      </div>
-      <div class="form-group">
-        <label for="editMobile">Mobile</label>
-        <input type="text" id="editMobile" />
-      </div>
-      <div class="form-group">
-        <label for="editHouseNo">House No</label>
-        <input type="text" id="editHouseNo" />
-      </div>
-      <div class="form-group">
-        <label for="editStreet">Street Address</label>
-        <input type="text" id="editStreet" />
-      </div>
-      <div class="form-group">
-        <label for="editBaranggay">Baranggay</label>
-        <input type="text" id="editBaranggay" />
-      </div>
-      <div class="form-group">
-        <label for="editCity">City</label>
-        <input type="text" id="editCity" />
-      </div>
-      <div class="form-group">
-        <label for="editProvince">Province</label>
-        <input type="text" id="editProvince" />
-      </div>
-      <div class="form-group">
-        <label for="editPostal">Postal Code</label>
-        <input type="text" id="editPostal" />
-      </div>
+      <label>First Name</label>
+      <input type="text" id="editFirstName" required />
+
+      <label>Last Name</label>
+      <input type="text" id="editLastName" required />
+
+      <label>Mobile</label>
+      <input type="text" id="editMobile" />
+
+      <label>House No</label>
+      <input type="text" id="editHouseNo" />
+
+      <label>Street Address</label>
+      <input type="text" id="editStreet" />
+
+      <label>City</label>
+      <input type="text" id="editCity" />
+
+      <label>Province</label>
+      <input type="text" id="editProvince" />
+
+      <label>Postal Code</label>
+      <input type="text" id="editPostal" />
 
       <button type="submit" class="btn">Save Changes</button>
     </form>
@@ -382,11 +409,11 @@
 </div>
 
 
-
   <!-- Wishlist Modal -->
   <div id="wishlistModal" class="modal">
     <div class="modal-content">
-      <h2>Your Wishlist ❤️ <span id="closeWishlist" class="close-btn">&times;</span></h2>
+      <span id="closeWishlist" class="close-btn">&times;</span>
+      <h2>Your Wishlist ❤️</h2>
       <div id="wishlistItems"></div>
     </div>
   </div>
@@ -394,8 +421,8 @@
   <!-- Cart Modal -->
   <div id="cartModal" class="modal">
     <div class="modal-content">
-      
-      <h2>Your Cart 🛒 <span id="closeCart" class="close-btn">&times;</span></h2>
+      <span id="closeCart" class="close-btn">&times;</span>
+      <h2>Your Cart 🛒</h2>
 
       <!-- Scrollable container -->
       <div class="cart-items-wrapper">
@@ -405,11 +432,13 @@
       <div id="cartTotal"></div>
       <!-- Cart Modal -->
       <button onclick="window.location.href='checkout.html'" class="checkout">Proceed to Checkout</button>
+
+
     </div>
   </div>
-
   <script type="module" src="js/homepage.js"></script>
 </body>
+
 </html>
 
 
