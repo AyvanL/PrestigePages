@@ -112,7 +112,8 @@ body {
   position: relative;
   display: flex;
   align-items: center;
-  margin-right: 25rem;
+  /* avoid large fixed margins that cause overflow on smaller screens */
+  margin-right: 0;
 }
 
 .search input {
@@ -828,7 +829,7 @@ footer {
   .search input { width: 100%; max-width: 100%; }
 
   /* Sidebar stacks on top */
-  .content-wrapper { flex-direction: column; }
+  .content-wrapper { flex-direction: column; align-items: stretch; }
   .sidebar { width: 100%; }
 
   /* Grid columns reduce */
@@ -840,6 +841,8 @@ footer {
   .icon-btn { width: 36px; height: 36px; }
   .btn { padding: 10px 14px; }
   .hero-inner { gap: 20px; padding-block: 32px; }
+  /* slightly taller image box and less padding on small phones */
+  .hero-art .stack { aspect-ratio: 4/5; padding: 16px; }
   .feature-row { grid-template-columns: 1fr; }
   .grid { grid-template-columns: 1fr; }
   .sidebar { padding: 14px; }
@@ -864,25 +867,14 @@ footer {
     grid-template-columns: 1fr;
     padding-block: 36px;
   }
-  .feature-row {
-    grid-template-columns: 1fr;
-  }
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .nav-links {
-    display: none;
-  }
-  .hamburger {
-    display: grid;
-  }
-
+  .feature-row { grid-template-columns: 1fr; }
+  .nav-links { display: none; }
+  .hamburger { display: grid; }
+  /* compact search wrapper on tablets */
   .search {
     position: relative;
     display: flex;
     align-items: center;
-    margin-right: 0rem;
-    display: flex;
     gap: 8px;
     padding: 8px 12px;
     border: 1px solid #ccc;
@@ -890,11 +882,11 @@ footer {
     width: 100%;
     max-width: 400px;
     background: #fff;
-    margin-bottom: 20px;
+    margin: 0; /* override any margins */
   }
   .search input {
-    width: 300px;
-    max-width: 55vw;
+    width: 100%;
+    max-width: 100%;
     padding: 10px 36px 10px 14px;
     background: var(--paper);
     border: 1px solid var(--line);
@@ -904,11 +896,6 @@ footer {
     border: none;
     outline: none;
     font-size: 14px;
-  }
-}
-@media (max-width: 855px) {
-  .grid {
-    grid-template-columns: 1fr;
   }
 }
 
