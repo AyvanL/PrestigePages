@@ -72,8 +72,8 @@
         >
       </p>
       <form id="signupForm">
-        <div style="display: flex">
-          <div class="input-container" style="width: 11.5rem">
+        <div class="row">
+          <div class="input-container">
             <i class="fa-solid fa-user"></i>
             <input
               type="text"
@@ -83,7 +83,7 @@
             />
           </div>
 
-          <div class="input-container" style="width: 11.8rem">
+          <div class="input-container">
             <i class="fa-solid fa-user"></i>
             <input type="text" id="lastName" placeholder="Last Name" required />
           </div>
@@ -102,11 +102,7 @@
             placeholder="Password"
             required
           />
-          <i
-            class="fa-solid fa-eye"
-            id="togglePassword"
-            style="margin-left: 330px; cursor: pointer"
-          ></i>
+          <i class="fa-solid fa-eye" id="togglePassword"></i>
         </div>
 
         <div class="input-container">
@@ -117,27 +113,22 @@
             placeholder="Confirm Password"
             required
           />
-          <i
-            class="fa-solid fa-eye"
-            id="toggleCPassword"
-            style="margin-left: 330px; cursor: pointer"
-          ></i>
+          <i class="fa-solid fa-eye" id="toggleCPassword"></i>
         </div>
 
         <div class="input-container">
           <i class="fa-solid fa-phone"></i>
           <input type="tel" id="mobile" placeholder="Mobile Number" required />
         </div>
-        <div style="display: flex; justify-content: space-between">
-          <div>
-            <p style="margin: 0; padding-left: 1.5rem; padding-bottom: 0.5rem">
-              Or login with.
-            </p>
-            <a href="#" class="fa fa-google"></a>
-            <a href="#" class="fa fa-facebook"></a>
+        <div class="social-wrap">
+          <p class="social-title">Or login with.</p>
+          <div class="social-row">
+            <a href="#" class="fa fa-google" aria-label="Login with Google"></a>
+            <a href="#" class="fa fa-facebook" aria-label="Login with Facebook"></a>
           </div>
-          <button class="login-btn" type="submit">Sign Up</button>
         </div>
+
+        <button class="login-btn" type="submit">Sign Up</button>
       </form>
     </div>
 
