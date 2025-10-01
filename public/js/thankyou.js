@@ -38,6 +38,13 @@ async function markTransactionPaid(user, txId) {
     lastTransactionId: txId,
     lastTransactionAt: serverTimestamp(),
   });
+
+  // Clear the user's cart after successful payment
+  try {
+    await updateDoc(userRef, { cart: [] });
+  } catch (e) {
+    console.warn("Could not clear cart:", e);
+  }
 }
 
 onAuthStateChanged(auth, async (user) => {
