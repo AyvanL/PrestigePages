@@ -175,6 +175,49 @@ body {
   right: -6px;
 }
 
+.faq-contact-container {
+  display: grid;
+  grid-template-columns: 2fr 2fr; /* FAQ left, Contact right bigger */
+  gap: 40px; /* space between FAQ and Contact */
+  align-items: start;
+  margin-top: 40px;
+}
+
+.faq-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.contact-column {
+  background: #fff;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+}
+
+/* Make form inputs nice */
+.contact-column input,
+.contact-column textarea {
+  width: 100%;
+  padding: 10px 10px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+/* Responsive for mobile */
+@media (max-width: 768px) {
+  .faq-contact-container {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .contact-column {
+    padding: 30px;
+  }
+}
+
 /* Position inside cart button */
 .icon-btn {
   position: relative;

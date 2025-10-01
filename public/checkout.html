@@ -26,7 +26,7 @@
       <div class="brand">PrestigePages</div>
       <nav class="nav-links" aria-label="Main">
         <a href="homepage-logged.html">Home</a>
-        <a href="#popular">Store</a>
+        <a href="homepage-logged.html#popular">Store</a>
         <a href="about-us-logged.html">About us</a>
       </nav>
 
@@ -126,6 +126,7 @@
 
         <hr />
         <div class="inputs">
+          <p>Shipping Information</p>
           <form id="shippingForm">
             <input type="text" id="shippingFirstName" placeholder="Full Name" required />
             <input type="email" id="shippingEmail" placeholder="Email" required />
@@ -136,23 +137,24 @@
             <input type="text" id="shippingProvince" placeholder="Province" required />
             <input type="text" id="shippingPostal" placeholder="Postal Code" required />
 
-            <p>Delivery Option</p>
-            <label for="delivery">Delivery Method:</label>
-            <select id="delivery" required>
-              <option value="" disabled selected>Delivery Options</option>
-              <option value="normal">Normal Delivery</option>
-              <option value="express">Express Delivery</option>
-            </select>
+           <p class="label">Delivery Option</p>
+<select id="delivery" class="modern-select" required>
+  <option value="" disabled selected hidden>Delivery Options</option>
+  <option value="normal">Normal Delivery - (₱49)</option>
+  <option value="express">Express Delivery - (₱100)</option>
+</select>
 
-            </br>
+<p class="label">Payment Method</p>
+<select id="payment" class="modern-select" required>
+  <option value="" disabled selected hidden>Payment Options</option>
+  <option value="COD">Cash on Delivery</option>
+  <option value="Card">Credit / Debit Card</option>
+  <option value="E-wallet">Online Wallet</option>
+</select>
 
-            <p>Payment Method</p>
-            <p>Payment Method</p>
-            <p>Payment Method</p>
-            <p>Payment Method</p>
-            <p>Payment Method</p>
 
-            <button type="submit" class="conbtn">Continue</button>
+
+
           </form>
         </div>
       </div>
@@ -164,14 +166,25 @@
         </div>
         <div class="order-summary">
           <hr />
-          <p id="cart-total"><strong>Total: ₱0</strong></p>
+          <div id="shipping-line" class="summary-row">
+            <span class="summary-label">Shipping Fee:</span>
+            <span class="summary-method" id="shipping-method">Select delivery</span>
+            <span class="summary-amount" id="shipping-amount">₱0</span>
+          </div>
+
+          <div class="summary-row total">
+            <span class="summary-label">Total:</span>
+            <span class="summary-amount" id="cart-total">₱0</span>
+          </div>
         </div>
+        <button type="submit" class="conbtn" form="shippingForm">Continue</button>
       </div>
-    </div>
-  </div>
 
   <script type="module" src="js/homepage.js"></script>
   <script type="module" src="js/checkout.js"></script>
+
+  
+
 </body>
 
 </html>

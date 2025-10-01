@@ -48,50 +48,19 @@
         <div class="brand">PrestigePages</div>
         <nav class="nav-links" aria-label="Main">
           <a href="index.html">Home</a>
+<<<<<<< HEAD
           <a href="index.html">Store</a>
           <a href="about-us.html">About us</a>
+=======
+          <a href="index.html#popular">Store</a>
+          <a href="about-us.html">About us</a>
+          <a href="faq.html">FAQ</a>
+>>>>>>> ed3640b8fb9585d77af904612649b471e00b0fe6
         </nav>
 
         <div class="nav-spacer"></div>
 
         <div class="actions">
-          <button class="icon-btn" aria-label="Wishlist">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12.1 20.3 4.7 13c-2.6-2.6-1.9-6.9 1.6-8.5 1.7-.8 3.7-.5 5.1.7 1.4-1.2 3.4-1.5 5.1-.7 3.5 1.6 4.2 5.9 1.6 8.5l-7.3 7.3Z"
-                stroke="#7E6E5B"
-                stroke-width="1.6"
-                fill="#fff"
-              />
-            </svg>
-          </button>
-
-          <button class="icon-btn" aria-label="Cart">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M3 3h2l2.4 12.3a2 2 0 0 0 2 1.7h6.9a2 2 0 0 0 2-1.6L21 7H6"
-                stroke="#7E6E5B"
-                stroke-width="1.6"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <circle cx="10" cy="20" r="1.5" fill="#7E6E5B" />
-              <circle cx="17" cy="20" r="1.5" fill="#7E6E5B" />
-            </svg>
-          </button>
-
           <nav class="nav-links" aria-label="Main">
             <a href="login.html">Log In</a>
             <a href="signup.html">Sign Up</a>
@@ -108,8 +77,8 @@
         >
       </p>
       <form id="signupForm">
-        <div style="display: flex">
-          <div class="input-container" style="width: 11.5rem">
+        <div class="row">
+          <div class="input-container">
             <i class="fa-solid fa-user"></i>
             <input
               type="text"
@@ -119,7 +88,7 @@
             />
           </div>
 
-          <div class="input-container" style="width: 11.8rem">
+          <div class="input-container">
             <i class="fa-solid fa-user"></i>
             <input type="text" id="lastName" placeholder="Last Name" required />
           </div>
@@ -138,11 +107,7 @@
             placeholder="Password"
             required
           />
-          <i
-            class="fa-solid fa-eye"
-            id="togglePassword"
-            style="margin-left: 330px; cursor: pointer"
-          ></i>
+          <i class="fa-solid fa-eye" id="togglePassword"></i>
         </div>
 
         <div class="input-container">
@@ -153,27 +118,22 @@
             placeholder="Confirm Password"
             required
           />
-          <i
-            class="fa-solid fa-eye"
-            id="toggleCPassword"
-            style="margin-left: 330px; cursor: pointer"
-          ></i>
+          <i class="fa-solid fa-eye" id="toggleCPassword"></i>
         </div>
 
         <div class="input-container">
           <i class="fa-solid fa-phone"></i>
           <input type="tel" id="mobile" placeholder="Mobile Number" required />
         </div>
-        <div style="display: flex; justify-content: space-between">
-          <div>
-            <p style="margin: 0; padding-left: 1.5rem; padding-bottom: 0.5rem">
-              Or login with.
-            </p>
-            <a href="#" class="fa fa-google"></a>
-            <a href="#" class="fa fa-facebook"></a>
+        <div class="social-wrap">
+          <p class="social-title">Or login with.</p>
+          <div class="social-row">
+            <a href="#" class="fa fa-google" aria-label="Login with Google"></a>
+            <a href="#" class="fa fa-facebook" aria-label="Login with Facebook"></a>
           </div>
-          <button class="login-btn" type="submit">Sign Up</button>
         </div>
+
+        <button class="login-btn" type="submit">Sign Up</button>
       </form>
     </div>
 
@@ -200,18 +160,7 @@
         doc,
         setDoc,
       } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
-      // Firebase config
-      const firebaseConfig = {
-        apiKey: "AIzaSyCC_14beDBhudrtoAIFqc29TCMY5zoa4AA",
-        authDomain: "prestige-pages.firebaseapp.com",
-        databaseURL: "https://prestige-pages-default-rtdb.firebaseio.com",
-        projectId: "prestige-pages",
-        storageBucket: "prestige-pages.appspot.com",
-        messagingSenderId: "1065922943021",
-        appId: "1:1065922943021:web:e5829dd09e206063b500a4",
-        measurementId: "G-V0E6PXN1Z5",
-      };
+      import { firebaseConfig } from "./js/firebase-config.js";
 
       // Initialize Firebase
       const app = initializeApp(firebaseConfig);

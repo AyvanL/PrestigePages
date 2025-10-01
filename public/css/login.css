@@ -1,6 +1,6 @@
 * {
   margin: 0;
-  padding: o;
+  padding: 0;
 }
 
 body {
@@ -12,54 +12,40 @@ body {
 }
 
 .containers {
-  background-color: rgb(255, 255, 255);
-  width: 30rem;
   background-color: #dbc6a0;
-  border-radius: 10px;
-  margin: auto;
-  margin-top: 7rem;
-  padding: 2rem;
-  border: solid 1px;
+  width: min(92vw, 420px);
+  border-radius: 12px;
+  margin: clamp(2rem, 8vw, 7rem) auto 2rem;
+  padding: 1.25rem 1.25rem 1.5rem;
+  border: 1px solid #c7b089;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
 h1 {
-  color: white;
-  margin-left: 1.5rem;
-  margin-top: 0.5rem;
-  font-weight: 500;
+  margin: 0 0 0.25rem 0.25rem;
+  font-weight: 600;
   color: #2b3838;
 }
 
 .login-btn {
-  text-align: center;
-  width: 7rem;
-  padding: 8px;
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
   border: none;
   background-color: #ab966d;
   color: #fff;
   font-size: 16px;
   cursor: pointer;
-  transition: background-color 0.3 ease;
-  margin-top: 1px;
-  border-radius: 25px;
-  margin-left: 17rem;
+  transition: background-color 0.2s ease;
+  margin-top: 12px;
+  border-radius: 999px;
 }
 
-#loginForm {
-  margin-left: 1rem;
-}
+#loginForm { margin: 0.25rem; }
 
-input {
-  width: 90%;
-  height: 2rem;
-}
+input { width: 100%; height: 2.6rem; }
 
-.containers p {
-  margin-left: 1.5rem;
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
-  color: #2b3838;
-}
+.containers p { margin: 0.75rem 0 1.25rem 0.25rem; color: #2b3838; }
 
 .back {
   padding-top: 1rem;
@@ -80,12 +66,13 @@ input {
 }
 
 .input-container input {
-  padding-left: 35px;
-  width: 95%;
-  height: 7vh;
+  padding-left: 36px;
+  padding-right: 40px; /* room for eye icon */
+  width: 100%;
+  height: 44px;
   box-sizing: border-box;
   border-radius: 10px;
-  border-style: none;
+  border: 1px solid #e4dac5;
   background-color: #ffffff;
 }
 
@@ -232,8 +219,49 @@ body {
   box-shadow: var(--shadow);
 }
 
+/* Fade-in animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Apply fade-in to sections */
+    .fade-in {
+      opacity: 0;
+      animation: fadeIn 1s ease forwards;
+    }
+
+    .site-header {
+      animation: fadeIn 0.8s ease forwards;
+    }
+
+    div.containers {
+      opacity: 0;
+      animation: fadeIn 1s ease 0.2s forwards;
+    }
+
 .hamburger {
   display: none;
+}
+
+/* Position password eye toggle without inline styles */
+#togglePassword {
+  position: absolute;
+  left: auto; /* override generic icon left position */
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #2b3838;
+  cursor: pointer;
+  padding: 6px;
+  z-index: 1; /* keep above input */
 }
 
 .modal {
@@ -275,7 +303,13 @@ body {
 }
 
 @media (max-width: 560px) {
-  .search input {
-    width: 58vw;
-  }
+  .containers { width: min(94vw, 420px); padding: 1rem 1rem 1.25rem; }
+  .login-btn { padding: 12px; font-size: 15px; }
+  .input-container input { height: 42px; }
+  .containers p { font-size: 14px; }
+}
+
+/* Larger screens can right-align the button if desired */
+@media (min-width: 800px) {
+  .login-btn { width: 8rem; margin-left: auto; }
 }

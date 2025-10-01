@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Orders - Manage Orders</title>
+  <link rel="stylesheet" href="css/admin-orders.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar (Navbar on the left) -->
+    <nav class="sidebar">
+      <a href="index.html" class="brand">Prestige Pages</a>
+      <a href="admin-orders.html" class="active">Orders</a>
+      <a href="admin-prod-management.html">Inventory</a>
+      <a href="admin-customer.html">Customers</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <h2>Order Management</h2>
+
+      <!-- Orders Table Section -->
+      <section class="order-list">
+        <h3>All Orders</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer Name</th>
+              <th>Order Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="order-list">
+            <!-- Order rows will be dynamically loaded here -->
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <!-- Order Details Modal -->
+  <div id="orderDetailsModal" class="modal">
+    <div class="modal-content">
+      <h3>Order Details</h3>
+      <div id="orderDetailsContent"></div>
+      <button type="button" id="closeModalBtn">Close</button>
+    </div>
+  </div>
+
+  <!-- Optional Scripts -->
+  <script src="admin-orders.js"></script>
+</body>
+
+</html>

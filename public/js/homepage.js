@@ -13,18 +13,7 @@ import {
   arrayUnion,
   arrayRemove,
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
-// Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyCC_14beDBhudrtoAIFqc29TCMY5zoa4AA",
-  authDomain: "prestige-pages.firebaseapp.com",
-  databaseURL: "https://prestige-pages-default-rtdb.firebaseio.com",
-  projectId: "prestige-pages",
-  storageBucket: "prestige-pages.appspot.com",
-  messagingSenderId: "1065922943021",
-  appId: "1:1065922943021:web:e5829dd09e206063b500a4",
-  measurementId: "G-V0E6PXN1Z5",
-};
+import { firebaseConfig } from "./firebase-config.js";
 
 // Init Firebase
 const app = initializeApp(firebaseConfig);
@@ -45,10 +34,11 @@ const editProfileForm = document.getElementById("editProfileForm");
 
 const editFirstName = document.getElementById("editFirstName");
 const editLastName = document.getElementById("editLastName");
-const editAddress = document.getElementById("editAddress");
+// optional/unused in this page
 const editMobile = document.getElementById("editMobile");
 const closeProfileBtn = document.getElementById("closeProfile");
 
+// checkout modal elements may not exist here
 const modal = document.getElementById("checkoutModal");
 const openBtn = document.getElementById("openCheckout");
 const closeBtn = document.getElementById("closeCheckout");
@@ -109,9 +99,8 @@ async function loadCartFromFirestore() {
 // --- Profile modal and edit profile logic ---
 
 // When Profile is clicked, load data
-document
-  .querySelector(".dropdown-content a[href='profile.html']")
-  .addEventListener("click", async (e) => {
+const profileLink = document.querySelector(".dropdown-content a[href='profile.html']");
+if (profileLink) profileLink.addEventListener("click", async (e) => {
     e.preventDefault();
 
     const user = auth.currentUser;
@@ -126,12 +115,12 @@ document
         profileFirstName.textContent = data.firstName || "Not set";
         profileLastName.textContent = data.lastName || "Not set";
         profileEmail.textContent = user.email || "No email";
-        profileHouseno.textContent = data.houseNo || "Not set";
-        profileStreet.textContent = data.street || "Not set";
-        profileProvince.textContent = data.province || "Not set";
-        profileCity.textContent = data.city || "Not set";
-        profilePostal.textContent = data.postal || "Not set";
-        profileMobile.textContent = data.mobile || "Not set";
+  profileHouseno.textContent = data.houseNo || "Not set";
+  profileStreet.textContent = data.street || "Not set";
+  profileProvince.textContent = data.province || "Not set";
+  profileCity.textContent = data.city || "Not set";
+  profilePostal.textContent = data.postal || "Not set";
+  profileMobile.textContent = data.mobile || "Not set";
 
         // Prefill edit form
         editFirstName.value = data.firstName || "";
@@ -149,20 +138,26 @@ document
   });
 
 // Close Profile Modal
-closeProfileBtn.addEventListener("click", () => {
-  profileModal.style.display = "none";
-});
+if (closeProfileBtn) {
+  closeProfileBtn.addEventListener("click", () => {
+    profileModal.style.display = "none";
+  });
+}
 
 // Open Edit Profile Modal
-editProfileBtn.addEventListener("click", () => {
-  profileModal.style.display = "none";
-  editProfileModal.style.display = "flex";
-});
+if (editProfileBtn) {
+  editProfileBtn.addEventListener("click", () => {
+    profileModal.style.display = "none";
+    editProfileModal.style.display = "flex";
+  });
+}
 
 // Close Edit Modal
-closeEditBtn.addEventListener("click", () => {
-  editProfileModal.style.display = "none";
-});
+if (closeEditBtn) {
+  closeEditBtn.addEventListener("click", () => {
+    editProfileModal.style.display = "none";
+  });
+}
 
 // Handle form submit
 editProfileForm.addEventListener("submit", async (e) => {
@@ -190,8 +185,8 @@ editProfileForm.addEventListener("submit", async (e) => {
     profileLastName.textContent = editLastName.value;
     profileHouseno.textContent = editHouseNo.value;
     profileStreet.textContent = editStreet.value;
-    profileProvince.textContent = editProvince.value;
     profileCity.textContent = editCity.value;
+    profileProvince.textContent = editProvince.value;
     profilePostal.textContent = editPostal.value;
     profileMobile.textContent = editMobile.value;
 
@@ -201,22 +196,26 @@ editProfileForm.addEventListener("submit", async (e) => {
 });
 
 // Dropdown toggle
-document.querySelector(".dropdown").addEventListener("click", function (e) {
-  this.classList.toggle("active");
-  this.querySelector(".dropdown-content").classList.toggle("show");
-  this.querySelector(".dropdown-trigger").classList.toggle("active");
-  e.stopPropagation();
-});
+const dropdown = document.querySelector(".dropdown");
+if (dropdown) {
+  dropdown.addEventListener("click", function (e) {
+    this.classList.toggle("active");
+    this.querySelector(".dropdown-content").classList.toggle("show");
+    this.querySelector(".dropdown-trigger").classList.toggle("active");
+    e.stopPropagation();
+  });
+}
 
 // Close dropdown when clicking outside
 window.addEventListener("click", function () {
-  const dropdown = document.querySelector(".dropdown");
-  if (dropdown.classList.contains("active")) {
-    dropdown.classList.remove("active");
-    dropdown.querySelector(".dropdown-content").classList.remove("show");
-    dropdown.querySelector(".dropdown-trigger").classList.remove("active");
+  const dropdownEl = document.querySelector(".dropdown");
+  if (dropdownEl && dropdownEl.classList.contains("active")) {
+    dropdownEl.classList.remove("active");
+    dropdownEl.querySelector(".dropdown-content").classList.remove("show");
+    dropdownEl.querySelector(".dropdown-trigger").classList.remove("active");
   }
 });
+
 
 // Check if user is logged in
 onAuthStateChanged(auth, async (user) => {
@@ -342,10 +341,27 @@ const el = (tag, cls, html) => {
 };
 
 const stars = (n) => {
-  const full = "★".repeat(Math.max(0, Math.min(5, n)));
-  const empty = "☆".repeat(5 - Math.max(0, Math.min(5, n)));
-  return `<span class="rating" aria-label="${n} out of 5 stars">${full}${empty}</span>`;
+  // Default to 5 if null/undefined/NaN
+  let rating = (n === undefined || n === null) ? 5 : Number(n);
+
+  // Clamp to 0–5 for display (but keep exact for text)
+  const clamped = Math.max(0, Math.min(5, rating));
+  const fullStars = Math.floor(clamped); // only full stars
+  const emptyStars = 5 - fullStars;
+
+  const full = "★".repeat(fullStars);
+  const empty = "☆".repeat(emptyStars);
+
+  // Show exact rating text next to stars (1 decimal if needed)
+  const ratingText = `${rating.toFixed(1)}/5`;
+
+  return `
+    <span class="rating" aria-label="${ratingText}">
+      ${full}${empty} <span class="rating-text">- ${ratingText}</span>
+    </span>
+  `;
 };
+
 
 function renderBooks(list) {
   const grid = document.getElementById("book-grid");
@@ -475,7 +491,7 @@ function renderBooks(list) {
 
 // search filtering
 const searchInput = document.getElementById("searchInput");
-searchInput.addEventListener("input", (e) => {
+if (searchInput) searchInput.addEventListener("input", (e) => {
   const q = e.target.value.toLowerCase().trim();
   const filtered = BOOKS.filter((b) =>
     (b.title + " " + b.author).toLowerCase().includes(q)
@@ -494,7 +510,8 @@ window.handleLogout = async function () {
 };
 
 // mobile nav demo (expand inline links under header)
-document.getElementById("navToggle").addEventListener("click", () => {
+const navToggle = document.getElementById("navToggle");
+if (navToggle) navToggle.addEventListener("click", () => {
   const existing = document.getElementById("mobileMenu");
   if (existing) {
     existing.remove();
@@ -535,20 +552,22 @@ const minPriceVal = document.getElementById("minPriceVal");
 const maxPriceVal = document.getElementById("maxPriceVal");
 
 // update displayed values when sliders move
-[minPrice, maxPrice].forEach((slider) => {
-  slider.addEventListener("input", () => {
-    minPriceVal.textContent = minPrice.value;
-    maxPriceVal.textContent = maxPrice.value;
-    applyFilters();
+if (minPrice && maxPrice && minPriceVal && maxPriceVal) {
+  [minPrice, maxPrice].forEach((slider) => {
+    slider.addEventListener("input", () => {
+      minPriceVal.textContent = minPrice.value;
+      maxPriceVal.textContent = maxPrice.value;
+      applyFilters();
+    });
   });
-});
+}
 
 // --- update your applyFilters() ---
 function applyFilters() {
   const selectedCategory = document.querySelector(
     'input[name="category"]:checked'
   ).value;
-  const searchTerm = document.getElementById("searchInput").value.toLowerCase();
+  const searchTerm = (document.getElementById("searchInput")?.value || "").toLowerCase();
   const min = parseInt(minPrice.value);
   const max = parseInt(maxPrice.value);
 
@@ -628,14 +647,18 @@ async function updateCart() {
 }
 
 // Show/hide cart modal
-cartBtn.addEventListener("click", async () => {
-  await loadCartFromFirestore();
-  cartModal.style.display = "flex";
-});
+if (cartBtn) {
+  cartBtn.addEventListener("click", async () => {
+    await loadCartFromFirestore();
+    cartModal.style.display = "flex";
+  });
+}
 
-closeCart.addEventListener("click", () => {
-  cartModal.style.display = "none";
-});
+if (closeCart) {
+  closeCart.addEventListener("click", () => {
+    cartModal.style.display = "none";
+  });
+}
 
 // Close modal when clicking outside
 window.addEventListener("click", (e) => {
@@ -740,14 +763,18 @@ window.addEventListener("click", (e) => {
 });
 
  // Open modal
-    openBtn.onclick = () => {
-      modal.style.display = "block";
-    };
+    if (openBtn && modal) {
+      openBtn.onclick = () => {
+        modal.style.display = "block";
+      };
+    }
 
     // Close modal
-    closeBtn.onclick = () => {
-      modal.style.display = "none";
-    };
+    if (closeBtn && modal) {
+      closeBtn.onclick = () => {
+        modal.style.display = "none";
+      };
+    }
 
     // Close modal when clicking outside
     window.onclick = (e) => {
