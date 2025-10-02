@@ -1,6 +1,6 @@
 // Admin Transaction Management: list, search, view transactions from Firestore
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, query, orderBy, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
 // Initialize Firebase
@@ -24,6 +24,10 @@ const modalStatus = document.getElementById('modalStatus');
 // State
 let TRANSACTIONS = [];
 
+function normalizeStatus(val) {
+  return String(val || "").trim().toLowerCase();
+}
+
 // Generate HTML row
 function rowHtml(txn) {
   return `<tr data-id="${txn.id}">
@@ -37,11 +41,45 @@ function rowHtml(txn) {
   </tr>`;
 }
 
-// Fetch transactions from Firestore
+// Fetch transactions from Firestore across users and keep only completed
 async function loadTransactions() {
-  const q = query(collection(db, 'transactions'), orderBy('date', 'desc'));
-  const snap = await getDocs(q);
-  TRANSACTIONS = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  // 1) List all users
+  const usersSnap = await getDocs(collection(db, 'users'));
+  const rows = [];
+
+  // 2) For each user, load their transactions ordered by createdAt desc
+  for (const userDoc of usersSnap.docs) {
+    const uid = userDoc.id;
+    const userData = userDoc.data() || {};
+    const customerName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
+
+    const txSnap = await getDocs(query(collection(db, 'users', uid, 'transactions'), orderBy('createdAt', 'desc')));
+    txSnap.forEach((d) => {
+      const data = d.data();
+      const pay = normalizeStatus(data.status);
+      const deliv = normalizeStatus(data.delivstatus || data.deliveryStatus || data.fulfillmentStatus);
+      const isPaid = (pay === 'paid' || pay === 'complete' || pay === 'completed' || pay === 'success');
+      const isDelivered = (deliv === 'delivered');
+      if (!(isPaid && isDelivered)) return;
+
+      const created = data.createdAt?.toDate ? data.createdAt.toDate() : null;
+      const dateStr = created ? created.toISOString().slice(0, 10) : '';
+      const amountStr = typeof data.total === 'number' ? `₱${data.total.toLocaleString()}` : '';
+
+      rows.push({
+        id: d.id,
+        customerName: customerName || userData.email || uid,
+        orderDetails: d.id, // using tx id as order id placeholder
+        amount: amountStr,
+        date: dateStr,
+        status: `${(data.status || 'paid').toString().toLowerCase()} / ${(data.delivstatus || 'delivered').toString().toLowerCase()}`,
+        _uid: uid,
+      });
+    });
+  }
+
+  // 3) Sort all rows by date desc (fallback to createdAt implicit order)
+  TRANSACTIONS = rows.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   render(TRANSACTIONS);
 }
 

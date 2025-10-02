@@ -48,7 +48,14 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
 
+  // Set a fallback flag immediately: being on the thank-you page implies payment success
+  try { localStorage.setItem("pp:clearCartTx", txId); } catch {}
+
   if (!user) {
+    // If the user isn't signed in after redirect, defer cart clearing to next login/homepage load
+    try {
+      localStorage.setItem("pp:clearCartTx", txId);
+    } catch {}
     setStatus("Please log in to view your receipt.", "error");
     // Optionally redirect to login and back
     // location.href = "/login.html?redirect=" + encodeURIComponent(location.pathname + location.search);
@@ -59,6 +66,7 @@ onAuthStateChanged(auth, async (user) => {
     await markTransactionPaid(user, txId);
     setStatus("Payment successful. Your order is now marked as ", "ok");
     statusEl.insertAdjacentHTML("beforeend", "<strong>paid</strong>.");
+    try { localStorage.removeItem("pp:clearCartTx"); } catch {}
   } catch (err) {
     console.error("Failed to mark transaction paid:", err);
     setStatus("We couldn't verify your payment automatically. We'll keep checking.", "error");

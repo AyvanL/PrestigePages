@@ -1004,8 +1004,9 @@ footer {
 #transModal details[open] .tx-chevron { transform: rotate(180deg); }
 /* Make Transactions modal wider */
 #transModal .modal-content {
-  width: 720px;            /* wider than default 420px */
-  max-width: 95vw;         /* stay responsive on small screens */
+  width: 600px;           
+  max-width: 95vw;      
+  
 }
 
 

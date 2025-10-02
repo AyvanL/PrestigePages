@@ -19,7 +19,7 @@ function formatDate(ts) {
 // Load all users' transactions
 async function loadOrders() {
   const orderList = document.getElementById('order-list');
-  orderList.innerHTML = '';
+  orderList.innerHTML = '<tr><td colspan="7" style="padding:12px; text-align:center; color:#555;">Loading...</td></tr>';
   try {
     const usersSnap = await getDocs(collection(db, 'users'));
     const rows = [];
@@ -31,7 +31,9 @@ async function loadOrders() {
       txSnap.forEach((txDoc) => {
         const tx = txDoc.data() || {};
         const txId = txDoc.id;
-        const deliv = tx.delivstatus || 'pending';
+  const deliv = tx.delivstatus || 'pending';
+  const payMethod = tx.paymentMethod || tx.payment || tx.payment_type || '';
+  const payStatus = (tx.status || '').toString().toLowerCase() || 'initiated';
         const createdAt = formatDate(tx.createdAt);
 
         const tr = document.createElement('tr');
@@ -40,6 +42,8 @@ async function loadOrders() {
           <td>${txId}</td>
           <td>${name}</td>
           <td>${createdAt}</td>
+          <td>${payMethod}</td>
+          <td style="text-transform:capitalize;">${payStatus}</td>
           <td class="status-text" style="color:#111; font-weight:400;">${delivDisplay}</td>
           <td>
             <button class="change-status" data-uid="${uid}" data-txid="${txId}">Change</button>
@@ -60,6 +64,11 @@ async function loadOrders() {
 
     // Sort by date desc
     rows.sort((a,b) => new Date(b.createdAtVal).getTime() - new Date(a.createdAtVal).getTime());
+    orderList.innerHTML = '';
+    if (rows.length === 0) {
+      orderList.innerHTML = '<tr><td colspan="7" style="padding:12px; text-align:center; color:#777;">No orders found.</td></tr>';
+      return;
+    }
     rows.forEach(r => orderList.appendChild(r.tr));
 
     // Events for Change and option click (slide down panel)
@@ -103,7 +112,7 @@ async function loadOrders() {
     });
   } catch (err) {
     console.error('Error loading orders', err);
-    alert('Failed to load orders');
+    orderList.innerHTML = '<tr><td colspan="7" style="padding:12px; text-align:center; color:#b91c1c;">Failed to load orders.</td></tr>';
   }
 }
 

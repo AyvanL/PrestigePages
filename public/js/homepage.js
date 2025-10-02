@@ -16,6 +16,7 @@ import {
   getDocs,
   query,
   orderBy,
+  serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -261,6 +262,44 @@ onAuthStateChanged(auth, async (user) => {
 
     // Load cart from Firestore
     await loadCartFromFirestore();
+
+    // Fallback: if thankyou page couldn't clear the cart (e.g., user not signed in on redirect),
+    // detect a pending clear flag and clear here once the user is authenticated.
+    try {
+      const pendingTx = localStorage.getItem("pp:clearCartTx");
+      if (pendingTx) {
+        // Mark the transaction as paid and clear cart if thank-you couldn't do it
+        try {
+          await updateDoc(doc(db, "users", user.uid, "transactions", pendingTx), {
+            status: "paid",
+            paidAt: serverTimestamp(),
+          });
+        } catch (e) {
+          console.warn("Could not mark transaction paid from homepage fallback", e);
+        }
+        await updateDoc(doc(db, "users", user.uid), { cart: [] });
+        cart = [];
+        await updateCart();
+        localStorage.removeItem("pp:clearCartTx");
+      }
+    } catch {}
+
+    // Extra safety: if the last transaction was paid but cart still has items, clear it now
+    try {
+      const userData = (await getDoc(doc(db, "users", user.uid))).data();
+      const lastTxId = userData?.lastTransactionId;
+      if (lastTxId && Array.isArray(cart) && cart.length > 0) {
+        const txSnap = await getDoc(doc(db, "users", user.uid, "transactions", lastTxId));
+        if (txSnap.exists()) {
+          const tx = txSnap.data();
+          if (tx?.status === "paid") {
+            await updateDoc(doc(db, "users", user.uid), { cart: [] });
+            cart = [];
+            await updateCart();
+          }
+        }
+      }
+    } catch {}
 
     // Render books after wishlist is loaded
     renderBooks(BOOKS);
@@ -727,11 +766,11 @@ async function loadTransactions() {
         const qty = it.qty || 1;
         const cover = it.cover || "";
         return `
-          <li style="display:flex; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--line)">
-            <img src="${cover}" alt="" style="width:50px; height:70px; object-fit:cover; border-radius:6px; background:#eee;" />
-            <div style="flex:1">
-              <div style="font-weight:700">${it.title || 'Item'}</div>
-              <div style="font-size:12px; color:var(--muted-ink)">${it.author || ''}</div>
+          <li style="display:flex; gap:16px; align-items:center; padding:14px 0; border-bottom:1px solid var(--line)">
+            <img src="${cover}" alt="" style="width:60px; height:90px; object-fit:cover; border-radius:8px; background:#eee;" />
+            <div style="flex:1; min-width:0;">
+              <div style="font-weight:700; margin-bottom:2px;">${it.title || 'Item'}</div>
+              <div style="font-size:13px; color:var(--muted-ink)">${it.author || ''}</div>
             </div>
             <div style="white-space:nowrap;">x${qty}</div>
             <div style="min-width:90px; text-align:right; font-weight:700;">${price}</div>
@@ -761,7 +800,7 @@ async function loadTransactions() {
                 <span><strong>Delivery fee:</strong> ${shipFee}</span>
               </div>
             </div>
-            <ul style="list-style:none; padding:0; margin:10px 0 0;">${items || '<li style="padding:8px 0;">No items</li>'}</ul>
+            <ul style="list-style:none; padding:0; margin:12px 0 0;">${items || '<li style="padding:8px 0;">No items</li>'}</ul>
           </details>
         </li>`);
     });
