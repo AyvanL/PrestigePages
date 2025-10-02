@@ -57,6 +57,36 @@
     </div>
   </div>
 
+  <!-- Change Status Modal -->
+  <div id="statusModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h3>Update Order Status</h3>
+      <div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">
+        <label>
+          <div style="margin-bottom:4px;">Delivery Status</div>
+          <select id="statusDelivery">
+            <option value="pending">Pending</option>
+            <option value="processing">Processing</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+          </select>
+        </label>
+        <label>
+          <div style="margin-bottom:4px;">Payment Status</div>
+          <select id="statusPayment">
+            <option value="initiated">Initiated</option>
+            <option value="paid">Paid</option>
+            <option value="failed">Failed</option>
+          </select>
+        </label>
+      </div>
+      <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
+        <button type="button" id="statusCancelBtn">Cancel</button>
+        <button type="button" id="statusSaveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script type="module" src="js/admin-orders.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>

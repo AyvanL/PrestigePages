@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
 // Initialize Firebase
@@ -15,6 +15,17 @@ function formatDate(ts) {
     return String(ts);
   } catch { return ''; }
 }
+
+// Modal refs
+let modalCtx = { uid: null, txid: null };
+const statusModal = document.getElementById('statusModal');
+const statusDeliverySel = document.getElementById('statusDelivery');
+const statusPaymentSel = document.getElementById('statusPayment');
+const statusCancelBtn = document.getElementById('statusCancelBtn');
+const statusSaveBtn = document.getElementById('statusSaveBtn');
+
+statusCancelBtn?.addEventListener('click', () => { if (statusModal) statusModal.style.display = 'none'; });
+window.addEventListener('click', (e) => { if (e.target === statusModal) statusModal.style.display = 'none'; });
 
 // Load all users' transactions
 async function loadOrders() {
@@ -46,15 +57,8 @@ async function loadOrders() {
           <td style="text-transform:capitalize;">${payStatus}</td>
           <td class="status-text" style="color:#111; font-weight:400;">${delivDisplay}</td>
           <td>
-            <button class="change-status" data-uid="${uid}" data-txid="${txId}">Change</button>
-            <div class="status-panel" style="max-height:0; overflow:hidden; transition:max-height .25s ease; margin-top:6px; background:#fff; border:1px solid #e5e7eb; border-radius:10px; box-shadow:0 8px 20px rgba(0,0,0,.08);">
-              <div class="status-options" style="display:flex; flex-direction:column; gap:6px; padding:8px;">
-                <button class="status-option" data-value="Pending" style="background:#fff; color:#111; font-weight:400; border:1px solid #e5e7eb; border-radius:8px; padding:8px 10px; text-align:left; cursor:pointer;">Pending</button>
-                <button class="status-option" data-value="Processing" style="background:#fff; color:#111; font-weight:400; border:1px solid #e5e7eb; border-radius:8px; padding:8px 10px; text-align:left; cursor:pointer;">Processing</button>
-                <button class="status-option" data-value="Shipped" style="background:#fff; color:#111; font-weight:400; border:1px solid #e5e7eb; border-radius:8px; padding:8px 10px; text-align:left; cursor:pointer;">Shipped</button>
-                <button class="status-option" data-value="Delivered" style="background:#fff; color:#111; font-weight:400; border:1px solid #e5e7eb; border-radius:8px; padding:8px 10px; text-align:left; cursor:pointer;">Delivered</button>
-              </div>
-            </div>
+            <button class="open-status" data-uid="${uid}" data-txid="${txId}">Change</button>
+            <button class="delete-order" data-uid="${uid}" data-txid="${txId}">Delete</button>
             <button class="view-btn" data-uid="${uid}" data-txid="${txId}">View</button>
           </td>
         `;
@@ -71,42 +75,37 @@ async function loadOrders() {
     }
     rows.forEach(r => orderList.appendChild(r.tr));
 
-    // Events for Change and option click (slide down panel)
+    // Events for open status modal and delete
     orderList.addEventListener('click', async (e) => {
-      // Toggle panel
-      const changeBtn = e.target.closest('.change-status');
-      if (changeBtn) {
-        const td = changeBtn.parentElement;
-        const panel = td.querySelector('.status-panel');
-        if (!panel) return;
-        const isOpen = panel.style.maxHeight && panel.style.maxHeight !== '0px';
-        if (isOpen) {
-          panel.style.maxHeight = '0px';
-        } else {
-          // close other open panels in this row to avoid stacking heights (optional)
-          panel.style.maxHeight = panel.scrollHeight + 'px';
-        }
+      const openBtn = e.target.closest('.open-status');
+      if (openBtn) {
+        const uid = openBtn.getAttribute('data-uid');
+        const txid = openBtn.getAttribute('data-txid');
+        // Pre-fill current values from row
+        const tr = openBtn.closest('tr');
+        const delivText = tr.querySelector('.status-text')?.textContent?.trim().toLowerCase() || 'pending';
+        const payText = tr.children[4]?.textContent?.trim().toLowerCase() || 'initiated';
+        if (statusDeliverySel) statusDeliverySel.value = delivText;
+        if (statusPaymentSel) statusPaymentSel.value = payText;
+        modalCtx = { uid, txid };
+        if (statusModal) statusModal.style.display = 'block';
         return;
       }
 
-      // Click on option
-      const opt = e.target.closest('.status-option');
-      if (opt) {
-        const newVal = opt.getAttribute('data-value');
-        const tr = opt.closest('tr');
-        const statusCell = tr.querySelector('.status-text');
-        const uid = tr.querySelector('.change-status')?.getAttribute('data-uid');
-        const txid = tr.querySelector('.change-status')?.getAttribute('data-txid');
-        const panel = tr.querySelector('.status-panel');
-        if (!uid || !txid || !statusCell) return;
+      const delBtn = e.target.closest('.delete-order');
+      if (delBtn) {
+        const uid = delBtn.getAttribute('data-uid');
+        const txid = delBtn.getAttribute('data-txid');
+        if (!uid || !txid) return;
+        const ok = confirm('Delete this order? This cannot be undone.');
+        if (!ok) return;
         try {
-          await updateDoc(doc(db, 'users', uid, 'transactions', txid), { delivstatus: newVal });
-          statusCell.textContent = newVal;
+          await deleteDoc(doc(db, 'users', uid, 'transactions', txid));
+          // Remove row from UI
+          delBtn.closest('tr')?.remove();
         } catch (err) {
-          console.error('Failed to update delivery status', err);
-          alert('Failed to update delivery status');
-        } finally {
-          if (panel) panel.style.maxHeight = '0px';
+          console.error('Failed to delete order', err);
+          alert('Failed to delete order');
         }
       }
     });
@@ -153,3 +152,30 @@ document.getElementById('order-list').addEventListener('click', (e) => {
 
 // Load on page
 loadOrders();
+
+// Save status changes
+statusSaveBtn?.addEventListener('click', async () => {
+  const { uid, txid } = modalCtx;
+  if (!uid || !txid) { statusModal.style.display = 'none'; return; }
+  const deliv = statusDeliverySel?.value || 'pending';
+  const pay = statusPaymentSel?.value || 'initiated';
+  try {
+    await updateDoc(doc(db, 'users', uid, 'transactions', txid), {
+      delivstatus: deliv,
+      status: pay,
+    });
+    // Update the row inline without full reload
+    const row = document.querySelector(`button.open-status[data-uid='${uid}'][data-txid='${txid}']`)?.closest('tr');
+    if (row) {
+      row.querySelector('.status-text').textContent = deliv.charAt(0).toUpperCase() + deliv.slice(1);
+      // Payment status is in 5th cell (0-based: 4)
+      const payCell = row.children[4];
+      if (payCell) payCell.textContent = pay;
+    }
+  } catch (err) {
+    console.error('Failed to update status', err);
+    alert('Failed to update status');
+  } finally {
+    if (statusModal) statusModal.style.display = 'none';
+  }
+});
