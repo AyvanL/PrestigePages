@@ -34,7 +34,7 @@
       animation: fadeIn 0.8s ease forwards;
     }
 
-    .hero {
+    main {
       opacity: 0;
       animation: fadeIn 1s ease 0.2s forwards;
     }
@@ -260,49 +260,24 @@
     </div>
   </div>
 
+  
+
 
   <!-- Edit Profile Modal -->
 <div id="editProfileModal" class="modal">
   <div class="modal-content">
-    <h2>Edit Profile <span class="close-btn" id="closeEdit">&times;</span></h2>
+    <h2>Edit Profile <span class="close-btn" id="closeEdit">&times;</span> </h2>
 
     <form id="editProfileForm">
-      <div class="form-group">
-        <label for="editFirstName">First Name</label>
-        <input type="text" id="editFirstName" required />
-      </div>
-      <div class="form-group">
-        <label for="editLastName">Last Name</label>
-        <input type="text" id="editLastName" required />
-      </div>
-      <div class="form-group">
-        <label for="editMobile">Mobile</label>
-        <input type="text" id="editMobile" />
-      </div>
-      <div class="form-group">
-        <label for="editHouseNo">House No</label>
-        <input type="text" id="editHouseNo" />
-      </div>
-      <div class="form-group">
-        <label for="editStreet">Street Address</label>
-        <input type="text" id="editStreet" />
-      </div>
-      <div class="form-group">
-        <label for="editBaranggay">Baranggay</label>
-        <input type="text" id="editBaranggay" />
-      </div>
-      <div class="form-group">
-        <label for="editCity">City</label>
-        <input type="text" id="editCity" />
-      </div>
-      <div class="form-group">
-        <label for="editProvince">Province</label>
-        <input type="text" id="editProvince" />
-      </div>
-      <div class="form-group">
-        <label for="editPostal">Postal Code</label>
-        <input type="text" id="editPostal" />
-      </div>
+      <label>First Name</label> <input type="text" id="editFirstName" required />
+      <label>Last Name</label> <input type="text" id="editLastName" required />
+      <label>Mobile</label> <input type="text" id="editMobile" />
+      <label>House No</label> <input type="text" id="editHouseNo" />
+      <label>Street Address</label> <input type="text" id="editStreet" />
+      <label>Baranggay</label> <input type="text" id="editBaranggay" />
+      <label>City</label> <input type="text" id="editCity" />
+      <label>Province</label> <input type="text" id="editProvince" />
+      <label>Postal Code</label> <input type="text" id="editPostal" />
 
       <button type="submit" class="btn">Save Changes</button>
     </form>

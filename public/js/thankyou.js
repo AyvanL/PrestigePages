@@ -37,6 +37,7 @@ async function markTransactionPaid(user, txId) {
   await updateDoc(userRef, {
     lastTransactionId: txId,
     lastTransactionAt: serverTimestamp(),
+    cart: [],
   });
 }
 

@@ -58,6 +58,12 @@ document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
   const password = document.getElementById("password")?.value || "";
 
   try {
+    // Admin shortcut (username/password based)
+    if (email === "admin" && password === "admin") {
+      window.location.href = "admin-orders.html";
+      return;
+    }
+
     // Persist session across refresh & new tabs
     await setPersistence(auth, browserLocalPersistence);
 

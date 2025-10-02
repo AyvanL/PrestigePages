@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Transactions - Admin</title>
+  <link rel="stylesheet" href="css/admin-transaction-management.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="dashboard-layout">
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <a href="index.html" class="brand">Prestige Pages</a>
+      <a href="admin-orders.html">Orders</a>
+      <a href="admin-prod-management.html">Inventory</a>
+      <a href="admin-customer.html">Customers</a>
+      <a href="admin-transaction-management.html" class="active">Transactions</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <h2>Transaction Management</h2>
+      <h3>All Transactions</h3>
+
+      <!-- Search bar -->
+      <input type="text" id="searchTransaction" placeholder="Search transactions...">
+
+      <!-- Transactions Table -->
+      <section class="transaction-list">
+        <table id="transactionTable">
+          <thead>
+            <tr>
+              <th>Transaction ID</th>
+              <th>Customer</th>
+              <th>Order ID</th>
+              <th>Amount</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Sample Rows -->
+            <tr>
+              <td>TXN001</td>
+              <td>Juan Dela Cruz</td>
+              <td>ORD123</td>
+              <td>₱1,200</td>
+              <td>2025-10-01</td>
+              <td><span class="status success">Completed</span></td>
+              <td><button class="view-btn">View</button></td>
+            </tr>
+            <tr>
+              <td>TXN002</td>
+              <td>Maria Santos</td>
+              <td>ORD124</td>
+              <td>₱850</td>
+              <td>2025-10-01</td>
+              <td><span class="status pending">Pending</span></td>
+              <td><button class="view-btn">View</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div id="transactionModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Transaction Details</h2>
+      <p><b>ID:</b> <span id="modalTxnId"></span></p>
+      <p><b>Customer:</b> <span id="modalCustomer"></span></p>
+      <p><b>Order ID:</b> <span id="modalOrder"></span></p>
+      <p><b>Amount:</b> <span id="modalAmount"></span></p>
+      <p><b>Date:</b> <span id="modalDate"></span></p>
+      <p><b>Status:</b> <span id="modalStatus"></span></p>
+    </div>
+  </div>
+
+  <!-- External JS -->
+  <script src="js/admin-transaction-management.js"></script>
+</body>
+</html>

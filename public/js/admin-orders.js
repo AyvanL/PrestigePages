@@ -1,146 +1,146 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import {
-    getFirestore,
-    doc,
-    updateDoc,
-    collection,
-    getDocs,
-    getDoc
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Load all orders into the table
+function formatDate(ts) {
+  try {
+    if (!ts) return '';
+    if (typeof ts.toDate === 'function') return ts.toDate().toLocaleString();
+    if (ts.seconds) return new Date(ts.seconds * 1000).toLocaleString();
+    if (typeof ts === 'number') return new Date(ts).toLocaleString();
+    return String(ts);
+  } catch { return ''; }
+}
+
+// Load all users' transactions
 async function loadOrders() {
-  const orderList = document.getElementById("order-list");
-  orderList.innerHTML = ""; // Clear existing rows
-
+  const orderList = document.getElementById('order-list');
+  orderList.innerHTML = '';
   try {
-    const querySnapshot = await getDocs(collection(db, "orders"));
-    querySnapshot.forEach((doc) => {
-      const order = doc.data();
-      const orderId = doc.id;
+    const usersSnap = await getDocs(collection(db, 'users'));
+    const rows = [];
+    for (const userDoc of usersSnap.docs) {
+      const uid = userDoc.id;
+      const udata = userDoc.data() || {};
+      const name = `${(udata.firstName||'').trim()} ${(udata.lastName||'').trim()}`.trim() || udata.email || uid;
+      const txSnap = await getDocs(collection(db, 'users', uid, 'transactions'));
+      txSnap.forEach((txDoc) => {
+        const tx = txDoc.data() || {};
+        const txId = txDoc.id;
+        const deliv = tx.delivstatus || 'pending';
+        const createdAt = formatDate(tx.createdAt);
 
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${order.orderId}</td>
-        <td>${order.customerName}</td>
-        <td>${order.orderDate}</td>
-        <td class="status ${order.status}">${order.status}</td>
-        <td>
-          <button onclick="viewOrderDetails('${orderId}')">View</button>
-          <button onclick="updateOrderStatus('${orderId}')">Update Status</button>
-          <button onclick="printInvoice('${orderId}')">Print Invoice</button>
-          <button onclick="manageReturn('${orderId}')">Manage Return/Refund</button>
-        </td>
-      `;
-      orderList.appendChild(row);
+        const tr = document.createElement('tr');
+        const delivDisplay = (deliv && deliv[0]) ? deliv[0].toUpperCase() + deliv.slice(1).toLowerCase() : 'Pending';
+        tr.innerHTML = `
+          <td>${txId}</td>
+          <td>${name}</td>
+          <td>${createdAt}</td>
+          <td class="status-text" style="color:#111; font-weight:400;">${delivDisplay}</td>
+          <td>
+            <button class="change-status" data-uid="${uid}" data-txid="${txId}">Change</button>
+            <div class="status-panel" style="max-height:0; overflow:hidden; transition:max-height .25s ease; margin-top:6px; background:#fff; border:1px solid #e5e7eb; border-radius:10px; box-shadow:0 8px 20px rgba(0,0,0,.08);">
+              <div class="status-options" style="display:flex; flex-direction:column; gap:6px; padding:8px;">
+                <button class="status-option" data-value="Pending" style="background:#fff; color:#111; font-weight:400; border:1px solid #e5e7eb; border-radius:8px; padding:8px 10px; text-align:left; cursor:pointer;">Pending</button>
+                <button class="status-option" data-value="Processing" style="background:#fff; color:#111; font-weight:400; border:1px solid #e5e7eb; border-radius:8px; padding:8px 10px; text-align:left; cursor:pointer;">Processing</button>
+                <button class="status-option" data-value="Shipped" style="background:#fff; color:#111; font-weight:400; border:1px solid #e5e7eb; border-radius:8px; padding:8px 10px; text-align:left; cursor:pointer;">Shipped</button>
+                <button class="status-option" data-value="Delivered" style="background:#fff; color:#111; font-weight:400; border:1px solid #e5e7eb; border-radius:8px; padding:8px 10px; text-align:left; cursor:pointer;">Delivered</button>
+              </div>
+            </div>
+            <button class="view-btn" data-uid="${uid}" data-txid="${txId}">View</button>
+          </td>
+        `;
+        rows.push({ tr, createdAtVal: createdAt });
+      });
+    }
+
+    // Sort by date desc
+    rows.sort((a,b) => new Date(b.createdAtVal).getTime() - new Date(a.createdAtVal).getTime());
+    rows.forEach(r => orderList.appendChild(r.tr));
+
+    // Events for Change and option click (slide down panel)
+    orderList.addEventListener('click', async (e) => {
+      // Toggle panel
+      const changeBtn = e.target.closest('.change-status');
+      if (changeBtn) {
+        const td = changeBtn.parentElement;
+        const panel = td.querySelector('.status-panel');
+        if (!panel) return;
+        const isOpen = panel.style.maxHeight && panel.style.maxHeight !== '0px';
+        if (isOpen) {
+          panel.style.maxHeight = '0px';
+        } else {
+          // close other open panels in this row to avoid stacking heights (optional)
+          panel.style.maxHeight = panel.scrollHeight + 'px';
+        }
+        return;
+      }
+
+      // Click on option
+      const opt = e.target.closest('.status-option');
+      if (opt) {
+        const newVal = opt.getAttribute('data-value');
+        const tr = opt.closest('tr');
+        const statusCell = tr.querySelector('.status-text');
+        const uid = tr.querySelector('.change-status')?.getAttribute('data-uid');
+        const txid = tr.querySelector('.change-status')?.getAttribute('data-txid');
+        const panel = tr.querySelector('.status-panel');
+        if (!uid || !txid || !statusCell) return;
+        try {
+          await updateDoc(doc(db, 'users', uid, 'transactions', txid), { delivstatus: newVal });
+          statusCell.textContent = newVal;
+        } catch (err) {
+          console.error('Failed to update delivery status', err);
+          alert('Failed to update delivery status');
+        } finally {
+          if (panel) panel.style.maxHeight = '0px';
+        }
+      }
     });
-  } catch (error) {
-    console.error("Error loading orders: ", error);
-    alert("Failed to load orders.");
+  } catch (err) {
+    console.error('Error loading orders', err);
+    alert('Failed to load orders');
   }
 }
 
-// View Order Details in modal
-async function viewOrderDetails(orderId) {
-  const orderDetailsContent = document.getElementById("orderDetailsContent");
-
+// View Order Details (fetch the transaction)
+async function viewOrderDetails(uid, txid) {
   try {
-    const orderDoc = await getDoc(doc(db, "orders", orderId));
-    const order = orderDoc.data();
-
+    const txDoc = await getDoc(doc(db, 'users', uid, 'transactions', txid));
+    const tx = txDoc.data() || {};
+    const orderDetailsContent = document.getElementById('orderDetailsContent');
+    const itemsHtml = (tx.items || []).map(it => `<li>${it.title || it.name || 'Item'} x${it.qty || it.quantity || 1} - ₱${Number(it.price || 0).toFixed(2)}</li>`).join('');
     orderDetailsContent.innerHTML = `
-      <p><strong>Customer:</strong> ${order.customerName}</p>
-      <p><strong>Order Date:</strong> ${order.orderDate}</p>
-      <p><strong>Status:</strong> ${order.status}</p>
-      <p><strong>Items:</strong> ${order.items.join(", ")}</p>
-      <p><strong>Total Amount:</strong> ₱${order.totalAmount}</p>
+      <p><strong>Total:</strong> ₱${Number(tx.total || 0).toFixed(2)}</p>
+      <p><strong>Payment:</strong> ${tx.status || 'unknown'}</p>
+      <p><strong>Delivery:</strong> ${tx.delivstatus || ''}</p>
+      <p><strong>Created:</strong> ${formatDate(tx.createdAt)}</p>
+      <ul>${itemsHtml}</ul>
     `;
-    // Show the modal
-    document.getElementById("orderDetailsModal").style.display = "block";
+    document.getElementById('orderDetailsModal').style.display = 'block';
   } catch (error) {
-    console.error("Error fetching order details: ", error);
-    alert("Failed to load order details.");
+    console.error('Error fetching order details: ', error);
+    alert('Failed to load order details.');
   }
 }
 
-// Close the order details modal
-document.getElementById("closeModalBtn").addEventListener("click", () => {
-  document.getElementById("orderDetailsModal").style.display = "none";
+// Close modal
+document.getElementById('closeModalBtn').addEventListener('click', () => {
+  document.getElementById('orderDetailsModal').style.display = 'none';
 });
 
-// Update order status (Pending, Processing, Shipped, Delivered, Cancelled)
-async function updateOrderStatus(orderId) {
-  const newStatus = prompt("Enter new status (e.g., Pending, Processing, Shipped, Delivered, Cancelled):");
+// Delegate view button clicks
+document.getElementById('order-list').addEventListener('click', (e) => {
+  const btn = e.target.closest('.view-btn');
+  if (!btn) return;
+  const uid = btn.getAttribute('data-uid');
+  const txid = btn.getAttribute('data-txid');
+  viewOrderDetails(uid, txid);
+});
 
-  if (newStatus) {
-    try {
-      const orderDocRef = doc(db, "orders", orderId);
-      await updateDoc(orderDocRef, {
-        status: newStatus
-      });
-      alert("Order status updated successfully!");
-      loadOrders(); // Reload the orders after updating
-    } catch (error) {
-      console.error("Error updating order status: ", error);
-      alert("Failed to update order status.");
-    }
-  } else {
-    alert("Invalid status. Please try again.");
-  }
-}
-
-// Print the invoice or packing slip for the order
-async function printInvoice(orderId) {
-  try {
-    const orderDoc = await getDoc(doc(db, "orders", orderId));
-    const order = orderDoc.data();
-
-    const invoiceContent = `
-      <h2>Invoice for Order ${order.orderId}</h2>
-      <p><strong>Customer:</strong> ${order.customerName}</p>
-      <p><strong>Order Date:</strong> ${order.orderDate}</p>
-      <p><strong>Status:</strong> ${order.status}</p>
-      <p><strong>Items:</strong> ${order.items.join(", ")}</p>
-      <p><strong>Total Amount:</strong> ₱${order.totalAmount}</p>
-    `;
-
-    const printWindow = window.open('', '', 'height=500,width=800');
-    printWindow.document.write('<html><head><title>Invoice</title></head><body>');
-    printWindow.document.write(invoiceContent);
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.print();
-  } catch (error) {
-    console.error("Error printing invoice: ", error);
-    alert("Failed to print invoice.");
-  }
-}
-
-// Manage order returns and refunds
-async function manageReturn(orderId) {
-  const action = prompt("Enter action (e.g., 'Return', 'Refund'):");
-
-  if (action) {
-    try {
-      const orderDocRef = doc(db, "orders", orderId);
-      await updateDoc(orderDocRef, {
-        returnRefundStatus: action
-      });
-      alert("Return/Refund action updated successfully!");
-      loadOrders(); // Reload the orders after managing return/refund
-    } catch (error) {
-      console.error("Error managing return/refund: ", error);
-      alert("Failed to manage return/refund.");
-    }
-  } else {
-    alert("Invalid action. Please try again.");
-  }
-}
-
-// Load orders on page load
+// Load on page
 loadOrders();

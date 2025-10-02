@@ -12,6 +12,10 @@ import {
   setDoc,
   arrayUnion,
   arrayRemove,
+  collection,
+  getDocs,
+  query,
+  orderBy,
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -24,8 +28,16 @@ const db = getFirestore(app);
 const profileFirstName = document.getElementById("profileFirstName");
 const profileLastName = document.getElementById("profileLastName");
 const profileEmail = document.getElementById("profileEmail");
-const profileAddress = document.getElementById("profileAddress");
 const profileMobile = document.getElementById("profileMobile");
+// Address/profile fields present in the modal
+const profileHouseno = document.getElementById("profileHouseno");
+const profileStreet = document.getElementById("profileStreet");
+const profileBaranggay = document.getElementById("profileBaranggay");
+const profileProvince = document.getElementById("profileProvince");
+const profileCity = document.getElementById("profileCity");
+const profilePostal = document.getElementById("profilePostal");
+// Modal container
+const profileModal = document.getElementById("profileModal");
 
 const editProfileBtn = document.getElementById("editProfileBtn");
 const editProfileModal = document.getElementById("editProfileModal");
@@ -34,8 +46,13 @@ const editProfileForm = document.getElementById("editProfileForm");
 
 const editFirstName = document.getElementById("editFirstName");
 const editLastName = document.getElementById("editLastName");
-// optional/unused in this page
 const editMobile = document.getElementById("editMobile");
+const editHouseNo = document.getElementById("editHouseNo");
+const editStreet = document.getElementById("editStreet");
+const editBaranggay = document.getElementById("editBaranggay");
+const editCity = document.getElementById("editCity");
+const editProvince = document.getElementById("editProvince");
+const editPostal = document.getElementById("editPostal");
 const closeProfileBtn = document.getElementById("closeProfile");
 
 // checkout modal elements may not exist here
@@ -63,6 +80,11 @@ const cartModal = document.getElementById("cartModal");
 const closeCart = document.getElementById("closeCart");
 const cartItemsEl = document.getElementById("cartItems");
 const cartTotalEl = document.getElementById("cartTotal");
+// Transactions modal elements
+const transBtn = document.getElementById("transBtn");
+const transModal = document.getElementById("transModal");
+const closeTrans = document.getElementById("closeTrans");
+const transContent = document.getElementById("transContent");
 
 // --- Helper functions for Firestore cart ---
 
@@ -115,18 +137,20 @@ if (profileLink) profileLink.addEventListener("click", async (e) => {
         profileFirstName.textContent = data.firstName || "Not set";
         profileLastName.textContent = data.lastName || "Not set";
         profileEmail.textContent = user.email || "No email";
-  profileHouseno.textContent = data.houseNo || "Not set";
-  profileStreet.textContent = data.street || "Not set";
-  profileProvince.textContent = data.province || "Not set";
-  profileCity.textContent = data.city || "Not set";
-  profilePostal.textContent = data.postal || "Not set";
-  profileMobile.textContent = data.mobile || "Not set";
+        profileHouseno.textContent = data.houseNo || "Not set";
+        profileStreet.textContent = data.street || "Not set";
+        profileBaranggay.textContent = data.baranggay || "Not set";
+        profileProvince.textContent = data.province || "Not set";
+        profileCity.textContent = data.city || "Not set";
+        profilePostal.textContent = data.postal || "Not set";
+        profileMobile.textContent = data.mobile || "Not set";
 
         // Prefill edit form
         editFirstName.value = data.firstName || "";
         editLastName.value = data.lastName || "";
         editHouseNo.value = data.houseNo || "";
         editStreet.value = data.street || "";
+        editBaranggay.value = data.baranggay || "";
         editCity.value = data.city || "";
         editProvince.value = data.province || "";
         editPostal.value = data.postal || "";
@@ -172,6 +196,7 @@ editProfileForm.addEventListener("submit", async (e) => {
       lastName: editLastName.value,
       houseNo: editHouseNo.value,
       street: editStreet.value,
+      baranggay: editBaranggay.value,
       city: editCity.value,
       province: editProvince.value,
       postal: editPostal.value,
@@ -185,6 +210,7 @@ editProfileForm.addEventListener("submit", async (e) => {
     profileLastName.textContent = editLastName.value;
     profileHouseno.textContent = editHouseNo.value;
     profileStreet.textContent = editStreet.value;
+    profileBaranggay.textContent = editBaranggay.value;
     profileCity.textContent = editCity.value;
     profileProvince.textContent = editProvince.value;
     profilePostal.textContent = editPostal.value;
@@ -665,6 +691,99 @@ window.addEventListener("click", (e) => {
   if (e.target === cartModal) {
     cartModal.style.display = "none";
   }
+});
+
+// ---------- Transactions Modal ----------
+async function loadTransactions() {
+  if (!transContent) return;
+  const user = auth.currentUser;
+  if (!user) {
+    transContent.innerHTML = `<p>Please log in to see your transactions.</p>`;
+    return;
+  }
+  transContent.innerHTML = `<p>Loading...</p>`;
+  try {
+    const q = query(collection(db, "users", user.uid, "transactions"), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    if (snap.empty) {
+      transContent.innerHTML = `<p>No transactions yet.</p>`;
+      return;
+    }
+
+    const rows = [];
+    snap.forEach((d) => {
+      const data = d.data();
+      const date = data.createdAt?.toDate ? data.createdAt.toDate() : null;
+      const when = date ? date.toLocaleString() : "";
+      const total = typeof data.total === "number" ? `₱${data.total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}` : "";
+      const paymentStatus = data.status || "initiated"; // payment status (paid/initiated)
+      const deliveryStatus = data.delivstatus || data.deliveryStatus || data.fulfillmentStatus || "pending"; // shipping status
+      const shipFee = typeof data.shippingFee === "number"
+        ? `₱${data.shippingFee.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`
+        : "₱0.00";
+
+      const items = (Array.isArray(data.items) ? data.items : []).map((it) => {
+        const price = typeof it.price === "number" ? `₱${it.price.toLocaleString()}` : "";
+        const qty = it.qty || 1;
+        const cover = it.cover || "";
+        return `
+          <li style="display:flex; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--line)">
+            <img src="${cover}" alt="" style="width:50px; height:70px; object-fit:cover; border-radius:6px; background:#eee;" />
+            <div style="flex:1">
+              <div style="font-weight:700">${it.title || 'Item'}</div>
+              <div style="font-size:12px; color:var(--muted-ink)">${it.author || ''}</div>
+            </div>
+            <div style="white-space:nowrap;">x${qty}</div>
+            <div style="min-width:90px; text-align:right; font-weight:700;">${price}</div>
+          </li>`;
+      }).join("");
+
+      rows.push(`
+        <li style="border-bottom:1px solid var(--line);">
+          <details>
+            <summary style="display:flex; align-items:center; gap:10px; list-style:none; cursor:pointer;">
+              <span class=\"tx-chevron\" aria-hidden=\"true\" style=\"margin-right:6px; display:inline-flex;\">
+                <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"> 
+                  <path d=\"M6 9l6 6 6-6\" stroke=\"#7E6E5B\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>
+                </svg>
+              </span>
+              <div style="flex:1">
+                <div style="font-weight:700">Order #${d.id}</div>
+                <div style="font-size:12px; color:var(--muted-ink)">${when}</div>
+              </div>
+              <div style="min-width:90px; font-weight:700;">${total}</div>
+              <div class=\"pill\" style=\"white-space:nowrap; text-transform:capitalize;\">${deliveryStatus}</div>
+            </summary>
+            <div style="margin-top:10px; font-size:13px; color:var(--muted-ink);">
+              <div style=\"display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:8px;\">
+                <span><strong>Payment:</strong> ${paymentStatus}</span>
+                <span><strong>Delivery:</strong> ${deliveryStatus}</span>
+                <span><strong>Delivery fee:</strong> ${shipFee}</span>
+              </div>
+            </div>
+            <ul style="list-style:none; padding:0; margin:10px 0 0;">${items || '<li style="padding:8px 0;">No items</li>'}</ul>
+          </details>
+        </li>`);
+    });
+
+    transContent.innerHTML = `<ul style="list-style:none; padding:0; margin:0">${rows.join("")}</ul>`;
+  } catch (err) {
+    console.error("Failed to load transactions", err);
+    transContent.innerHTML = `<p>Failed to load transactions.</p>`;
+  }
+}
+
+if (transBtn && transModal) {
+  transBtn.addEventListener("click", async () => {
+    await loadTransactions();
+    transModal.style.display = "flex";
+  });
+}
+if (closeTrans && transModal) {
+  closeTrans.addEventListener("click", () => (transModal.style.display = "none"));
+}
+window.addEventListener("click", (e) => {
+  if (e.target === transModal) transModal.style.display = "none";
 });
 
 // Wishlist modal handlers

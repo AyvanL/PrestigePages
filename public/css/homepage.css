@@ -577,7 +577,7 @@ footer {
 }
 
 /* Modal (reuse your style, but ensure for cart too) */
-#cartModal {
+#cartModal{
   display: none; /* hidden by default */
   position: fixed;
   inset: 0;
@@ -586,6 +586,16 @@ footer {
   align-items: center;
   z-index: 9999;
 }
+
+#wishlistModal{
+  display: none; /* hidden by default */
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+}
+
 #cartModal .modal-content {
   background: #fff;
   padding: 20px;
@@ -596,7 +606,7 @@ footer {
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow);
-
+  
 }
 #cartItems,
 #wishlistItems {
@@ -609,6 +619,7 @@ footer {
   min-height: 100px; /* minimum height to show scrollbar */
   max-height: calc(80vh - 200px); /* leaves room for header/footer */
 }
+
 #cartItems li {
   display: flex;
   align-items: center;
@@ -616,8 +627,6 @@ footer {
   padding: 10px 0;
   border-bottom: 1px solid #f0f0f0;
 }
-
-
 
 /* Cart item style */
 .cart-item {
@@ -707,6 +716,7 @@ footer {
   z-index: 1000;
   inset: 0; /* shorthand for top/right/bottom/left: 0 */
   background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
   padding: 20px;
   overflow-y: auto;
   display: none; /* initial state */
@@ -728,39 +738,92 @@ footer {
   flex-direction: column;
 }
 
-#profile-modal {
-  display: none; /* hidden by default */
+#profileModal.modal {
+  display: none; /* stays hidden until you show it with JS */
   position: fixed;
   z-index: 1000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
-  justify-content: center;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
   align-items: center;
   justify-content: center;
+  font-family: system-ui, sans-serif;
 }
 
-#profile-modal .modal-content {
- width: 400px;
-  max-width: 90%;
+/* Modal box */
+#profileModal .modal-content {
   background: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: var(--shadow);
-  margin: auto; /* centers it */
-  max-height: 90vh; 
-  overflow-y: auto; /* scroll only if content is long */
+  color: #333;
+  width: 92%;
+  max-width: 480px;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  position: relative;
+  animation: profileModalFadeIn 0.3s ease-out;
 }
 
+#profileModal h2 {
+  margin-top: 0;
+  margin-bottom: 0.7rem;
+  font-size: 1.6rem;
+  color: #222;
+}
+
+
+/* Profile info blocks */
+#profileModal .profile-info p {
+  background: #f7f8fa;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.6rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+#profileModal .profile-info p strong {
+  color: #444;
+}
+
+#profileModal .btn {
+  display: block;
+  width: 100%;
+  padding: 0.8rem;
+  margin-top: 1rem;
+  background: #5a4b13;
+  color: #fff;
+  font-weight: 600;
+  text-align: center;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+#profileModal .btn:hover {
+  background: #806a1b;
+}
+
+@keyframes profileModalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 /* Close button */
 .close-btn {
   float: right;
-  font-size: 22px;
   font-weight: bold;
   cursor: pointer;
+  font-size: 2.5rem;
+  margin-top: -15px;;
 }
 
 /* Form styles inside edit modal */
@@ -781,6 +844,19 @@ footer {
   font-size: 14px;
 }
 
+.modal-content h2{
+  margin-top: 0;
+}
+
+.modal-content h2 span {
+  color: black;
+  transition: color 0.3s;
+}
+
+.modal-content h2 span:hover {
+  color: #990505;
+}
+
 .modal-content button {
   padding: 10px;
   background: #5a4b13;
@@ -796,6 +872,18 @@ footer {
 }
 
 /* Smooth fade animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Small animation */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -906,6 +994,18 @@ footer {
 @keyframes fadeInUp {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
+}
+
+/* Transactions modal chevron styles (global) */
+#transModal summary::-webkit-details-marker { display: none; }
+#transModal summary::marker { content: ""; }
+#transModal summary { list-style: none; }
+#transModal details .tx-chevron { transition: transform 0.2s ease; }
+#transModal details[open] .tx-chevron { transform: rotate(180deg); }
+/* Make Transactions modal wider */
+#transModal .modal-content {
+  width: 720px;            /* wider than default 420px */
+  max-width: 95vw;         /* stay responsive on small screens */
 }
 
 

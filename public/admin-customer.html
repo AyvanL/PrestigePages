@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Customers - Admin</title>
+  <link rel="stylesheet" href="css/admin-customer.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <style>
+    /* Modern modal look */
+    .modal { display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(6px); align-items: center; justify-content: center; z-index: 1000; }
+    .modal-content { background: #ffffff; width: min(720px, 94vw); border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,.18); padding: 20px 22px; border: 1px solid #eee; }
+    .modal-content h2 { margin: 0 0 6px; font-size: 20px; display:flex; gap:10px; align-items:center; }
+    .modal-subtitle { margin: 0 0 14px; color: #6b7280; font-size: 13.5px; }
+    .close { cursor: pointer; float: right; font-size: 26px; color: #888; }
+    .close:hover { color: #333; }
+    .edit-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .edit-grid > div label { display:block; font-weight: 600; font-size: 13px; margin-bottom: 6px; color:#374151; }
+    .edit-grid input { width: 100%; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 14px; background: #fff; transition: border-color .2s, box-shadow .2s; }
+    .edit-grid input:focus { outline: none; border-color: #c89b3c; box-shadow: 0 0 0 3px rgba(200,155,60,.18); }
+    .edit-grid input[disabled] { background: #f9fafb; color: #6b7280; cursor: not-allowed; }
+    .modal-actions { display:flex; justify-content:flex-end; gap: 10px; margin-top: 16px; }
+    .btn { appearance:none; border-radius: 999px; padding: 10px 16px; border: 1px solid #e5e7eb; background: #fff; color:#111827; cursor: pointer; font-weight: 600; }
+    .btn:hover { background: #f8f9fb; }
+    .btn-outline { border-color:#c89b3c; color:#7a5b14; }
+    .btn-outline:hover { background: #fff9ec; }
+    .btn-ghost { background: transparent; border-color: transparent; color:#6b7280; }
+    .btn-ghost:hover { background:#f3f4f6; }
+    .btn-primary { background:#c89b3c; border-color:#c89b3c; color:#fff; }
+    .btn-primary[disabled] { opacity:.6; cursor:not-allowed; }
+    .btn-primary:hover { background:#b58a32; border-color:#b58a32; }
+    /* View details grid */
+    .view-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; margin-top: 8px; }
+    .view-item label { display:block; font-weight: 600; font-size: 12.5px; color:#4b5563; margin-bottom: 4px; }
+    .view-value { background:#fafafa; border:1px solid #e5e7eb; border-radius:10px; padding: 8px 10px; font-size:14px; color:#111827; min-height: 38px; display:flex; align-items:center; }
+    @media (max-width: 640px){ .edit-grid{ grid-template-columns: 1fr; } .view-grid{ grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="dashboard-layout">
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <a href="index.html" class="brand">Prestige Pages</a>
+      <a href="admin-orders.html">Orders</a>
+      <a href="admin-prod-management.html">Inventory</a>
+      <a href="admin-customer.html" class="active">Customers</a>
+      <a href="admin-transaction-management.html">Transactions</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <h2>Customer Management</h2>
+      <h3>All Customers</h3>
+
+      <!-- Search -->
+      <input type="text" id="searchInput" placeholder="Search customers...">
+
+      <section class="customer-list">
+        <table id="customerTable">
+          <thead>
+            <tr>
+              <th>Customer ID</th>
+              <th>First Name</th>
+              <th>Last Name</th>
+              <th>Email</th>
+              <th>Mobile Number</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div id="customerModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2><i class="fa-regular fa-id-card"></i> Customer Details</h2>
+      <p class="modal-subtitle">Personal information (read-only)</p>
+      <div class="view-grid">
+        <div class="view-item">
+          <label>Email</label>
+          <div id="vEmail" class="view-value"></div>
+        </div>
+        <div class="view-item">
+          <label>First Name</label>
+          <div id="vFirstName" class="view-value"></div>
+        </div>
+        <div class="view-item">
+          <label>Last Name</label>
+          <div id="vLastName" class="view-value"></div>
+        </div>
+        <div class="view-item">
+          <label>Mobile</label>
+          <div id="vMobile" class="view-value"></div>
+        </div>
+        <div class="view-item">
+          <label>House No</label>
+          <div id="vHouseNo" class="view-value"></div>
+        </div>
+        <div class="view-item">
+          <label>Street</label>
+          <div id="vStreet" class="view-value"></div>
+        </div>
+        <div class="view-item">
+          <label>City</label>
+          <div id="vCity" class="view-value"></div>
+        </div>
+        <div class="view-item">
+          <label>Province</label>
+          <div id="vProvince" class="view-value"></div>
+        </div>
+        <div class="view-item">
+          <label>Postal</label>
+          <div id="vPostal" class="view-value"></div>
+        </div>
+        <div class="view-item" style="grid-column: 1 / -1;">
+          <label>Full Address</label>
+          <div id="vAddress" class="view-value"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary" id="closeViewBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div id="editUserModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closeEditUser">&times;</span>
+  <h2><i class="fa-regular fa-user"></i> Edit Customer</h2>
+      <form id="editUserForm">
+        <div class="edit-grid">
+          <div>
+            <label>First Name</label>
+            <input type="text" id="efirstName" required />
+          </div>
+          <div>
+            <label>Last Name</label>
+            <input type="text" id="elastName" required />
+          </div>
+          <div>
+            <label>Email</label>
+            <input type="email" id="eemail" />
+          </div>
+          <div>
+            <label>Mobile</label>
+            <input type="text" id="emobile" />
+          </div>
+          <div>
+            <label>House No</label>
+            <input type="text" id="ehouseNo" />
+          </div>
+          <div>
+            <label>Street</label>
+            <input type="text" id="estreet" />
+          </div>
+          <div>
+            <label>City</label>
+            <input type="text" id="ecity" />
+          </div>
+          <div>
+            <label>Province</label>
+            <input type="text" id="eprovince" />
+          </div>
+          <div>
+            <label>Postal</label>
+            <input type="text" id="epostal" />
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="cancelEditBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveEditBtn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- External JS (ES module for Firebase ESM imports) -->
+  <script type="module" src="js/admin-customer-management.js"></script>
+</body>
+</html>

@@ -141,6 +141,11 @@
           <!-- ✅ badge -->
         </button>
 
+        <button class="icon-btn" aria-label="Custom" id="transBtn">
+  <img src="images/file.png" alt="" class="icon-img"  width="20px"/>
+  
+</button>
+
         <div class="dropdown">
           <div class="dropdown-trigger">
             <button class="dropbtn" id="welcomeMessage">Loading....</button>
@@ -269,7 +274,7 @@
       </section>
 
     <!-- Popular books -->
-    <section id="popular" class="container popular-section fade-in">
+    <section id="popular" class="container popular-section fade-in" style="padding-top: 5em;">
       <div class="popular-header">
         <h2>Our Popular Books</h2>
 
@@ -337,71 +342,44 @@
   <!-- Profile Modal -->
   <div id="profileModal" class="modal">
     <div class="modal-content">
-      <span id="closeProfile" class="close-btn">&times;</span>
-
-      <h2>Your Profile</h2>
-
-      <p>
-        <strong>First Name:</strong>
-        <span id="profileFirstName">Loading...</span>
-      </p>
-      <p>
-        <strong>Last Name:</strong>
-        <span id="profileLastName">Loading...</span>
-      </p>
-      <p><strong>Email:</strong> <span id="profileEmail">Loading...</span></p>
-      <p><strong>Mobile:</strong> <span id="profileMobile">Not set</span></p>
-      <p>
-        <strong>House No:</strong> <span id="profileHouseno">Not set</span>
-      </p>
-      <p>
-        <strong>Street Address:</strong> <span id="profileStreet">Not set</span>
-      </p>
-      <p>
-        <strong>Province:</strong> <span id="profileProvince">Not set</span>
-      </p>
-      <p>
-        <strong>City:</strong> <span id="profileCity">Not set</span>
-      </p>
-      <p>
-        <strong>Postal Code:</strong> <span id="profilePostal">Not set</span>
-      </p>
       
+      <h2>Your Profile <span id="closeProfile" class="close-btn">&times;</span> </h2>
+
+      <div class="profile-info">
+        <p><strong>First Name:</strong> <span id="profileFirstName">Loading...</span></p>
+        <p><strong>Last Name:</strong> <span id="profileLastName">Loading...</span></p>
+        <p><strong>Email:</strong> <span id="profileEmail">Loading...</span></p>
+        <p><strong>Mobile:</strong> <span id="profileMobile">Not set</span></p>
+        <p><strong>House No:</strong> <span id="profileHouseno">Not set</span></p>
+        <p><strong>Street Address:</strong> <span id="profileStreet">Not set</span></p>
+        <p><strong>Baranggay:</strong> <span id="profileBaranggay">Not set</span></p>
+        <p><strong>City:</strong> <span id="profileCity">Not set</span></p>
+        <p><strong>Province:</strong> <span id="profileProvince">Not set</span></p>
+        <p><strong>Postal Code:</strong> <span id="profilePostal">Not set</span></p>
+      </div>
 
       <button id="editProfileBtn" class="btn">Edit Profile</button>
     </div>
   </div>
 
+  
+
+
   <!-- Edit Profile Modal -->
 <div id="editProfileModal" class="modal">
   <div class="modal-content">
-    <span class="close-btn" id="closeEdit">&times;</span>
-    <h2>Edit Profile</h2>
+    <h2>Edit Profile <span class="close-btn" id="closeEdit">&times;</span> </h2>
 
     <form id="editProfileForm">
-      <label>First Name</label>
-      <input type="text" id="editFirstName" required />
-
-      <label>Last Name</label>
-      <input type="text" id="editLastName" required />
-
-      <label>Mobile</label>
-      <input type="text" id="editMobile" />
-
-      <label>House No</label>
-      <input type="text" id="editHouseNo" />
-
-      <label>Street Address</label>
-      <input type="text" id="editStreet" />
-
-      <label>City</label>
-      <input type="text" id="editCity" />
-
-      <label>Province</label>
-      <input type="text" id="editProvince" />
-
-      <label>Postal Code</label>
-      <input type="text" id="editPostal" />
+      <label>First Name</label> <input type="text" id="editFirstName" required />
+      <label>Last Name</label> <input type="text" id="editLastName" required />
+      <label>Mobile</label> <input type="text" id="editMobile" />
+      <label>House No</label> <input type="text" id="editHouseNo" />
+      <label>Street Address</label> <input type="text" id="editStreet" />
+      <label>Baranggay</label> <input type="text" id="editBaranggay" />
+      <label>City</label> <input type="text" id="editCity" />
+      <label>Province</label> <input type="text" id="editProvince" />
+      <label>Postal Code</label> <input type="text" id="editPostal" />
 
       <button type="submit" class="btn">Save Changes</button>
     </form>
@@ -412,8 +390,7 @@
   <!-- Wishlist Modal -->
   <div id="wishlistModal" class="modal">
     <div class="modal-content">
-      <span id="closeWishlist" class="close-btn">&times;</span>
-      <h2>Your Wishlist ❤️</h2>
+      <h2>Your Wishlist ❤️ <span id="closeWishlist" class="close-btn">&times;</span></h2>
       <div id="wishlistItems"></div>
     </div>
   </div>
@@ -421,8 +398,8 @@
   <!-- Cart Modal -->
   <div id="cartModal" class="modal">
     <div class="modal-content">
-      <span id="closeCart" class="close-btn">&times;</span>
-      <h2>Your Cart 🛒</h2>
+      
+      <h2>Your Cart 🛒 <span id="closeCart" class="close-btn">&times;</span></h2>
 
       <!-- Scrollable container -->
       <div class="cart-items-wrapper">
@@ -434,6 +411,16 @@
       <button onclick="window.location.href='checkout.html'" class="checkout">Proceed to Checkout</button>
 
 
+    </div>
+  </div>
+
+  <!-- Transactions Modal -->
+  <div id="transModal" class="modal">
+    <div class="modal-content">
+      <h2>Your Transactions <span id="closeTrans" class="close-btn">&times;</span></h2>
+      <div id="transContent">
+        <p>Loading...</p>
+      </div>
     </div>
   </div>
   <script type="module" src="js/homepage.js"></script>

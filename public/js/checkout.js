@@ -275,6 +275,7 @@ async function onSubmitCheckout(e) {
       userId: user.uid,
       items, subtotal, shippingFee, total, shipping,
       deliveryMethod, paymentMethod, status: "initiated",
+      delivstatus: "pending",
       createdAt: serverTimestamp(),
     };
     txRef = await addDoc(collection(db, "users", user.uid, "transactions"), order);
