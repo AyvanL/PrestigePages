@@ -66,8 +66,8 @@ function ensureDeliveryOptions() {
   if (sel.options.length > 0) return;
   sel.innerHTML = `
     <option value="" disabled selected>Select delivery</option>
-    <option value="normal">Normal Delivery (+₱49)</option>
-    <option value="express">Express Delivery (+₱100)</option>
+    <option value="normal">Normal Delivery ₱49</option>
+    <option value="express">Express Delivery ₱100</option>
   `;
 }
 

@@ -946,6 +946,59 @@ if (transContent) {
   });
 }
 
+// Ensure jsPDF is available (UMD)
+function loadJsPDF() {
+  return new Promise((resolve, reject) => {
+    if (window.jspdf?.jsPDF) return resolve(window.jspdf.jsPDF);
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
+    s.onload = () => resolve(window.jspdf?.jsPDF);
+    s.onerror = () => reject(new Error('Failed to load jsPDF'));
+    document.head.appendChild(s);
+  });
+}
+
+// Load Unicode-capable fonts so the peso sign (₱) renders correctly
+async function ensurePdfFonts(docPdf) {
+  try {
+    const fontList = (docPdf.getFontList && docPdf.getFontList()) || {};
+    if (fontList.NotoSans || fontList.Roboto) return; // already added
+
+    const fetchBase64 = async (url) => {
+      const res = await fetch(url, { mode: 'cors' });
+      if (!res.ok) throw new Error('Font fetch failed: ' + url);
+      const buf = await res.arrayBuffer();
+      let binary = '';
+      const bytes = new Uint8Array(buf);
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      return btoa(binary);
+    };
+
+    // Try Noto Sans first (broad Unicode coverage)
+    try {
+      const notoReg = await fetchBase64('https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts/hinted/ttf/NotoSans/NotoSans-Regular.ttf');
+      const notoBold = await fetchBase64('https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts/hinted/ttf/NotoSans/NotoSans-Bold.ttf');
+      docPdf.addFileToVFS('NotoSans-Regular.ttf', notoReg);
+      docPdf.addFileToVFS('NotoSans-Bold.ttf', notoBold);
+      docPdf.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+      docPdf.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold');
+      return;
+    } catch (e) {
+      // Fall back to Roboto if Noto Sans isn't reachable
+    }
+
+    // Fallback: pdfmake-hosted Roboto fonts (CORS enabled)
+    const regularB64 = await fetchBase64('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto-Regular.ttf');
+    const boldB64 = await fetchBase64('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto-Medium.ttf');
+    docPdf.addFileToVFS('Roboto-Regular.ttf', regularB64);
+    docPdf.addFileToVFS('Roboto-Bold.ttf', boldB64);
+    docPdf.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+    docPdf.addFont('Roboto-Bold.ttf', 'Roboto', 'bold');
+  } catch (e) {
+    console.warn('Falling back to standard font; peso sign may not render:', e);
+  }
+}
+
 async function printReceipt(uid, txid) {
   const txRef = doc(db, 'users', uid, 'transactions', txid);
   const snap = await getDoc(txRef);
@@ -961,58 +1014,111 @@ async function printReceipt(uid, txid) {
   const payMethod = tx.paymentMethod || '';
   const payStatus = tx.status || '';
 
-  const lines = items.map(i => `
-    <tr>
-      <td>${i.title || 'Item'}</td>
-      <td style="text-align:center;">${i.qty || 1}</td>
-      <td style="text-align:right;">₱${Number(i.price||0).toLocaleString()}</td>
-    </tr>`).join('');
+  const jsPDF = await loadJsPDF();
+  if (!jsPDF) throw new Error('jsPDF unavailable');
+  const docPdf = new jsPDF({ unit: 'mm', format: 'a4' });
+  await ensurePdfFonts(docPdf);
 
-  const html = `<!doctype html><html><head><meta charset="utf-8">
-    <title>Receipt ${txid}</title>
-    <style>
-      body{font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; padding:24px; color:#111}
-      h1{font-size:18px; margin:0 0 8px}
-      h2{font-size:14px; margin:16px 0 8px}
-      table{width:100%; border-collapse:collapse}
-      th,td{padding:6px 0; border-bottom:1px solid #eee}
-      .row{display:flex; gap:16px; flex-wrap:wrap}
-      .muted{color:#666}
-    </style>
-  </head><body>
-    <h1>PrestigePages Receipt</h1>
-    <div class="muted">Order #${txid} • ${whenStr}</div>
-    <h2>Items</h2>
-    <table>
-      <thead><tr><th style="text-align:left;">Title</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Price</th></tr></thead>
-      <tbody>${lines || '<tr><td colspan="3">No items</td></tr>'}</tbody>
-      <tfoot>
-        <tr><td></td><td style="text-align:right;" class="muted">Subtotal</td><td style="text-align:right;">₱${Number(sub).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td></tr>
-        <tr><td></td><td style="text-align:right;" class="muted">Shipping</td><td style="text-align:right;">₱${Number(fee).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td></tr>
-        <tr><td></td><td style="text-align:right;"><strong>Total</strong></td><td style="text-align:right;"><strong>₱${Number(total).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</strong></td></tr>
-      </tfoot>
-    </table>
-    <h2>Payment</h2>
-    <div>Method: ${payMethod || '—'}</div>
-    <div>Status: ${payStatus || '—'}</div>
-    <h2>Shipping</h2>
-    <div class="row muted">
-      <div>${ship.name || ''}</div>
-      <div>${ship.email || ''}</div>
-      <div>${ship.phone || ''}</div>
-    </div>
-    <div class="row muted">
-      <div>${ship.unit || ''} ${ship.street || ''}</div>
-      <div>${ship.city || ''}, ${ship.province || ''} ${ship.postal || ''}</div>
-    </div>
-    <script>window.addEventListener('load',()=>{window.print(); setTimeout(()=>window.close(), 300);});</script>
-  </body></html>`;
+  // Helpers
+  const peso = (n, opts = {}) => {
+    const num = Number(n || 0);
+    const { min = 2, max = 2 } = opts;
+    // Use Philippine locale; prefix with Unicode peso explicitly
+    return "\u20B1" + num.toLocaleString('en-PH', {
+      minimumFractionDigits: min,
+      maximumFractionDigits: max,
+    });
+  };
 
-  const w = window.open('', '_blank', 'width=720,height=900');
-  if (!w) throw new Error('Pop-up blocked');
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
+  // Header
+  docPdf.setFont((docPdf.getFontList().NotoSans ? 'NotoSans' : 'Roboto'), 'bold');
+  docPdf.setFontSize(20);
+  docPdf.text('Prestige Pages', 105, 18, { align: 'center' });
+  docPdf.setFont((docPdf.getFontList().NotoSans ? 'NotoSans' : 'Roboto'), 'normal');
+  docPdf.setFontSize(11);
+  docPdf.text(`Order #${txid}`, 14, 28);
+  docPdf.text(`Date: ${whenStr}`, 14, 34);
+
+  // Items header
+  let y = 44;
+  const pageW = docPdf.internal.pageSize.getWidth();
+  const rightX = pageW - 14;
+  docPdf.setFont((docPdf.getFontList().NotoSans ? 'NotoSans' : 'Roboto'), 'bold');
+  docPdf.text('Items', 14, y);
+  y += 6;
+  docPdf.setLineWidth(0.2);
+  docPdf.line(14, y, rightX, y);
+  y += 6;
+  docPdf.setFont((docPdf.getFontList().NotoSans ? 'NotoSans' : 'Roboto'), 'bold');
+  docPdf.text('Title', 14, y);
+  docPdf.text('Qty', 150, y, { align: 'right' });
+  docPdf.text('Price', rightX, y, { align: 'right' });
+  y += 4;
+  docPdf.setFont((docPdf.getFontList().NotoSans ? 'NotoSans' : 'Roboto'), 'normal');
+
+  const addLine = () => { y += 6; if (y > 280) { docPdf.addPage(); y = 20; } };
+
+  if (items.length === 0) {
+    docPdf.text('No items', 14, y); y += 6;
+  } else {
+    for (const it of items) {
+      const title = it.title || 'Item';
+      const qty = String(it.qty || 1);
+  const price = "\u20B1" + Number(it.price||0).toLocaleString('en-PH');
+      const titleLines = docPdf.splitTextToSize(title, 120);
+      for (let i = 0; i < titleLines.length; i++) {
+        docPdf.text(titleLines[i], 14, y);
+        if (i === 0) {
+          docPdf.text(qty, 150, y, { align: 'right' });
+          docPdf.text(price, rightX, y, { align: 'right' });
+        }
+        addLine();
+      }
+    }
+  }
+
+  // Totals
+  y += 2; if (y > 280) { docPdf.addPage(); y = 20; }
+  docPdf.setLineWidth(0.2); docPdf.line(14, y, rightX, y); y += 6;
+  docPdf.text('Subtotal:', 150, y, { align: 'right' });
+  docPdf.text(peso(sub), rightX, y, { align: 'right' });
+  y += 6;
+  docPdf.text('Shipping:', 150, y, { align: 'right' });
+  docPdf.text(peso(fee), rightX, y, { align: 'right' });
+  y += 6;
+  docPdf.setFont((docPdf.getFontList().NotoSans ? 'NotoSans' : 'Roboto'), 'bold');
+  docPdf.text('Total:', 150, y, { align: 'right' });
+  docPdf.text(peso(total), rightX, y, { align: 'right' });
+  docPdf.setFont((docPdf.getFontList().NotoSans ? 'NotoSans' : 'Roboto'), 'normal');
+  y += 10;
+
+  // Payment and Shipping
+  docPdf.setFont((docPdf.getFontList().NotoSans ? 'NotoSans' : 'Roboto'), 'bold');
+  docPdf.text('Payment', 14, y); y += 6;
+  docPdf.setFont((docPdf.getFontList().NotoSans ? 'NotoSans' : 'Roboto'), 'normal');
+  docPdf.text(`Method: ${payMethod || '—'}`, 14, y); y += 6;
+  docPdf.text(`Status: ${payStatus || '—'}`, 14, y); y += 10;
+
+  docPdf.setFont((docPdf.getFontList().NotoSans ? 'NotoSans' : 'Roboto'), 'bold');
+  docPdf.text('Shipping', 14, y); y += 6;
+  docPdf.setFont((docPdf.getFontList().NotoSans ? 'NotoSans' : 'Roboto'), 'normal');
+  const shipLines = [
+    `${ship.name || ''}`.trim(),
+    `${ship.email || ''}`.trim(),
+    `${ship.phone || ''}`.trim(),
+    `${ship.unit || ''} ${ship.street || ''}`.trim(),
+    `${ship.city || ''}, ${ship.province || ''} ${ship.postal || ''}`.trim(),
+  ].filter(Boolean);
+  for (const line of shipLines) { docPdf.text(line, 14, y); addLine(); }
+
+  y += 4;
+  docPdf.setFontSize(10);
+  docPdf.setTextColor(120);
+  docPdf.text('Thank you for shopping with Prestige Pages!', 14, y);
+
+  // Save PDF
+  const filename = `PrestigePages-Receipt-${txid}.pdf`;
+  docPdf.save(filename);
 }
 
 // Wishlist modal handlers
