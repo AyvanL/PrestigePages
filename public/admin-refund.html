@@ -54,37 +54,90 @@
     </main>
   </div>
 
-  <script>
-    // Minimal table renderer (replace with your backend fetch)
-    const peso = v => "₱" + (Math.round((Number(v) || 0) * 100) / 100).toFixed(2);
-    function pushRefundRow({ id, orderId, customer, amount, method, status, date }){
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${id}</td>
-        <td>${orderId}</td>
-        <td>${customer}</td>
-        <td>${peso(amount)}</td>
-        <td>${method}</td>
-        <td><span class="badge ${status==='Processed'?'success':'muted'}">${status}</span></td>
-        <td>${date}</td>
-        <td>
-          <button class="btn btn-sm" onclick="alert('Refund #${id}\\nAmount: ${peso(amount)}\\nStatus: ${status}')">
-            <i class="fa fa-eye"></i> View
-          </button>
-        </td>
-      `;
-      document.querySelector('#refundList').prepend(tr);
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+    import { firebaseConfig } from "./js/firebase-config.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const peso = v => "₱" + Number(v || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+
+    async function loadRefunds(){
+      const tbody = document.querySelector('#refundList');
+      tbody.innerHTML = '';
+      const users = await getDocs(collection(db, 'users'));
+      const rows = [];
+      for (const u of users.docs){
+        const uid = u.id; const udata = u.data()||{}; const name = `${udata.firstName||''} ${udata.lastName||''}`.trim() || udata.email || uid;
+        const txs = await getDocs(collection(db, 'users', uid, 'transactions'));
+        txs.forEach(d => {
+          const t = d.data()||{};
+          const deliv = (t.delivstatus||'').toString().toLowerCase();
+          if (deliv !== 'refund-processing') return;
+          rows.push({ uid, id: d.id, name, amount: t.total||0, method: t.paymentMethod||'', status: 'Processing', date: (t.createdAt?.toDate?t.createdAt.toDate().toLocaleString():'' )});
+        });
+      }
+      if (rows.length === 0){
+        tbody.innerHTML = '<tr><td colspan="8" style="padding:14px; text-align:center; color:#666;">No refund requests found.</td></tr>';
+        return;
+      }
+      rows.forEach(r=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.id}</td>
+          <td>${r.id}</td>
+          <td>${r.name}</td>
+          <td>${peso(r.amount)}</td>
+          <td>${r.method}</td>
+          <td><span class="badge muted">${r.status}</span></td>
+          <td>${r.date}</td>
+          <td>
+            <button class="btn btn-sm approve-refund" data-uid="${r.uid}" data-id="${r.id}"><i class="fa fa-check"></i> Approve</button>
+            <button class="btn btn-sm reject-refund" data-uid="${r.uid}" data-id="${r.id}" style="margin-left:6px;"><i class="fa fa-times"></i> Reject</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+
+      // Approve handler
+      tbody.addEventListener('click', async (e)=>{
+        const btn = e.target.closest('.approve-refund');
+        if (!btn) return;
+        const uid = btn.getAttribute('data-uid');
+        const id = btn.getAttribute('data-id');
+        if (!uid || !id) return;
+        const ok = confirm('Approve refund for this transaction?');
+        if (!ok) return;
+        try{
+          await updateDoc(doc(db,'users',uid,'transactions',id), { delivstatus: 'refunded', refundApprovedAt: serverTimestamp() });
+          btn.closest('tr')?.remove();
+        }catch(err){
+          alert('Failed to approve refund');
+          console.error(err);
+        }
+      });
+
+      // Reject handler
+      tbody.addEventListener('click', async (e)=>{
+        const btn = e.target.closest('.reject-refund');
+        if (!btn) return;
+        const uid = btn.getAttribute('data-uid');
+        const id = btn.getAttribute('data-id');
+        if (!uid || !id) return;
+        const ok = confirm('Reject this refund request and revert to Delivered?');
+        if (!ok) return;
+        try{
+          await updateDoc(doc(db,'users',uid,'transactions',id), { delivstatus: 'delivered', refundRejectedAt: serverTimestamp() });
+          btn.closest('tr')?.remove();
+        }catch(err){
+          alert('Failed to reject refund');
+          console.error(err);
+        }
+      });
     }
 
-    // Sample rows (delete once wired to API)
-    pushRefundRow({
-      id: "REF-2999", orderId: "ORD-10018", customer: "Carlos D.", amount: 899.00,
-      method: "Original", status:"Processed", date:"2025-09-20 02:11 PM"
-    });
-    pushRefundRow({
-      id: "REF-2998", orderId: "ORD-10012", customer: "Arielle P.", amount: 399.00,
-      method: "Store Credit", status:"Processed", date:"2025-09-17 11:03 AM"
-    });
+    loadRefunds();
   </script>
 </body>
 </html>

@@ -909,8 +909,8 @@ if (transContent) {
           alert('Refund is only available for paid orders.');
           return;
         }
-        await updateDoc(txRef, { status: 'refund-requested', refundRequestedAt: serverTimestamp() });
-        alert('Refund requested. We will review it shortly.');
+        await updateDoc(txRef, { delivstatus: 'refund-processing', refundRequestedAt: serverTimestamp() });
+        alert('Refund requested. Status set to refund processing.');
         // Update visible status text in the details row if present
         const sum = refundBtn.closest('details')?.querySelector('span strong');
       } catch (err) {
