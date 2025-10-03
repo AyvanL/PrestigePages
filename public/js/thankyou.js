@@ -43,6 +43,7 @@ async function markTransactionPaid(user, txId) {
 
 onAuthStateChanged(auth, async (user) => {
   const txId = getQueryParam("ref");
+  const cod = getQueryParam("cod");
   if (!txId) {
     setStatus("Missing order reference in URL.", "error");
     return;
@@ -63,9 +64,18 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   try {
+    // If Cash on Delivery, do NOT mark as paid
+    if (cod) {
+      setStatus("Order placed via Cash on Delivery. Payment status: ", "ok");
+      if (statusEl) statusEl.insertAdjacentHTML("beforeend", "<strong>unpaid</strong>.");
+      try { localStorage.removeItem("pp:clearCartTx"); } catch {}
+      return;
+    }
+
+    // Online payment: mark as paid
     await markTransactionPaid(user, txId);
     setStatus("Payment successful. Your order is now marked as ", "ok");
-    statusEl.insertAdjacentHTML("beforeend", "<strong>paid</strong>.");
+    if (statusEl) statusEl.insertAdjacentHTML("beforeend", "<strong>paid</strong>.");
     try { localStorage.removeItem("pp:clearCartTx"); } catch {}
   } catch (err) {
     console.error("Failed to mark transaction paid:", err);

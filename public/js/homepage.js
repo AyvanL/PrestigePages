@@ -930,7 +930,7 @@ if (transContent) {
         const data = snap.data();
         const deliv = (data.delivstatus || data.deliveryStatus || '').toString().toLowerCase();
         if (deliv !== 'pending') {
-          alert('The product is already in processing');
+          alert('The order is now on process');
           return;
         }
         const ok = confirm('Are you sure you want to delete this order?');

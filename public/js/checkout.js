@@ -253,10 +253,13 @@ async function onSubmitCheckout(e) {
     postal: getVal("shippingPostal"),
   };
   const deliveryMethod = document.getElementById("delivery")?.value || "";
-  const paymentMethod = document.getElementById("payment")?.value || "";
+  const paymentSel = document.getElementById("payment");
+  const paymentMethodValue = paymentSel?.value || "";
+  const paymentMethodLabel =
+    paymentSel?.options?.[paymentSel.selectedIndex]?.text || paymentMethodValue;
 
   if (!deliveryMethod) { alert("Please choose a delivery option."); btn?.removeAttribute("disabled"); return; }
-  if (!paymentMethod) { alert("Please choose a payment method."); btn?.removeAttribute("disabled"); return; }
+  if (!paymentMethodValue) { alert("Please choose a payment method."); btn?.removeAttribute("disabled"); return; }
 
   const subtotal = cart.reduce((sum, it) => sum + Number(it.price) * Number(it.qty || 1), 0);
   const shippingFee = getShippingFee();
@@ -270,17 +273,51 @@ async function onSubmitCheckout(e) {
 
   let txRef = null;
   try {
-    // 1) Create a pending transaction inside user
-    const order = {
+    // Build base order
+    const baseOrder = {
       userId: user.uid,
       items, subtotal, shippingFee, total, shipping,
-      deliveryMethod, paymentMethod, status: "initiated",
+      deliveryMethod,
+      // Save the user-facing label (e.g., "Online Payment") instead of the code (e.g., "ONLINE")
+      paymentMethod: paymentMethodLabel,
       delivstatus: "pending",
       createdAt: serverTimestamp(),
     };
-    txRef = await addDoc(collection(db, "users", user.uid, "transactions"), order);
 
-    // 2) Pay via PayMongo (E-wallet etc.)
+    if (paymentMethodValue === 'COD') {
+      // Cash on Delivery: create unpaid transaction, clear cart, redirect to thankyou
+      txRef = await addDoc(collection(db, 'users', user.uid, 'transactions'), {
+        ...baseOrder,
+        status: 'unpaid',
+      });
+
+      // Save last transaction
+      await updateDoc(doc(db, 'users', user.uid), {
+        lastTransactionId: txRef.id,
+        lastTransactionAt: serverTimestamp(),
+        cart: [],
+      });
+
+      // Local clear for UI
+      cart = [];
+      await updateCart();
+
+      // Optional: set a local flag in case thankyou page needs to finalize cleanup
+      try { localStorage.setItem('pp:clearCartTx', txRef.id); } catch {}
+
+      // Redirect directly to thank you (no PayMongo)
+      const hasPublic = location.pathname.includes('/public/');
+      const base = location.origin + (hasPublic ? '/public' : '');
+      window.location.href = `${base}/thankyou.html?ref=${encodeURIComponent(txRef.id)}&cod=1`;
+      return;
+    }
+
+    // ONLINE payment path -> PayMongo Checkout
+    txRef = await addDoc(collection(db, "users", user.uid, "transactions"), {
+      ...baseOrder,
+      status: "initiated",
+    });
+
     const { checkout_url, id: checkoutId } = await createCheckoutSession({
       amount: amountCentavos,
       email: shipping.email || user.email,
@@ -288,7 +325,6 @@ async function onSubmitCheckout(e) {
       description: `PrestigePages Order ${txRef.id}`,
     });
 
-    // 3) Link session to transaction and redirect
     await updateDoc(doc(db, "users", user.uid, "transactions", txRef.id), {
       checkoutSessionId: checkoutId || null,
     });

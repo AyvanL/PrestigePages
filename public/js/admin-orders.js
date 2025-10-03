@@ -44,7 +44,8 @@ async function loadOrders() {
         const txId = txDoc.id;
   const deliv = tx.delivstatus || 'pending';
   const payMethod = tx.paymentMethod || tx.payment || tx.payment_type || '';
-  const payStatus = (tx.status || '').toString().toLowerCase() || 'initiated';
+  let payRaw = (tx.status || '').toString().toLowerCase();
+  const payStatus = (payRaw === 'paid') ? 'paid' : (payRaw === 'failed' ? 'failed' : 'unpaid');
         const createdAt = formatDate(tx.createdAt);
 
         const tr = document.createElement('tr');
@@ -84,7 +85,7 @@ async function loadOrders() {
         // Pre-fill current values from row
         const tr = openBtn.closest('tr');
         const delivText = tr.querySelector('.status-text')?.textContent?.trim().toLowerCase() || 'pending';
-        const payText = tr.children[4]?.textContent?.trim().toLowerCase() || 'initiated';
+  const payText = tr.children[4]?.textContent?.trim().toLowerCase() || 'unpaid';
         if (statusDeliverySel) statusDeliverySel.value = delivText;
         if (statusPaymentSel) statusPaymentSel.value = payText;
         modalCtx = { uid, txid };
@@ -158,7 +159,7 @@ statusSaveBtn?.addEventListener('click', async () => {
   const { uid, txid } = modalCtx;
   if (!uid || !txid) { statusModal.style.display = 'none'; return; }
   const deliv = statusDeliverySel?.value || 'pending';
-  const pay = statusPaymentSel?.value || 'initiated';
+  const pay = statusPaymentSel?.value || 'unpaid';
   try {
     await updateDoc(doc(db, 'users', uid, 'transactions', txid), {
       delivstatus: deliv,

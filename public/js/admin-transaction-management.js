@@ -9,6 +9,7 @@ const db = getFirestore(app);
 
 // DOM Elements
 const tableBody = document.querySelector('#transactionTable tbody');
+const tableEl = document.getElementById('transactionTable');
 const searchInput = document.getElementById('searchTransaction');
 
 // Modal Elements
@@ -28,6 +29,13 @@ function normalizeStatus(val) {
   return String(val || "").trim().toLowerCase();
 }
 
+// Helper: show a single full-width message row
+function showMessageRow(text, cls = '') {
+  if (!tableBody) return;
+  const colSpan = (tableEl?.querySelectorAll('thead th')?.length) || 7;
+  tableBody.innerHTML = `<tr class="${cls}"><td colspan="${colSpan}" style="text-align:center; padding:12px;">${text}</td></tr>`;
+}
+
 // Generate HTML row
 function rowHtml(txn) {
   return `<tr data-id="${txn.id}">
@@ -43,6 +51,9 @@ function rowHtml(txn) {
 
 // Fetch transactions from Firestore across users and keep only completed
 async function loadTransactions() {
+  // show loading state
+  showMessageRow('<i class="fas fa-spinner fa-spin"></i> Loading...', 'loading');
+
   // 1) List all users
   const usersSnap = await getDocs(collection(db, 'users'));
   const rows = [];
@@ -80,7 +91,11 @@ async function loadTransactions() {
 
   // 3) Sort all rows by date desc (fallback to createdAt implicit order)
   TRANSACTIONS = rows.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
-  render(TRANSACTIONS);
+  if (TRANSACTIONS.length === 0) {
+    showMessageRow('No transactions found.', 'empty');
+  } else {
+    render(TRANSACTIONS);
+  }
 }
 
 // Render transaction list
@@ -137,6 +152,6 @@ window.addEventListener('click', (e) => { if (e.target === modal) closeModal(); 
 // Kick off
 loadTransactions().catch(err => {
   console.error('Failed to load transactions', err);
-  alert('Failed to load transactions');
+  showMessageRow('Failed to load transactions.', 'error');
 });
     
