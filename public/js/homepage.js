@@ -14,6 +14,7 @@ import {
   arrayRemove,
   collection,
   getDocs,
+  deleteDoc,
   query,
   orderBy,
   serverTimestamp,
@@ -744,19 +745,30 @@ async function loadTransactions() {
   try {
     const q = query(collection(db, "users", user.uid, "transactions"), orderBy("createdAt", "desc"));
     const snap = await getDocs(q);
+
     if (snap.empty) {
-      transContent.innerHTML = `<p>No transactions yet.</p>`;
+      transContent.innerHTML = `
+        <div class="tx-tabs">
+          <button class="tx-tab active" data-tab="in">In Process</button>
+          <button class="tx-tab" data-tab="done">Complete</button>
+        </div>
+        <div class="tx-panels">
+          <div class="tx-panel" data-tab="in"><p>No transactions yet.</p></div>
+          <div class="tx-panel" data-tab="done" style="display:none;"><p>No transactions yet.</p></div>
+        </div>`;
       return;
     }
 
-    const rows = [];
+    const rowsIn = [];
+    const rowsDone = [];
+
     snap.forEach((d) => {
       const data = d.data();
       const date = data.createdAt?.toDate ? data.createdAt.toDate() : null;
       const when = date ? date.toLocaleString() : "";
       const total = typeof data.total === "number" ? `₱${data.total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}` : "";
-      const paymentStatus = data.status || "initiated"; // payment status (paid/initiated)
-      const deliveryStatus = data.delivstatus || data.deliveryStatus || data.fulfillmentStatus || "pending"; // shipping status
+      const paymentStatus = data.status || "initiated";
+      const deliveryStatus = data.delivstatus || data.deliveryStatus || data.fulfillmentStatus || "pending";
       const shipFee = typeof data.shippingFee === "number"
         ? `₱${data.shippingFee.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`
         : "₱0.00";
@@ -777,13 +789,23 @@ async function loadTransactions() {
           </li>`;
       }).join("");
 
-      rows.push(`
+      const payNorm = String(paymentStatus || '').toLowerCase();
+      const delivNorm = String(deliveryStatus || '').toLowerCase();
+      const isPaid = (payNorm === 'paid' || payNorm === 'complete' || payNorm === 'completed' || payNorm === 'success');
+      const isDelivered = (delivNorm === 'delivered');
+      const isComplete = isPaid && isDelivered;
+
+      const actionBtnHtml = isComplete
+        ? `<button class="btn secondary small btn-refund" data-txid="${d.id}">Refund</button>`
+        : `<button class="btn secondary small btn-cancel" data-txid="${d.id}">Cancel</button>`;
+
+      const rowHtml = `
         <li style="border-bottom:1px solid var(--line); margin:12px 0; padding:8px 0;">
           <details>
             <summary style="display:flex; align-items:center; gap:10px; list-style:none; cursor:pointer;">
-              <span class=\"tx-chevron\" aria-hidden=\"true\" style=\"margin-right:6px; display:inline-flex;\">
-                <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"> 
-                  <path d=\"M6 9l6 6 6-6\" stroke=\"#7E6E5B\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>
+              <span class="tx-chevron" aria-hidden="true" style="margin-right:6px; display:inline-flex;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> 
+                  <path d="M6 9l6 6 6-6" stroke="#7E6E5B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </span>
               <div style="flex:1">
@@ -791,10 +813,10 @@ async function loadTransactions() {
                 <div style="font-size:12px; color:var(--muted-ink)">${when}</div>
               </div>
               <div style="min-width:90px; font-weight:700;">${total}</div>
-              <div class=\"pill\" style=\"white-space:nowrap; text-transform:capitalize;\">${deliveryStatus}</div>
+              <div class="pill" style="white-space:nowrap; text-transform:capitalize;">${deliveryStatus}</div>
             </summary>
             <div style="margin-top:10px; font-size:13px; color:var(--muted-ink);">
-              <div style=\"display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:8px;\">
+              <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
                 <span><strong>Payment:</strong> ${paymentStatus}</span>
                 <span><strong>Delivery:</strong> ${deliveryStatus}</span>
                 <span><strong>Delivery fee:</strong> ${shipFee}</span>
@@ -803,13 +825,26 @@ async function loadTransactions() {
             <ul style="list-style:none; padding:0; margin:12px 0 0;">${items || '<li style="padding:8px 0;">No items</li>'}</ul>
             <div class="tx-actions" style="display:flex; gap:10px; margin-top:12px;">
               <button class="btn small btn-print" data-txid="${d.id}">Print receipt</button>
-              <button class="btn secondary small btn-refund" data-txid="${d.id}">Refund</button>
+              ${actionBtnHtml}
             </div>
           </details>
-        </li>`);
+        </li>`;
+
+      if (isComplete) rowsDone.push(rowHtml); else rowsIn.push(rowHtml);
     });
 
-    transContent.innerHTML = `<ul style="list-style:none; padding:0; margin:0">${rows.join("")}</ul>`;
+    const inHTML = rowsIn.length ? `<ul style="list-style:none; padding:0; margin:0">${rowsIn.join("")}</ul>` : `<p>No in‑process orders.</p>`;
+    const doneHTML = rowsDone.length ? `<ul style="list-style:none; padding:0; margin:0">${rowsDone.join("")}</ul>` : `<p>No completed orders.</p>`;
+
+    transContent.innerHTML = `
+      <div class="tx-tabs">
+        <button class="tx-tab active" data-tab="in">In Process</button>
+        <button class="tx-tab" data-tab="done">Complete</button>
+      </div>
+      <div class="tx-panels">
+        <div class="tx-panel" data-tab="in">${inHTML}</div>
+        <div class="tx-panel" data-tab="done" style="display:none;">${doneHTML}</div>
+      </div>`;
   } catch (err) {
     console.error("Failed to load transactions", err);
     transContent.innerHTML = `<p>Failed to load transactions.</p>`;
@@ -829,15 +864,33 @@ window.addEventListener("click", (e) => {
   if (e.target === transModal) transModal.style.display = "none";
 });
 
-// Transactions actions: delegated handlers for print and refund
+// Transactions actions: delegated handlers for tabs, print, refund, cancel
 if (transContent) {
   transContent.addEventListener('click', async (e) => {
+    // Tab switching
+    const tabBtn = e.target.closest('.tx-tab');
+    if (tabBtn) {
+      const tab = tabBtn.getAttribute('data-tab');
+      transContent.querySelectorAll('.tx-tab').forEach(b => b.classList.toggle('active', b === tabBtn));
+      transContent.querySelectorAll('.tx-panel').forEach(p => {
+        p.style.display = (p.getAttribute('data-tab') === tab) ? '' : 'none';
+      });
+      return;
+    }
     const user = auth.currentUser;
     const printBtn = e.target.closest('.btn-print');
     if (printBtn && user) {
       const txid = printBtn.getAttribute('data-txid');
       if (!txid) return;
-      try { await printReceipt(user.uid, txid); } catch (err) { console.error('Print failed', err); }
+      try {
+        // block print when unpaid
+        const txRef = doc(db, 'users', user.uid, 'transactions', txid);
+        const snap = await getDoc(txRef);
+        const data = snap.exists() ? snap.data() : {};
+        const status = (data.status || '').toString().toLowerCase();
+        if (status !== 'paid') { alert('Not yet paid'); return; }
+        await printReceipt(user.uid, txid);
+      } catch (err) { console.error('Print failed', err); }
       return;
     }
     const refundBtn = e.target.closest('.btn-refund');
@@ -863,6 +916,31 @@ if (transContent) {
       } catch (err) {
         console.error('Refund request failed', err);
         alert('Failed to request refund.');
+      }
+    }
+
+    const cancelBtn = e.target.closest('.btn-cancel');
+    if (cancelBtn && user) {
+      const txid = cancelBtn.getAttribute('data-txid');
+      if (!txid) return;
+      try {
+        const txRef = doc(db, 'users', user.uid, 'transactions', txid);
+        const snap = await getDoc(txRef);
+        if (!snap.exists()) return;
+        const data = snap.data();
+        const deliv = (data.delivstatus || data.deliveryStatus || '').toString().toLowerCase();
+        if (deliv !== 'pending') {
+          alert('The product is already in processing');
+          return;
+        }
+        const ok = confirm('Are you sure you want to delete this order?');
+        if (!ok) return;
+        await deleteDoc(txRef);
+        alert('Order cancelled.');
+        await loadTransactions();
+      } catch (err) {
+        console.error('Cancel failed', err);
+        alert('Failed to cancel the order.');
       }
     }
   });

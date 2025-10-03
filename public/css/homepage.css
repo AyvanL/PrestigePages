@@ -652,6 +652,26 @@ footer {
 
 
 
+/* Transactions tabs */
+#transModal .tx-tabs { display:flex; gap:8px; margin-bottom:12px; }
+#transModal .tx-tab {
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff; /* default white */
+  color: #000;      /* black font */
+}
+#transModal .tx-tab[data-tab="in"].active {
+  /* active style only for In Process */
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--brand) 85%, #fff 15%),
+    color-mix(in oklab, var(--brand) 70%, #000 10%)
+  );
+  border-color: var(--brand);
+  color: #1b1406;
+  box-shadow: 0 4px 10px rgba(200,155,60,0.18);
+}
 .cart-item-details {
   flex: 1;
 }
@@ -1007,6 +1027,30 @@ footer {
   width: 600px;           
   max-width: 95vw;      
   
+}
+
+/* Transactions tabs */
+#transModal .tx-tabs { display:flex; gap:8px; margin-bottom:12px; }
+#transModal .tx-tab {
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: #000;
+}
+/* In Process keeps a button-like background at all times */
+#transModal .tx-tab[data-tab="in"] {
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--brand) 85%, #fff 15%),
+    color-mix(in oklab, var(--brand) 70%, #000 10%)
+  );
+  border-color: var(--brand);
+  color: #1b1406;
+  box-shadow: 0 4px 10px rgba(200,155,60,0.18);
+}
+/* Complete stays white whether active or not */
+#transModal .tx-tab[data-tab="done"] {
+  background: #fff;
 }
 
 
