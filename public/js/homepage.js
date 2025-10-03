@@ -778,7 +778,7 @@ async function loadTransactions() {
       }).join("");
 
       rows.push(`
-        <li style="border-bottom:1px solid var(--line);">
+        <li style="border-bottom:1px solid var(--line); margin:12px 0; padding:8px 0;">
           <details>
             <summary style="display:flex; align-items:center; gap:10px; list-style:none; cursor:pointer;">
               <span class=\"tx-chevron\" aria-hidden=\"true\" style=\"margin-right:6px; display:inline-flex;\">
@@ -801,6 +801,10 @@ async function loadTransactions() {
               </div>
             </div>
             <ul style="list-style:none; padding:0; margin:12px 0 0;">${items || '<li style="padding:8px 0;">No items</li>'}</ul>
+            <div class="tx-actions" style="display:flex; gap:10px; margin-top:12px;">
+              <button class="btn small btn-print" data-txid="${d.id}">Print receipt</button>
+              <button class="btn secondary small btn-refund" data-txid="${d.id}">Refund</button>
+            </div>
           </details>
         </li>`);
     });
@@ -824,6 +828,114 @@ if (closeTrans && transModal) {
 window.addEventListener("click", (e) => {
   if (e.target === transModal) transModal.style.display = "none";
 });
+
+// Transactions actions: delegated handlers for print and refund
+if (transContent) {
+  transContent.addEventListener('click', async (e) => {
+    const user = auth.currentUser;
+    const printBtn = e.target.closest('.btn-print');
+    if (printBtn && user) {
+      const txid = printBtn.getAttribute('data-txid');
+      if (!txid) return;
+      try { await printReceipt(user.uid, txid); } catch (err) { console.error('Print failed', err); }
+      return;
+    }
+    const refundBtn = e.target.closest('.btn-refund');
+    if (refundBtn && user) {
+      const txid = refundBtn.getAttribute('data-txid');
+      if (!txid) return;
+      const ok = confirm('Request a refund for this order?');
+      if (!ok) return;
+      try {
+        const txRef = doc(db, 'users', user.uid, 'transactions', txid);
+        const snap = await getDoc(txRef);
+        const data = snap.exists() ? snap.data() : {};
+        const status = (data.status || '').toString().toLowerCase();
+        // Only allow refund request if payment was made
+        if (status !== 'paid') {
+          alert('Refund is only available for paid orders.');
+          return;
+        }
+        await updateDoc(txRef, { status: 'refund-requested', refundRequestedAt: serverTimestamp() });
+        alert('Refund requested. We will review it shortly.');
+        // Update visible status text in the details row if present
+        const sum = refundBtn.closest('details')?.querySelector('span strong');
+      } catch (err) {
+        console.error('Refund request failed', err);
+        alert('Failed to request refund.');
+      }
+    }
+  });
+}
+
+async function printReceipt(uid, txid) {
+  const txRef = doc(db, 'users', uid, 'transactions', txid);
+  const snap = await getDoc(txRef);
+  if (!snap.exists()) throw new Error('Transaction not found');
+  const tx = snap.data();
+  const when = tx.createdAt?.toDate ? tx.createdAt.toDate() : null;
+  const whenStr = when ? when.toLocaleString() : '';
+  const items = Array.isArray(tx.items) ? tx.items : [];
+  const ship = tx.shipping || {};
+  const total = typeof tx.total === 'number' ? tx.total : 0;
+  const sub = typeof tx.subtotal === 'number' ? tx.subtotal : (items.reduce((s,i)=>s+Number(i.price||0)*Number(i.qty||1),0));
+  const fee = typeof tx.shippingFee === 'number' ? tx.shippingFee : (total - sub);
+  const payMethod = tx.paymentMethod || '';
+  const payStatus = tx.status || '';
+
+  const lines = items.map(i => `
+    <tr>
+      <td>${i.title || 'Item'}</td>
+      <td style="text-align:center;">${i.qty || 1}</td>
+      <td style="text-align:right;">₱${Number(i.price||0).toLocaleString()}</td>
+    </tr>`).join('');
+
+  const html = `<!doctype html><html><head><meta charset="utf-8">
+    <title>Receipt ${txid}</title>
+    <style>
+      body{font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; padding:24px; color:#111}
+      h1{font-size:18px; margin:0 0 8px}
+      h2{font-size:14px; margin:16px 0 8px}
+      table{width:100%; border-collapse:collapse}
+      th,td{padding:6px 0; border-bottom:1px solid #eee}
+      .row{display:flex; gap:16px; flex-wrap:wrap}
+      .muted{color:#666}
+    </style>
+  </head><body>
+    <h1>PrestigePages Receipt</h1>
+    <div class="muted">Order #${txid} • ${whenStr}</div>
+    <h2>Items</h2>
+    <table>
+      <thead><tr><th style="text-align:left;">Title</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Price</th></tr></thead>
+      <tbody>${lines || '<tr><td colspan="3">No items</td></tr>'}</tbody>
+      <tfoot>
+        <tr><td></td><td style="text-align:right;" class="muted">Subtotal</td><td style="text-align:right;">₱${Number(sub).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td></tr>
+        <tr><td></td><td style="text-align:right;" class="muted">Shipping</td><td style="text-align:right;">₱${Number(fee).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td></tr>
+        <tr><td></td><td style="text-align:right;"><strong>Total</strong></td><td style="text-align:right;"><strong>₱${Number(total).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</strong></td></tr>
+      </tfoot>
+    </table>
+    <h2>Payment</h2>
+    <div>Method: ${payMethod || '—'}</div>
+    <div>Status: ${payStatus || '—'}</div>
+    <h2>Shipping</h2>
+    <div class="row muted">
+      <div>${ship.name || ''}</div>
+      <div>${ship.email || ''}</div>
+      <div>${ship.phone || ''}</div>
+    </div>
+    <div class="row muted">
+      <div>${ship.unit || ''} ${ship.street || ''}</div>
+      <div>${ship.city || ''}, ${ship.province || ''} ${ship.postal || ''}</div>
+    </div>
+    <script>window.addEventListener('load',()=>{window.print(); setTimeout(()=>window.close(), 300);});</script>
+  </body></html>`;
+
+  const w = window.open('', '_blank', 'width=720,height=900');
+  if (!w) throw new Error('Pop-up blocked');
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
 
 // Wishlist modal handlers
 wishlistBtn.addEventListener("click", async () => {
