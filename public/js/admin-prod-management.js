@@ -50,14 +50,24 @@ productForm.addEventListener("submit", async (e) => {
 // Load Product List
 async function loadProductList() {
     const productList = document.getElementById("product-list");
-    productList.innerHTML = ""; // Clear the list before loading new data
+    productList.innerHTML = '<tr><td colspan="5" style="padding:12px; text-align:center; color:#555;">Loading...</td></tr>';
 
     try {
         const querySnapshot = await getDocs(collection(db, "products"));
-        querySnapshot.forEach((doc) => {
-            const product = doc.data();
-            const productId = doc.id;
+        const rows = [];
+        querySnapshot.forEach((docu) => {
+            const product = docu.data();
+            const productId = docu.id;
+            rows.push({ product, productId });
+        });
 
+        if (rows.length === 0) {
+            productList.innerHTML = '<tr><td colspan="5" style="padding:12px; text-align:center; color:#777;">No products found.</td></tr>';
+            return;
+        }
+
+        productList.innerHTML = '';
+        rows.forEach(({ product, productId }) => {
             const row = document.createElement("tr");
             row.innerHTML = `
                 <td>${product.title}</td>
@@ -73,7 +83,7 @@ async function loadProductList() {
         });
     } catch (error) {
         console.error("Error loading products: ", error);
-        alert("Failed to load products.");
+        productList.innerHTML = '<tr><td colspan="5" style="padding:12px; text-align:center; color:#b91c1c;">Failed to load products.</td></tr>';
     }
 }
 

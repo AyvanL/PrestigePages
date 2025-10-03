@@ -6,6 +6,7 @@ import { firebaseConfig } from "./firebase-config.js";
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+const tableEl = document.getElementById('customerTable');
 const tableBody = document.querySelector('#customerTable tbody');
 const searchInput = document.getElementById('searchInput');
 
@@ -46,6 +47,12 @@ let CURRENT_EDIT_UID = null;
 // Simple state
 let USERS = [];
 
+function showMessageRow(text, cls = '') {
+  if (!tableBody) return;
+  const colSpan = (tableEl?.querySelectorAll('thead th')?.length) || 6;
+  tableBody.innerHTML = `<tr class="${cls}"><td colspan="${colSpan}" style="text-align:center; padding:12px; color:#555;">${text}</td></tr>`;
+}
+
 function rowHtml(u) {
   const name = `${u.firstName || ''} ${u.lastName || ''}`.trim();
   const email = u.email || '';
@@ -65,10 +72,20 @@ function rowHtml(u) {
 }
 
 async function loadUsers() {
-  const q = query(collection(db, 'users'), orderBy('firstName'));
-  const snap = await getDocs(q);
-  USERS = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  render(USERS);
+  showMessageRow('<i class="fas fa-spinner fa-spin"></i> Loading...', 'loading');
+  try {
+    const qy = query(collection(db, 'users'), orderBy('firstName'));
+    const snap = await getDocs(qy);
+    USERS = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (USERS.length === 0) {
+      showMessageRow('No customers found.', 'empty');
+    } else {
+      render(USERS);
+    }
+  } catch (err) {
+    console.error('Failed to load users', err);
+    showMessageRow('Failed to load customers.', 'error');
+  }
 }
 
 function render(list) {
@@ -180,7 +197,4 @@ editForm?.addEventListener('submit', async (e) => {
 window.addEventListener('click', (e) => { if (e.target === editModal) editModal.style.display = 'none'; });
 
 // Kick off
-loadUsers().catch(err => {
-  console.error('Failed to load users', err);
-  alert('Failed to load users');
-});
+loadUsers();

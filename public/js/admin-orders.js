@@ -27,10 +27,18 @@ const statusSaveBtn = document.getElementById('statusSaveBtn');
 statusCancelBtn?.addEventListener('click', () => { if (statusModal) statusModal.style.display = 'none'; });
 window.addEventListener('click', (e) => { if (e.target === statusModal) statusModal.style.display = 'none'; });
 
+// Table refs and helpers (for loading/empty/error states)
+const orderList = document.getElementById('order-list');
+const tableEl = orderList?.closest('table');
+function showMessageRow(text, cls = '') {
+  if (!orderList) return;
+  const colSpan = (tableEl?.querySelectorAll('thead th')?.length) || 7;
+  orderList.innerHTML = `<tr class="${cls}"><td colspan="${colSpan}" style="padding:12px; text-align:center; color:#555;">${text}</td></tr>`;
+}
+
 // Load all users' transactions
 async function loadOrders() {
-  const orderList = document.getElementById('order-list');
-  orderList.innerHTML = '<tr><td colspan="7" style="padding:12px; text-align:center; color:#555;">Loading...</td></tr>';
+  showMessageRow('<i class="fas fa-spinner fa-spin"></i> Loading...', 'loading');
   try {
     const usersSnap = await getDocs(collection(db, 'users'));
     const rows = [];
@@ -76,11 +84,11 @@ async function loadOrders() {
 
     // Sort by date desc
     rows.sort((a,b) => new Date(b.createdAtVal).getTime() - new Date(a.createdAtVal).getTime());
-    orderList.innerHTML = '';
     if (rows.length === 0) {
-      orderList.innerHTML = '<tr><td colspan="7" style="padding:12px; text-align:center; color:#777;">No orders found.</td></tr>';
+      showMessageRow('No orders found.', 'empty');
       return;
     }
+    orderList.innerHTML = '';
     rows.forEach(r => orderList.appendChild(r.tr));
 
     // Events for open status modal and delete
@@ -119,7 +127,7 @@ async function loadOrders() {
     });
   } catch (err) {
     console.error('Error loading orders', err);
-    orderList.innerHTML = '<tr><td colspan="7" style="padding:12px; text-align:center; color:#b91c1c;">Failed to load orders.</td></tr>';
+    showMessageRow('Failed to load orders.', 'error');
   }
 }
 
