@@ -48,6 +48,12 @@ async function loadOrders() {
   const payStatus = (payRaw === 'paid') ? 'paid' : (payRaw === 'failed' ? 'failed' : 'unpaid');
         const createdAt = formatDate(tx.createdAt);
 
+        // Skip completed orders (paid + delivered) from Admin Orders; they belong to Admin Transactions
+        const delivLc = (deliv || '').toString().toLowerCase();
+        if (payStatus === 'paid' && delivLc === 'delivered') {
+          return; // do not include in Orders list
+        }
+
         const tr = document.createElement('tr');
         const delivDisplay = (deliv && deliv[0]) ? deliv[0].toUpperCase() + deliv.slice(1).toLowerCase() : 'Pending';
         tr.innerHTML = `
