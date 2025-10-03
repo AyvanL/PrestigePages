@@ -69,9 +69,12 @@ async function loadTransactions() {
       const data = d.data();
       const pay = normalizeStatus(data.status);
       const deliv = normalizeStatus(data.delivstatus || data.deliveryStatus || data.fulfillmentStatus);
-      const isPaid = (pay === 'paid' || pay === 'complete' || pay === 'completed' || pay === 'success');
-      const isDelivered = (deliv === 'delivered');
-      if (!(isPaid && isDelivered)) return;
+  const isPaid = (pay === 'paid' || pay === 'complete' || pay === 'completed' || pay === 'success');
+  const isDelivered = (deliv === 'delivered');
+  const isRefunded = (deliv === 'refunded');
+  const isRefundProcessing = (deliv === 'refund-processing');
+  // Show Paid+Delivered (completed) and also any Refunded entries here
+  if (!((isPaid && isDelivered) || isRefunded)) return;
 
       const created = data.createdAt?.toDate ? data.createdAt.toDate() : null;
       const dateStr = created ? created.toISOString().slice(0, 10) : '';
@@ -83,7 +86,7 @@ async function loadTransactions() {
         orderDetails: d.id, // using tx id as order id placeholder
         amount: amountStr,
         date: dateStr,
-        status: `${(data.status || 'paid').toString().toLowerCase()} / ${(data.delivstatus || 'delivered').toString().toLowerCase()}`,
+        status: `${(data.status || 'paid').toString().toLowerCase()} / ${(data.delivstatus || (isRefunded?'refunded':'delivered')).toString().toLowerCase()}`,
         _uid: uid,
       });
     });

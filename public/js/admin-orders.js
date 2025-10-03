@@ -49,8 +49,9 @@ async function loadOrders() {
         const createdAt = formatDate(tx.createdAt);
 
         // Skip completed orders (paid + delivered) from Admin Orders; they belong to Admin Transactions
+        // Also skip any refund workflow statuses so they appear in Refunds/Transactions, not Orders
         const delivLc = (deliv || '').toString().toLowerCase();
-        if (payStatus === 'paid' && delivLc === 'delivered') {
+        if ((payStatus === 'paid' && delivLc === 'delivered') || delivLc === 'refund-processing' || delivLc === 'refunded') {
           return; // do not include in Orders list
         }
 
