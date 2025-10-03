@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Admin Dashboard — Refund</title>
+  <link rel="stylesheet" href="css/admin-prod-management.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+  <style>
+    /* small helpers for badges */
+    .badge { display:inline-block; padding:.25rem .5rem; border-radius:999px; font-size:.8rem }
+    .badge.success{ background:#e7f7ef; color:#16794c }
+    .badge.muted{ background:#f1f1f1; color:#666 }
+  </style>
+</head>
+
+<body>
+  <div class="dashboard-layout">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <a href="index.html" class="brand">Prestige Pages</a>
+      <a href="admin-orders.html">Orders</a>
+      <a href="admin-prod-management.html">Inventory</a>
+      <a href="admin-customer.html">Customers</a>
+      <a href="admin-transaction-management.html">Transactions</a>
+      <a href="admin-refund.html" class="active">Refund</a>
+    </nav>
+
+    <!-- Main -->
+    <main class="main-content">
+      <h2>Refund Management</h2>
+
+      <!-- ONLY the Refund List remains -->
+      <section class="product-list">
+        <h3>Refund List</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Refund #</th>
+              <th>Order #</th>
+              <th>Customer</th>
+              <th>Amount</th>
+              <th>Method</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="refundList">
+            <!-- rows injected -->
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // Minimal table renderer (replace with your backend fetch)
+    const peso = v => "₱" + (Math.round((Number(v) || 0) * 100) / 100).toFixed(2);
+    function pushRefundRow({ id, orderId, customer, amount, method, status, date }){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${id}</td>
+        <td>${orderId}</td>
+        <td>${customer}</td>
+        <td>${peso(amount)}</td>
+        <td>${method}</td>
+        <td><span class="badge ${status==='Processed'?'success':'muted'}">${status}</span></td>
+        <td>${date}</td>
+        <td>
+          <button class="btn btn-sm" onclick="alert('Refund #${id}\\nAmount: ${peso(amount)}\\nStatus: ${status}')">
+            <i class="fa fa-eye"></i> View
+          </button>
+        </td>
+      `;
+      document.querySelector('#refundList').prepend(tr);
+    }
+
+    // Sample rows (delete once wired to API)
+    pushRefundRow({
+      id: "REF-2999", orderId: "ORD-10018", customer: "Carlos D.", amount: 899.00,
+      method: "Original", status:"Processed", date:"2025-09-20 02:11 PM"
+    });
+    pushRefundRow({
+      id: "REF-2998", orderId: "ORD-10012", customer: "Arielle P.", amount: 399.00,
+      method: "Store Credit", status:"Processed", date:"2025-09-17 11:03 AM"
+    });
+  </script>
+</body>
+</html>
