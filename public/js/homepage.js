@@ -18,6 +18,7 @@ import {
   query,
   orderBy,
   serverTimestamp,
+  onSnapshot,
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -261,8 +262,19 @@ onAuthStateChanged(auth, async (user) => {
       welcomeEl.textContent = "Welcome User!";
     }
 
-    // Load cart from Firestore
-    await loadCartFromFirestore();
+    // Realtime cart + wishlist via user doc snapshot
+    const userDocRef = doc(db, "users", user.uid);
+    onSnapshot(userDocRef, (snap) => {
+      if (!snap.exists()) return;
+      const data = snap.data() || {};
+      // Update wishlist live
+      USER_WISHLIST = Array.isArray(data.wishlist) ? data.wishlist : [];
+      // Update cart live (avoid overwriting if we are in the middle of local mutation? simple approach: replace)
+      if (Array.isArray(data.cart)) {
+        cart = data.cart;
+        updateCart(); // no await inside snapshot
+      }
+    });
 
     // Fallback: if thankyou page couldn't clear the cart (e.g., user not signed in on redirect),
     // detect a pending clear flag and clear here once the user is authenticated.
@@ -345,8 +357,8 @@ onAuthStateChanged(auth, async (user) => {
       }
     } catch {}
 
-  // Load books from Firestore after wishlist is loaded
-  await loadBooks();
+  // Subscribe to books collection in realtime
+  initBooksRealtime();
   } else {
     // Not logged in → redirect to login
     window.location.href = "login.html";
@@ -367,60 +379,44 @@ logoutBtn.addEventListener("click", async () => {
 // --- Books data (loaded dynamically from Firestore) ------------------
 let BOOKS = [];
 
-async function loadBooks() {
-  try {
-    const booksCol = collection(db, "books");
-    const qBooks = query(booksCol, orderBy("title"));
-    const snap = await getDocs(qBooks);
-    BOOKS = snap.docs.map((d) => {
-      const raw = d.data() || {};
-
-      // Some existing docs might have accidental extra quotes or a misspelled field 'tittle'
-      const pick = (val, fallback) => {
-        if (val === undefined || val === null) return fallback;
-        if (typeof val === "string") {
-          // Trim and remove leading/trailing single or double quotes if user pasted with quotes
-            const trimmed = val.trim().replace(/^['"]+|['"]+$/g, "");
-            return trimmed || fallback;
-        }
-        return val;
-      };
-
-      const title = pick(raw.title ?? raw.tittle, "Untitled");
-      const author = pick(raw.author, "Unknown");
-      const category = pick(raw.category, "uncategorized").toLowerCase();
-  const cover = pick(raw.cover, "https://via.placeholder.com/200x300?text=No+Cover");
-  const price = Number(raw.price); // could be NaN
+function sanitizeBookDoc(d) {
+  const raw = d.data() || {};
+  const pick = (val, fallback) => {
+    if (val === undefined || val === null) return fallback;
+    if (typeof val === 'string') {
+      const trimmed = val.trim().replace(/^["']+|["']+$/g, '');
+      return trimmed || fallback;
+    }
+    return val;
+  };
+  const title = pick(raw.title ?? raw.tittle, 'Untitled');
+  const author = pick(raw.author, 'Unknown');
+  const category = pick(raw.category, 'uncategorized').toLowerCase();
+  const cover = pick(raw.cover, 'https://via.placeholder.com/200x300?text=No+Cover');
+  const price = Number(raw.price);
   const rating = Number(raw.rating);
   const stock = Number(raw.stock);
+  return {
+    id: d.id,
+    title,
+    author,
+    price: isNaN(price) ? 0 : price,
+    rating: isNaN(rating) ? 5 : rating,
+    category,
+    cover,
+    stock: isNaN(stock) ? 0 : stock,
+  };
+}
 
-      return {
-        id: d.id,
-        title,
-        author,
-        price: isNaN(price) ? 0 : price,
-        rating: isNaN(rating) ? 5 : rating,
-        category,
-        cover,
-        stock: isNaN(stock) ? 0 : stock,
-      };
-    });
-
-    if (!BOOKS.length) {
-      console.warn("loadBooks: No book documents found in Firestore 'books' collection.");
-    } else {
-      console.log(`loadBooks: Loaded ${BOOKS.length} books`, BOOKS);
-    }
+function initBooksRealtime() {
+  const booksCol = collection(db, 'books');
+  const qBooks = query(booksCol, orderBy('title'));
+  onSnapshot(qBooks, (snap) => {
+    BOOKS = snap.docs.map(sanitizeBookDoc);
     renderBooks(BOOKS);
-  } catch (err) {
-    console.error("Failed to load books from Firestore:", err);
-    // Fallback: show empty state
-    BOOKS = [];
-    const grid = document.getElementById("book-grid");
-    if (grid) {
-      grid.innerHTML = '<p style="padding:20px">Failed to load books.</p>';
-    }
-  }
+  }, (err) => {
+    console.error('Books realtime subscription failed', err);
+  });
 }
 
 // --- Render helpers --------------------------------------------------
@@ -776,128 +772,124 @@ window.addEventListener("click", (e) => {
   }
 });
 
-// ---------- Transactions Modal ----------
-async function loadTransactions() {
+// ---------- Transactions Modal (Realtime) ----------
+let txUnsub = null;
+function renderTransactionsSnapshot(snap) {
   if (!transContent) return;
-  const user = auth.currentUser;
-  if (!user) {
-    transContent.innerHTML = `<p>Please log in to see your transactions.</p>`;
-    return;
-  }
-  transContent.innerHTML = `<p>Loading...</p>`;
-  try {
-    const q = query(collection(db, "users", user.uid, "transactions"), orderBy("createdAt", "desc"));
-    const snap = await getDocs(q);
-
-    if (snap.empty) {
-      transContent.innerHTML = `
-        <div class="tx-tabs">
-          <button class="tx-tab active" data-tab="in">In Process</button>
-          <button class="tx-tab" data-tab="done">Complete</button>
-        </div>
-        <div class="tx-panels">
-          <div class="tx-panel" data-tab="in"><p>No transactions yet.</p></div>
-          <div class="tx-panel" data-tab="done" style="display:none;"><p>No transactions yet.</p></div>
-        </div>`;
-      return;
-    }
-
-    const rowsIn = [];
-    const rowsDone = [];
-
-    snap.forEach((d) => {
-      const data = d.data();
-      const date = data.createdAt?.toDate ? data.createdAt.toDate() : null;
-      const when = date ? date.toLocaleString() : "";
-      const total = typeof data.total === "number" ? `₱${data.total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}` : "";
-      const paymentStatus = data.status || "initiated";
-      const deliveryStatus = data.delivstatus || data.deliveryStatus || data.fulfillmentStatus || "pending";
-      const shipFee = typeof data.shippingFee === "number"
-        ? `₱${data.shippingFee.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`
-        : "₱0.00";
-
-      const items = (Array.isArray(data.items) ? data.items : []).map((it) => {
-        const price = typeof it.price === "number" ? `₱${it.price.toLocaleString()}` : "";
-        const qty = it.qty || 1;
-        const cover = it.cover || "";
-        return `
-          <li style="display:flex; gap:16px; align-items:center; padding:14px 0; border-bottom:1px solid var(--line)">
-            <img src="${cover}" alt="" style="width:60px; height:90px; object-fit:cover; border-radius:8px; background:#eee;" />
-            <div style="flex:1; min-width:0;">
-              <div style="font-weight:700; margin-bottom:2px;">${it.title || 'Item'}</div>
-              <div style="font-size:13px; color:var(--muted-ink)">${it.author || ''}</div>
-            </div>
-            <div style="white-space:nowrap;">x${qty}</div>
-            <div style="min-width:90px; text-align:right; font-weight:700;">${price}</div>
-          </li>`;
-      }).join("");
-
-      const payNorm = String(paymentStatus || '').toLowerCase();
-      const delivNorm = String(deliveryStatus || '').toLowerCase();
-      const isPaid = (payNorm === 'paid' || payNorm === 'complete' || payNorm === 'completed' || payNorm === 'success');
-      const isDelivered = (delivNorm === 'delivered');
-      const isComplete = isPaid && isDelivered;
-
-      const actionBtnHtml = isComplete
-        ? `<button class="btn secondary small btn-refund" data-txid="${d.id}">Refund</button>`
-        : `<button class="btn secondary small btn-cancel" data-txid="${d.id}">Cancel</button>`;
-
-      const rowHtml = `
-        <li style="border-bottom:1px solid var(--line); margin:12px 0; padding:8px 0;">
-          <details>
-            <summary style="display:flex; align-items:center; gap:10px; list-style:none; cursor:pointer;">
-              <span class="tx-chevron" aria-hidden="true" style="margin-right:6px; display:inline-flex;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> 
-                  <path d="M6 9l6 6 6-6" stroke="#7E6E5B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </span>
-              <div style="flex:1">
-                <div style="font-weight:700">Order #${d.id}</div>
-                <div style="font-size:12px; color:var(--muted-ink)">${when}</div>
-              </div>
-              <div style="min-width:90px; font-weight:700;">${total}</div>
-              <div class="pill" style="white-space:nowrap; text-transform:capitalize;">${deliveryStatus}</div>
-            </summary>
-            <div style="margin-top:10px; font-size:13px; color:var(--muted-ink);">
-              <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
-                <span><strong>Payment:</strong> ${paymentStatus}</span>
-                <span><strong>Delivery:</strong> ${deliveryStatus}</span>
-                <span><strong>Delivery fee:</strong> ${shipFee}</span>
-              </div>
-            </div>
-            <ul style="list-style:none; padding:0; margin:12px 0 0;">${items || '<li style="padding:8px 0;">No items</li>'}</ul>
-            <div class="tx-actions" style="display:flex; gap:10px; margin-top:12px;">
-              <button class="btn small btn-print" data-txid="${d.id}">Print receipt</button>
-              ${actionBtnHtml}
-            </div>
-          </details>
-        </li>`;
-
-      if (isComplete) rowsDone.push(rowHtml); else rowsIn.push(rowHtml);
-    });
-
-    const inHTML = rowsIn.length ? `<ul style="list-style:none; padding:0; margin:0">${rowsIn.join("")}</ul>` : `<p>No in‑process orders.</p>`;
-    const doneHTML = rowsDone.length ? `<ul style="list-style:none; padding:0; margin:0">${rowsDone.join("")}</ul>` : `<p>No completed orders.</p>`;
-
+  if (snap.empty) {
     transContent.innerHTML = `
       <div class="tx-tabs">
         <button class="tx-tab active" data-tab="in">In Process</button>
         <button class="tx-tab" data-tab="done">Complete</button>
       </div>
       <div class="tx-panels">
-        <div class="tx-panel" data-tab="in">${inHTML}</div>
-        <div class="tx-panel" data-tab="done" style="display:none;">${doneHTML}</div>
+        <div class="tx-panel" data-tab="in"><p>No transactions yet.</p></div>
+        <div class="tx-panel" data-tab="done" style="display:none;"><p>No transactions yet.</p></div>
       </div>`;
-  } catch (err) {
-    console.error("Failed to load transactions", err);
-    transContent.innerHTML = `<p>Failed to load transactions.</p>`;
+    return;
   }
+  const rowsIn = [];
+  const rowsDone = [];
+  snap.forEach((d) => {
+    const data = d.data();
+    const date = data.createdAt?.toDate ? data.createdAt.toDate() : null;
+    const when = date ? date.toLocaleString() : '';
+    const total = typeof data.total === 'number' ? `₱${data.total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}` : '';
+    const paymentStatus = data.status || 'initiated';
+    const deliveryStatus = data.delivstatus || data.deliveryStatus || data.fulfillmentStatus || 'pending';
+    const shipFee = typeof data.shippingFee === 'number'
+      ? `₱${data.shippingFee.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`
+      : '₱0.00';
+    const items = (Array.isArray(data.items) ? data.items : []).map((it) => {
+      const price = typeof it.price === 'number' ? `₱${it.price.toLocaleString()}` : '';
+      const qty = it.qty || 1;
+      const cover = it.cover || '';
+      return `
+        <li style="display:flex; gap:16px; align-items:center; padding:14px 0; border-bottom:1px solid var(--line)">
+          <img src="${cover}" alt="" style="width:60px; height:90px; object-fit:cover; border-radius:8px; background:#eee;" />
+          <div style="flex:1; min-width:0;">
+            <div style="font-weight:700; margin-bottom:2px;">${it.title || 'Item'}</div>
+            <div style="font-size:13px; color:var(--muted-ink)">${it.author || ''}</div>
+          </div>
+            <div style="white-space:nowrap;">x${qty}</div>
+            <div style="min-width:90px; text-align:right; font-weight:700;">${price}</div>
+        </li>`;
+    }).join('');
+    const payNorm = String(paymentStatus||'').toLowerCase();
+    const delivNorm = String(deliveryStatus||'').toLowerCase();
+    const isPaid = (payNorm === 'paid' || payNorm === 'complete' || payNorm === 'completed' || payNorm === 'success');
+    const isDelivered = (delivNorm === 'delivered');
+    const isComplete = isPaid && isDelivered;
+    const actionBtnHtml = isComplete
+      ? `<button class="btn secondary small btn-refund" data-txid="${d.id}">Refund</button>`
+      : `<button class="btn secondary small btn-cancel" data-txid="${d.id}">Cancel</button>`;
+    const rowHtml = `
+      <li style="border-bottom:1px solid var(--line); margin:12px 0; padding:8px 0;">
+        <details>
+          <summary style="display:flex; align-items:center; gap:10px; list-style:none; cursor:pointer;">
+            <span class="tx-chevron" aria-hidden="true" style="margin-right:6px; display:inline-flex;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 9l6 6 6-6" stroke="#7E6E5B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <div style="flex:1">
+              <div style="font-weight:700">Order #${d.id}</div>
+              <div style="font-size:12px; color:var(--muted-ink)">${when}</div>
+            </div>
+            <div style="min-width:90px; font-weight:700;">${total}</div>
+            <div class="pill" style="white-space:nowrap; text-transform:capitalize;">${deliveryStatus}</div>
+          </summary>
+          <div style="margin-top:10px; font-size:13px; color:var(--muted-ink);">
+            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
+              <span><strong>Payment:</strong> ${paymentStatus}</span>
+              <span><strong>Delivery:</strong> ${deliveryStatus}</span>
+              <span><strong>Delivery fee:</strong> ${shipFee}</span>
+            </div>
+          </div>
+          <ul style="list-style:none; padding:0; margin:12px 0 0;">${items || '<li style="padding:8px 0;">No items</li>'}</ul>
+          <div class="tx-actions" style="display:flex; gap:10px; margin-top:12px;">
+            <button class="btn small btn-print" data-txid="${d.id}">Print receipt</button>
+            ${actionBtnHtml}
+          </div>
+        </details>
+      </li>`;
+    if (isComplete) rowsDone.push(rowHtml); else rowsIn.push(rowHtml);
+  });
+  const inHTML = rowsIn.length ? `<ul style="list-style:none; padding:0; margin:0">${rowsIn.join('')}</ul>` : `<p>No in‑process orders.</p>`;
+  const doneHTML = rowsDone.length ? `<ul style="list-style:none; padding:0; margin:0">${rowsDone.join('')}</ul>` : `<p>No completed orders.</p>`;
+  transContent.innerHTML = `
+    <div class="tx-tabs">
+      <button class="tx-tab active" data-tab="in">In Process</button>
+      <button class="tx-tab" data-tab="done">Complete</button>
+    </div>
+    <div class="tx-panels">
+      <div class="tx-panel" data-tab="in">${inHTML}</div>
+      <div class="tx-panel" data-tab="done" style="display:none;">${doneHTML}</div>
+    </div>`;
+}
+
+function subscribeTransactions() {
+  if (!transContent) return;
+  const user = auth.currentUser;
+  if (!user) {
+    transContent.innerHTML = '<p>Please log in to see your transactions.</p>';
+    return;
+  }
+  if (txUnsub) { txUnsub(); txUnsub = null; }
+  transContent.innerHTML = '<p>Loading...</p>';
+  const qTx = query(collection(db, 'users', user.uid, 'transactions'), orderBy('createdAt','desc'));
+  txUnsub = onSnapshot(qTx, (snap) => {
+    renderTransactionsSnapshot(snap);
+  }, (err) => {
+    console.error('Transactions realtime failed', err);
+    transContent.innerHTML = '<p>Failed to load transactions.</p>';
+  });
 }
 
 if (transBtn && transModal) {
-  transBtn.addEventListener("click", async () => {
-    await loadTransactions();
-    transModal.style.display = "flex";
+  transBtn.addEventListener('click', () => {
+    subscribeTransactions();
+    transModal.style.display = 'flex';
   });
 }
 if (closeTrans && transModal) {
