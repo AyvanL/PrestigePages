@@ -454,6 +454,20 @@ body {
   color: #d4a72a;
   letter-spacing: 1px;
 }
+.rating-text { font-size:12px; color: var(--muted-ink); margin-left:4px; }
+
+/* Book detail modal rating summary override */
+#bdRatingSummary .rating, #bdRatingSummary { color:#c89b3c; font-weight:600; }
+#bdRatingSummary span { letter-spacing:1px; }
+#bdRatingSummary .rating-text { color: var(--muted-ink); font-weight:400; }
+
+/* Ensure star picker buttons are visible */
+#bdStarPicker button { color:#c89b3c; }
+#bdStarPicker button:hover { transform:scale(1.1); }
+#bdStarPicker { display:flex; gap:4px; }
+
+/* Dark mode safeguard (if modal overlay dims) */
+#bookDetailModal .modal-content .rating, #bookDetailModal #bdStarPicker button { text-shadow:0 0 2px rgba(0,0,0,0.15); }
 .price-row {
   margin-top: auto;
   display: flex;

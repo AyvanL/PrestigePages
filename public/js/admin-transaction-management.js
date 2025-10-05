@@ -21,6 +21,8 @@ const modalOrder = document.getElementById('modalOrder');
 const modalAmount = document.getElementById('modalAmount');
 const modalDate = document.getElementById('modalDate');
 const modalStatus = document.getElementById('modalStatus');
+const modalItems = document.getElementById('modalItems');
+const modalItemsWrap = document.getElementById('modalItemsWrap');
 
 // State
 let TRANSACTIONS = [];
@@ -63,8 +65,10 @@ async function aggregateTransactions() {
       const deliv = normalizeStatus(data.delivstatus || data.deliveryStatus || data.fulfillmentStatus);
       const isPaid = (pay === 'paid' || pay === 'complete' || pay === 'completed' || pay === 'success');
       const isDelivered = (deliv === 'delivered');
-      const isRefunded = (deliv === 'refunded');
-      if (!((isPaid && isDelivered) || isRefunded)) return;
+      // Exclude any refunded transactions completely
+      if (deliv === 'refunded') return;
+      // Only show paid + delivered
+      if (!(isPaid && isDelivered)) return;
       const created = data.createdAt?.toDate ? data.createdAt.toDate() : null;
       const dateStr = created ? created.toISOString().slice(0,10) : '';
       const amountStr = typeof data.total === 'number' ? `₱${data.total.toLocaleString()}` : '';
@@ -74,7 +78,7 @@ async function aggregateTransactions() {
         orderDetails: d.id,
         amount: amountStr,
         date: dateStr,
-        status: `${(data.status || 'paid').toString().toLowerCase()} / ${(data.delivstatus || (isRefunded?'refunded':'delivered')).toString().toLowerCase()}`,
+        status: `${(data.status || 'paid').toString().toLowerCase()} / ${(data.delivstatus || 'delivered').toString().toLowerCase()}`,
         _uid: uid,
       });
     });
@@ -124,7 +128,7 @@ searchInput?.addEventListener('input', (e) => {
 });
 
 // View modal
-function openModal(txn) {
+async function openModal(txn) {
   if (!modal) return;
   modalTxnId.textContent = txn.id;
   modalCustomer.textContent = txn.customerName || '';
@@ -132,6 +136,52 @@ function openModal(txn) {
   modalAmount.textContent = txn.amount || '';
   modalDate.textContent = txn.date || '';
   modalStatus.textContent = txn.status || '';
+
+  if (modalItems) {
+    modalItems.innerHTML = '<li style="font-size:13px; color:#666;">Loading items...</li>';
+  }
+
+  try {
+    // Attempt to read from top-level transactions first (if mirror exists)
+    let data = null;
+    try {
+      const topSnap = await getDoc(doc(db,'transactions', txn.id));
+      if (topSnap.exists()) data = topSnap.data();
+    } catch {}
+    // Fallback: nested user transaction if we have _uid
+    if (!data && txn._uid) {
+      try {
+        const nested = await getDoc(doc(db,'users', txn._uid, 'transactions', txn.id));
+        if (nested.exists()) data = nested.data();
+      } catch {}
+    }
+    const itemsArr = Array.isArray(data?.items) ? data.items : [];
+    if (!itemsArr.length) {
+      if (modalItems) modalItems.innerHTML = '<li style="font-size:13px; color:#666;">No items recorded.</li>';
+    } else {
+      modalItems.innerHTML = itemsArr.map(it => {
+        const title = (it.title||'Untitled');
+        const author = it.author ? `by ${it.author}` : '';
+        const qty = it.qty || 1;
+        const price = typeof it.price === 'number' ? `₱${it.price.toLocaleString()}` : '';
+        const cover = it.cover || 'https://via.placeholder.com/48x72?text=No+Cover';
+        return `<li style="display:flex; gap:10px; align-items:center; padding:6px 0; border-bottom:1px solid #eee;">
+            <img src="${cover}" alt="" style="width:48px; height:72px; object-fit:cover; border-radius:6px; background:#f5f5f5;" />
+            <div style="flex:1; min-width:0;">
+              <div style="font-weight:600;">${title}</div>
+              <div style="font-size:12px; color:#555;">${author}</div>
+              <div style="font-size:12px; color:#777;">Qty: ${qty}</div>
+            </div>
+            <div style="font-weight:600; white-space:nowrap;">${price}</div>
+          </li>`;
+      }).join('');
+    }
+  } catch (e) {
+    if (modalItems) modalItems.innerHTML = '<li style="font-size:13px; color:#c00;">Failed to load items.</li>';
+    console.error('Load items failed', e);
+  }
+
+  if (modalItemsWrap) modalItemsWrap.style.display = '';
   modal.style.display = 'block';
 }
 

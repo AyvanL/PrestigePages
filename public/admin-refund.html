@@ -31,9 +31,9 @@
     <main class="main-content">
       <h2>Refund Management</h2>
 
-      <!-- ONLY the Refund List remains -->
+      <!-- Refund Requests (pending / processing) -->
       <section class="product-list">
-        <h3>Refund List</h3>
+        <h3>Refund Requests</h3>
         <table>
           <thead>
             <tr>
@@ -47,8 +47,29 @@
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody id="refundList">
-            <!-- rows injected -->
+          <tbody id="refundRequests">
+            <!-- request rows injected -->
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Refund List (processed: refunded / rejected) -->
+      <section class="product-list" style="margin-top:2rem;">
+        <h3>Refund List</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Refund #</th>
+              <th>Order #</th>
+              <th>Customer</th>
+              <th>Amount</th>
+              <th>Method</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="refundHistory">
+            <!-- history rows injected -->
           </tbody>
         </table>
       </section>
@@ -66,25 +87,37 @@
     const peso = v => "₱" + Number(v || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 
     async function loadRefunds(){
-      const tbody = document.querySelector('#refundList');
-      const colSpan = tbody.closest('table')?.querySelectorAll('thead th').length || 8;
-      tbody.innerHTML = `<tr class="loading"><td colspan="${colSpan}" style="text-align:center; padding:12px;"><i class='fas fa-spinner fa-spin'></i> Loading...</td></tr>`;
+      const reqBody = document.querySelector('#refundRequests');
+      const histBody = document.querySelector('#refundHistory');
+      const reqColSpan = reqBody.closest('table')?.querySelectorAll('thead th').length || 8;
+      const histColSpan = histBody.closest('table')?.querySelectorAll('thead th').length || 7;
+      reqBody.innerHTML = `<tr class="loading"><td colspan="${reqColSpan}" style="text-align:center; padding:12px;"><i class='fas fa-spinner fa-spin'></i> Loading requests...</td></tr>`;
+      histBody.innerHTML = `<tr class="loading"><td colspan="${histColSpan}" style="text-align:center; padding:12px;"><i class='fas fa-spinner fa-spin'></i> Loading history...</td></tr>`;
+
       const users = await getDocs(collection(db, 'users'));
-      const rows = [];
+      const requests = []; // refund-processing
+      const history = [];  // refunded, refund-rejected
+
       for (const u of users.docs){
         const uid = u.id; const udata = u.data()||{}; const name = `${udata.firstName||''} ${udata.lastName||''}`.trim() || udata.email || uid;
         const txs = await getDocs(collection(db, 'users', uid, 'transactions'));
         txs.forEach(d => {
           const t = d.data()||{};
-          const deliv = (t.delivstatus||'').toString().toLowerCase();
-          if (deliv !== 'refund-processing') return;
-          rows.push({ uid, id: d.id, name, amount: t.total||0, method: t.paymentMethod||'', status: 'Processing', date: (t.createdAt?.toDate?t.createdAt.toDate().toLocaleString():'' )});
+            const deliv = (t.delivstatus||'').toString().toLowerCase();
+            const base = { uid, id: d.id, name, amount: t.total||0, method: t.paymentMethod||'', date: (t.createdAt?.toDate?t.createdAt.toDate().toLocaleString():'' )};
+            if (deliv === 'refund-processing'){
+              requests.push({ ...base, status: 'Processing' });
+            } else if (deliv === 'refunded' || deliv === 'refund-rejected') {
+              history.push({ ...base, status: deliv === 'refunded' ? 'Refunded' : 'Rejected', raw: deliv });
+            }
         });
       }
-      if (rows.length === 0){
-        tbody.innerHTML = '<tr><td colspan="8" style="padding:14px; text-align:center; color:#666;">No refund requests found.</td></tr>';
+
+      // Populate requests table
+      if (requests.length === 0){
+        reqBody.innerHTML = `<tr><td colspan="${reqColSpan}" style="padding:14px; text-align:center; color:#666;">No refund requests found.</td></tr>`;
       } else {
-        tbody.innerHTML = rows.map(r=>`
+        reqBody.innerHTML = requests.map(r=>`
           <tr>
             <td>${r.id}</td>
             <td>${r.id}</td>
@@ -100,42 +133,57 @@
           </tr>`).join('');
       }
 
-      // Approve handler
-      tbody.addEventListener('click', async (e)=>{
-        const btn = e.target.closest('.approve-refund');
-        if (!btn) return;
-        const uid = btn.getAttribute('data-uid');
-        const id = btn.getAttribute('data-id');
-        if (!uid || !id) return;
-        const ok = confirm('Approve refund for this transaction?');
-        if (!ok) return;
-        try{
-          await updateDoc(doc(db,'users',uid,'transactions',id), { delivstatus: 'refunded', refundApprovedAt: serverTimestamp() });
-          btn.closest('tr')?.remove();
-        }catch(err){
-          alert('Failed to approve refund');
-          console.error(err);
-        }
-      });
+      // Populate history table
+      if (history.length === 0){
+        histBody.innerHTML = `<tr><td colspan="${histColSpan}" style="padding:14px; text-align:center; color:#666;">No processed refunds yet.</td></tr>`;
+      } else {
+        histBody.innerHTML = history.map(r=>`
+          <tr>
+            <td>${r.id}</td>
+            <td>${r.id}</td>
+            <td>${r.name}</td>
+            <td>${peso(r.amount)}</td>
+            <td>${r.method}</td>
+            <td>${r.status === 'Refunded' ? '<span class="badge success">Refunded</span>' : '<span class="badge error">Rejected</span>'}</td>
+            <td>${r.date}</td>
+          </tr>`).join('');
+      }
 
-      // Reject handler -> mark as refund-rejected (stay in refund list with distinct state)
-      tbody.addEventListener('click', async (e)=>{
-        const btn = e.target.closest('.reject-refund');
-        if (!btn) return;
-        const uid = btn.getAttribute('data-uid');
-        const id = btn.getAttribute('data-id');
-        if (!uid || !id) return;
-        const ok = confirm('Reject this refund request? It will be marked as refund-rejected.');
-        if (!ok) return;
-        try{
-          await updateDoc(doc(db,'users',uid,'transactions',id), { delivstatus: 'refund-rejected', refundRejectedAt: serverTimestamp() });
-          // change status badge text instead of removing so admin can still see it
-          const tr = btn.closest('tr');
-          tr?.querySelector('.badge')?.replaceChildren(document.createTextNode('Rejected'));
-          btn.remove(); // remove reject button to prevent duplicate actions
-        }catch(err){
-          alert('Failed to reject refund');
-          console.error(err);
+      // Attach action handlers to requests body only
+      reqBody.addEventListener('click', async (e)=>{
+        const approve = e.target.closest('.approve-refund');
+        if (approve){
+          const uid = approve.getAttribute('data-uid');
+          const id = approve.getAttribute('data-id');
+          if (!uid || !id) return;
+          const ok = confirm('Approve refund for this transaction?');
+          if (!ok) return;
+          try {
+            await updateDoc(doc(db,'users',uid,'transactions',id), { delivstatus: 'refunded', refundApprovedAt: serverTimestamp() });
+            approve.closest('tr')?.remove();
+            // Refresh history list to include newly refunded
+            loadRefunds();
+          } catch(err){
+            alert('Failed to approve refund');
+            console.error(err);
+          }
+          return;
+        }
+        const reject = e.target.closest('.reject-refund');
+        if (reject){
+          const uid = reject.getAttribute('data-uid');
+          const id = reject.getAttribute('data-id');
+            if (!uid || !id) return;
+            const ok = confirm('Reject this refund request? It will be marked as refund-rejected.');
+            if (!ok) return;
+            try {
+              await updateDoc(doc(db,'users',uid,'transactions',id), { delivstatus: 'refund-rejected', refundRejectedAt: serverTimestamp() });
+              reject.closest('tr')?.remove();
+              loadRefunds();
+            } catch(err){
+              alert('Failed to reject refund');
+              console.error(err);
+            }
         }
       });
     }

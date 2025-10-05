@@ -378,6 +378,27 @@ logoutBtn.addEventListener("click", async () => {
 
 // --- Books data (loaded dynamically from Firestore) ------------------
 let BOOKS = [];
+// Book detail modal elements
+const bookDetailModal = document.getElementById('bookDetailModal');
+const closeBookDetail = document.getElementById('closeBookDetail');
+const bdTitle = document.getElementById('bdTitle');
+const bdAuthor = document.getElementById('bdAuthor');
+const bdCover = document.getElementById('bdCover');
+const bdPrice = document.getElementById('bdPrice');
+const bdStock = document.getElementById('bdStock');
+const bdDescription = document.getElementById('bdDescription');
+const bdReviewsList = document.getElementById('bdReviewsList');
+const bdReviewFormWrap = document.getElementById('bdReviewFormWrap');
+const bdReviewForm = document.getElementById('bdReviewForm');
+const bdStarPicker = document.getElementById('bdStarPicker');
+const bdReviewText = document.getElementById('bdReviewText');
+const bdDeleteReview = document.getElementById('bdDeleteReview');
+const bdReviewMsg = document.getElementById('bdReviewMsg');
+const bdRatingSummary = document.getElementById('bdRatingSummary');
+const bdPurchaseNote = document.getElementById('bdPurchaseNote');
+let CURRENT_BOOK_ID = null;
+let CURRENT_BOOK_REVIEWS_UNSUB = null;
+let CURRENT_USER_REVIEW_ID = null; // track if user already reviewed
 
 function sanitizeBookDoc(d) {
   const raw = d.data() || {};
@@ -457,10 +478,14 @@ function renderBooks(list) {
   list.forEach((b) => {
     const card = el("article", "card");
 
-    const img = el("img", "cover");
-    img.alt = `${b.title} cover`;
-    img.src = b.cover;
-    card.appendChild(img);
+  const imgWrap = el('div','cover-wrap');
+  const img = el("img", "cover");
+  img.alt = `${b.title} cover`;
+  img.src = b.cover;
+  img.style.cursor = 'pointer';
+  img.addEventListener('click', () => openBookDetail(b.id));
+  imgWrap.appendChild(img);
+  card.appendChild(imgWrap);
 
     const body = el("div", "card-body");
     body.appendChild(el("div", "title", b.title));
@@ -588,6 +613,206 @@ function renderBooks(list) {
 
     card.appendChild(body);
     grid.appendChild(card);
+  });
+}
+
+// -------------- Book Detail Modal + Reviews --------------
+async function openBookDetail(bookId) {
+  try {
+    const book = BOOKS.find(b => b.id === bookId);
+    if (!book) return;
+    CURRENT_BOOK_ID = bookId;
+    bdTitle.textContent = book.title;
+    bdAuthor.textContent = `by ${book.author}`;
+    bdCover.src = book.cover;
+    bdPrice.textContent = '₱' + book.price.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2});
+    const stockVal = typeof book.stock === 'number'? book.stock : 0;
+    if (stockVal <= 0) {
+      bdStock.innerHTML = `<span class="pill pill-out">Out of stock</span>`;
+    } else if (stockVal <= 3) {
+      bdStock.innerHTML = `<span class="pill pill-low">Low stock (${stockVal})</span>`;
+    } else {
+      bdStock.innerHTML = `<span class="pill">In stock (${stockVal})</span>`;
+    }
+    // Fetch extra book info (description) if exists
+    try {
+      const snap = await getDoc(doc(db,'books', bookId));
+      if (snap.exists()) {
+        const data = snap.data();
+        bdDescription.textContent = data.description || 'No description available.';
+      } else {
+        bdDescription.textContent = 'No description available.';
+      }
+    } catch { bdDescription.textContent = 'No description available.'; }
+
+    // Setup review form state
+    setupReviewPermissions(bookId).then(()=>{
+      subscribeToReviews(bookId);
+    });
+
+    bookDetailModal.style.display = 'flex';
+  } catch (e) { console.error('Open book detail failed', e); }
+}
+
+if (closeBookDetail && bookDetailModal) {
+  closeBookDetail.addEventListener('click', ()=>{ closeBookDetailModal(); });
+}
+window.addEventListener('click', (e)=>{ if (e.target === bookDetailModal) closeBookDetailModal(); });
+function closeBookDetailModal(){
+  bookDetailModal.style.display = 'none';
+  if (CURRENT_BOOK_REVIEWS_UNSUB) { CURRENT_BOOK_REVIEWS_UNSUB(); CURRENT_BOOK_REVIEWS_UNSUB = null; }
+  CURRENT_BOOK_ID = null; CURRENT_USER_REVIEW_ID = null;
+  bdReviewsList.innerHTML='';
+  bdReviewText.value='';
+}
+
+function renderStarPicker(rating){
+  bdStarPicker.innerHTML='';
+  const current = rating || 0;
+  for(let i=1;i<=5;i++){
+    const btn = document.createElement('button');
+    btn.type='button';
+    btn.textContent = i <= current ? '★' : '☆';
+    btn.setAttribute('data-val', i);
+    btn.style.fontSize='22px'; btn.style.lineHeight='1'; btn.style.border='none'; btn.style.background='transparent'; btn.style.cursor='pointer';
+    btn.addEventListener('click', ()=>{
+      bdStarPicker.setAttribute('data-rating', i);
+      renderStarPicker(i);
+    });
+    bdStarPicker.appendChild(btn);
+  }
+}
+renderStarPicker(0);
+
+async function setupReviewPermissions(bookId){
+  const user = auth.currentUser;
+  if (!user){
+    bdReviewFormWrap.style.display='none';
+    bdPurchaseNote.style.display='block';
+    return;
+  }
+  // Determine if user purchased this book (has a paid transaction with the item id or title)
+  bdPurchaseNote.style.display='none';
+  bdReviewFormWrap.style.display='none';
+  CURRENT_USER_REVIEW_ID = null;
+  try {
+    const txCol = collection(db,'users', user.uid, 'transactions');
+    const txSnap = await getDocs(txCol); // could optimize with where clauses if indexed
+    let purchased = false;
+    txSnap.forEach(d => {
+      if (purchased) return;
+      const data = d.data();
+      const status = (data.status||'').toLowerCase();
+      if (status !== 'paid') return;
+      const items = Array.isArray(data.items)? data.items: [];
+      if (items.some(it => it.id === bookId || (it.title === bdTitle.textContent))) purchased = true;
+    });
+    if (purchased){
+      bdReviewFormWrap.style.display='block';
+      // Check existing review by this user
+      const existingSnap = await getDocs(collection(db,'books', bookId, 'reviews'));
+      existingSnap.forEach(r => {
+        const rv = r.data();
+        if (rv.userId === user.uid){
+          CURRENT_USER_REVIEW_ID = r.id;
+          bdReviewText.value = rv.text || '';
+          renderStarPicker(Number(rv.rating)||0);
+          bdStarPicker.setAttribute('data-rating', Number(rv.rating)||0);
+        }
+      });
+      bdDeleteReview.style.display = CURRENT_USER_REVIEW_ID ? 'inline-block' : 'none';
+    } else {
+      bdPurchaseNote.style.display='block';
+    }
+  } catch (e){
+    console.warn('Purchase check failed', e);
+    bdPurchaseNote.style.display='block';
+  }
+}
+
+function subscribeToReviews(bookId){
+  if (CURRENT_BOOK_REVIEWS_UNSUB){ CURRENT_BOOK_REVIEWS_UNSUB(); CURRENT_BOOK_REVIEWS_UNSUB = null; }
+  const revCol = collection(db,'books', bookId, 'reviews');
+  CURRENT_BOOK_REVIEWS_UNSUB = onSnapshot(revCol, (snap)=>{
+    const reviews = [];
+    let total = 0;
+    snap.forEach(d=>{
+      const data = d.data();
+      const rating = Number(data.rating)||0;
+      total += rating;
+      reviews.push({ id:d.id, ...data, rating });
+    });
+    const avg = reviews.length ? (total / reviews.length) : 0;
+    bdRatingSummary.innerHTML = reviews.length ? `${'★'.repeat(Math.round(avg)) + '☆'.repeat(5-Math.round(avg))} <span style="font-size:13px; color:var(--muted-ink);">(${avg.toFixed(1)} avg from ${reviews.length} review${reviews.length>1?'s':''})</span>` : '<span style="font-size:13px; color:var(--muted-ink);">No reviews yet.</span>';
+    reviews.sort((a,b)=> (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+    bdReviewsList.innerHTML = reviews.map(r => {
+      const filled = '★'.repeat(Math.round(r.rating));
+      const empty = '☆'.repeat(5-Math.round(r.rating));
+      const when = r.createdAt?.toDate ? r.createdAt.toDate().toLocaleString() : '';
+      const owner = (auth.currentUser && r.userId === auth.currentUser.uid) ? '<span style="color:var(--muted-ink); font-size:11px;">(You)</span>' : '';
+      return `<div style="border:1px solid var(--line); padding:10px 12px; border-radius:8px;">
+        <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
+          <div style="font-weight:600; font-size:14px;">${r.userName || 'User'} ${owner}</div>
+          <div style="font-size:16px; color:#C89B3C;">${filled}${empty}</div>
+        </div>
+        <div style="font-size:12px; color:var(--muted-ink); margin:2px 0 6px;">${when}</div>
+        <div style="font-size:14px; white-space:pre-wrap;">${(r.text||'').replace(/[<>]/g,'')}</div>
+      </div>`;
+    }).join('');
+  }, (err)=>{ console.warn('Reviews snapshot failed', err); });
+}
+
+if (bdReviewForm){
+  bdReviewForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const user = auth.currentUser;
+    if (!user || !CURRENT_BOOK_ID){ return; }
+    const rating = Number(bdStarPicker.getAttribute('data-rating'))||0;
+    if (rating < 1){ bdReviewMsg.textContent = 'Please select a star rating.'; return; }
+    const text = bdReviewText.value.trim();
+    try {
+      const reviewData = {
+        userId: user.uid,
+        userName: welcomeEl.textContent || user.email || 'User',
+        rating,
+        text,
+        updatedAt: serverTimestamp(),
+      };
+      if (CURRENT_USER_REVIEW_ID){
+        await updateDoc(doc(db,'books', CURRENT_BOOK_ID, 'reviews', CURRENT_USER_REVIEW_ID), reviewData);
+        bdReviewMsg.textContent = 'Review updated.';
+      } else {
+        reviewData.createdAt = serverTimestamp();
+        const newRef = doc(collection(db,'books', CURRENT_BOOK_ID, 'reviews'));
+        await setDoc(newRef, reviewData);
+        CURRENT_USER_REVIEW_ID = newRef.id;
+        bdDeleteReview.style.display = 'inline-block';
+        bdReviewMsg.textContent = 'Review posted.';
+      }
+    } catch (err){
+      console.error('Save review failed', err);
+      bdReviewMsg.textContent = 'Failed to save review.';
+    }
+  });
+}
+
+if (bdDeleteReview){
+  bdDeleteReview.addEventListener('click', async ()=>{
+    if (!CURRENT_BOOK_ID || !CURRENT_USER_REVIEW_ID) return;
+    const ok = confirm('Delete your review?');
+    if (!ok) return;
+    try {
+      await deleteDoc(doc(db,'books', CURRENT_BOOK_ID, 'reviews', CURRENT_USER_REVIEW_ID));
+      CURRENT_USER_REVIEW_ID = null;
+      bdReviewText.value='';
+      bdStarPicker.setAttribute('data-rating','0');
+      renderStarPicker(0);
+      bdDeleteReview.style.display='none';
+      bdReviewMsg.textContent='Review deleted.';
+    } catch (e){
+      console.error('Delete review failed', e);
+      bdReviewMsg.textContent='Failed to delete review.';
+    }
   });
 }
 
@@ -812,21 +1037,7 @@ function renderTransactionsSnapshot(snap) {
     const shipFee = typeof data.shippingFee === 'number'
       ? `₱${data.shippingFee.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`
       : '₱0.00';
-    const items = (Array.isArray(data.items) ? data.items : []).map((it) => {
-      const price = typeof it.price === 'number' ? `₱${it.price.toLocaleString()}` : '';
-      const qty = it.qty || 1;
-      const cover = it.cover || '';
-      return `
-        <li style="display:flex; gap:16px; align-items:center; padding:14px 0; border-bottom:1px solid var(--line)">
-          <img src="${cover}" alt="" style="width:60px; height:90px; object-fit:cover; border-radius:8px; background:#eee;" />
-          <div style="flex:1; min-width:0;">
-            <div style="font-weight:700; margin-bottom:2px;">${it.title || 'Item'}</div>
-            <div style="font-size:13px; color:var(--muted-ink)">${it.author || ''}</div>
-          </div>
-            <div style="white-space:nowrap;">x${qty}</div>
-            <div style="min-width:90px; text-align:right; font-weight:700;">${price}</div>
-        </li>`;
-    }).join('');
+    const itemsArr = Array.isArray(data.items) ? data.items : [];
     const payNorm = String(paymentStatus||'').toLowerCase();
     const delivNorm = String(deliveryStatus||'').toLowerCase();
     const isPaid = (payNorm === 'paid' || payNorm === 'complete' || payNorm === 'completed' || payNorm === 'success');
@@ -834,6 +1045,25 @@ function renderTransactionsSnapshot(snap) {
     const delivLower = String(deliveryStatus).toLowerCase();
   const isRefundState = (delivLower === 'refund-processing' || delivLower === 'refunded' || delivLower === 'refund-rejected');
     const isComplete = isPaid && isDelivered;
+    const items = itemsArr.map((it) => {
+      const price = typeof it.price === 'number' ? `₱${it.price.toLocaleString()}` : '';
+      const qty = it.qty || 1;
+      const cover = it.cover || '';
+      const rateBtn = (isComplete && !isRefundState) ? `<button class=\"btn tertiary small btn-rate-book\" data-book-id=\"${it.id || ''}\" data-title=\"${(it.title||'').replace(/"/g,'&quot;')}\" data-author=\"${(it.author||'').replace(/"/g,'&quot;')}\" style=\"margin-left:auto;\">Rate</button>` : '';
+      return `
+        <li style=\"display:flex; gap:16px; align-items:center; padding:14px 0; border-bottom:1px solid var(--line)\">
+          <img src=\"${cover}\" alt=\"\" style=\"width:60px; height:90px; object-fit:cover; border-radius:8px; background:#eee;\" />
+          <div style=\"flex:1; min-width:0;\">
+            <div style=\"font-weight:700; margin-bottom:2px;\">${it.title || 'Item'}</div>
+            <div style=\"font-size:13px; color:var(--muted-ink)\">${it.author || ''}</div>
+            <div style=\"display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px;\">
+              <span style=\"font-size:12px; color:var(--muted-ink);\">Qty: ${qty}</span>
+              <span style=\"font-size:12px; font-weight:600;\">${price}</span>
+              ${rateBtn}
+            </div>
+          </div>
+        </li>`;
+    }).join('');
     let actionBtnHtml = '';
     if (isRefundState) {
       if (delivLower === 'refund-processing') {
@@ -942,6 +1172,27 @@ if (transContent) {
       return;
     }
     const user = auth.currentUser;
+    // Rate button inside completed order items
+    const rateBtn = e.target.closest('.btn-rate-book');
+    if (rateBtn && user) {
+      const bookId = rateBtn.getAttribute('data-book-id');
+      let idToOpen = bookId;
+      if (!idToOpen) {
+        const title = rateBtn.getAttribute('data-title')||'';
+        const author = rateBtn.getAttribute('data-author')||'';
+        const match = BOOKS.find(b => b.title === title && (!author || b.author === author));
+        if (match) idToOpen = match.id;
+      }
+      if (idToOpen) {
+        openBookDetail(idToOpen);
+        setTimeout(()=>{
+          const reviewSection = document.getElementById('bdReviewsSection');
+          if (reviewSection) reviewSection.scrollIntoView({behavior:'smooth'});
+          if (bdReviewText) bdReviewText.focus({preventScroll:true});
+        }, 300);
+      }
+      return; // stop further handling
+    }
     const printBtn = e.target.closest('.btn-print');
     if (printBtn && user) {
       const txid = printBtn.getAttribute('data-txid');
