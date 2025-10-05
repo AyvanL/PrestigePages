@@ -269,18 +269,61 @@ onAuthStateChanged(auth, async (user) => {
     try {
       const pendingTx = localStorage.getItem("pp:clearCartTx");
       if (pendingTx) {
-        // Mark the transaction as paid and clear cart if thank-you couldn't do it
+        const txRef = doc(db, "users", user.uid, "transactions", pendingTx);
         try {
-          await updateDoc(doc(db, "users", user.uid, "transactions", pendingTx), {
-            status: "paid",
-            paidAt: serverTimestamp(),
-          });
+          const snap = await getDoc(txRef);
+          if (snap.exists()) {
+            const txData = snap.data();
+            // Deduct stock here if not yet deducted (mirrors thankyou logic simplified)
+            if (!txData.stockDeducted) {
+              const items = Array.isArray(txData.items) ? txData.items : [];
+              for (const it of items) {
+                const qty = Math.max(1, Number(it.qty || 1));
+                if (it.id) {
+                  const bookRef = doc(db, 'books', it.id);
+                  try {
+                    const bSnap = await getDoc(bookRef);
+                    if (bSnap.exists()) {
+                      let cur = bSnap.data().stock;
+                      if (typeof cur === 'string') { const p = parseInt(cur,10); cur = isNaN(p)?0:p; }
+                      if (typeof cur !== 'number') cur = 0;
+                      const newStock = Math.max(0, cur - qty);
+                      await updateDoc(bookRef, { stock: newStock });
+                    }
+                  } catch (e) { console.warn('Fallback stock deduction (id) failed', e); }
+                } else if (it.title) {
+                  // Fallback match title+author (inefficient)
+                  try {
+                    const all = await getDocs(collection(db,'books'));
+                    const needleTitle = String(it.title).trim().toLowerCase();
+                    const needleAuthor = String(it.author||'').trim().toLowerCase();
+                    const match = all.docs.find(d=>{
+                      const dData = d.data()||{};
+                      return String(dData.title||'').trim().toLowerCase()===needleTitle && (!needleAuthor || String(dData.author||'').trim().toLowerCase()===needleAuthor);
+                    });
+                    if (match) {
+                      const bData = match.data();
+                      let cur = bData.stock;
+                      if (typeof cur === 'string') { const p = parseInt(cur,10); cur = isNaN(p)?0:p; }
+                      if (typeof cur !== 'number') cur = 0;
+                      const newStock = Math.max(0, cur - qty);
+                      await updateDoc(doc(db,'books', match.id), { stock: newStock });
+                    }
+                  } catch (e) { console.warn('Fallback stock deduction (title) failed', e); }
+                }
+              }
+              await updateDoc(txRef, { stockDeducted: true });
+            }
+            // Mark transaction paid (best-effort) and clear cart
+            try {
+              await updateDoc(txRef, { status: 'paid', paidAt: serverTimestamp() });
+            } catch {}
+          }
         } catch (e) {
-          console.warn("Could not mark transaction paid from homepage fallback", e);
+          console.warn('Could not process fallback transaction', e);
         }
-        await updateDoc(doc(db, "users", user.uid), { cart: [] });
-        cart = [];
-        await updateCart();
+        try { await updateDoc(doc(db, "users", user.uid), { cart: [] }); } catch {}
+        cart = []; await updateCart();
         localStorage.removeItem("pp:clearCartTx");
       }
     } catch {}
@@ -441,7 +484,13 @@ function renderBooks(list) {
     );
   const stockVal = typeof b.stock === 'number' ? b.stock : 0;
   const inStock = stockVal > 0;
-  const pill = el("div", "pill" + (inStock ? "" : " pill-out"), inStock ? (stockVal > 0 ? `In stock (${stockVal})` : "In stock") : "Out of stock");
+  const LOW_THRESHOLD = 3;
+  let pillText;
+  let pillClass = 'pill';
+  if (!inStock) { pillText = 'Out of stock'; pillClass += ' pill-out'; }
+  else if (stockVal <= LOW_THRESHOLD) { pillText = `Low stock (${stockVal})`; pillClass += ' pill-low'; }
+  else { pillText = `In stock (${stockVal})`; }
+  const pill = el("div", pillClass, pillText);
   priceRow.appendChild(pill);
     body.appendChild(priceRow);
 
@@ -451,10 +500,13 @@ function renderBooks(list) {
   addBtn.textContent = inStock ? "Add to Cart" : "Out of Stock";
   addBtn.disabled = !inStock;
     addBtn.addEventListener("click", async () => {
+      if (!inStock) return;
       const existing = cart.find((c) => c.title === b.title);
       if (existing) {
+        if (existing.qty >= stockVal) { alert('Reached available stock.'); return; }
         existing.qty++;
       } else {
+        if (stockVal < 1) return;
         cart.push({ ...b, qty: 1 });
       }
       await saveCartToFirestore();
@@ -686,6 +738,11 @@ async function updateCart() {
     });
 
     div.querySelector(".increase").addEventListener("click", async () => {
+      const maxStock = typeof item.stock === 'number' ? item.stock : Infinity;
+      if (item.stock !== undefined && item.qty >= maxStock) {
+        alert('Cannot exceed available stock.');
+        return;
+      }
       item.qty++;
       await updateCart();
       await saveCartToFirestore();

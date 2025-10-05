@@ -1060,6 +1060,12 @@ footer {
   border: 1px solid #f5b5b5;
 }
 
+.pill.pill-low {
+  background: #fff4cc;
+  color: #9a6b00;
+  border: 1px solid #f2d27a;
+}
+
 .btn.disabled, .btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
