@@ -302,8 +302,8 @@ onAuthStateChanged(auth, async (user) => {
       }
     } catch {}
 
-    // Render books after wishlist is loaded
-    renderBooks(BOOKS);
+  // Load books from Firestore after wishlist is loaded
+  await loadBooks();
   } else {
     // Not logged in → redirect to login
     window.location.href = "login.html";
@@ -321,82 +321,62 @@ logoutBtn.addEventListener("click", async () => {
   }
 });
 
-// --- Demo data -------------------------------------------------------
-const BOOKS = [
-  {
-    title: "For the Record",
-    author: "Emma Lord",
-    price: 1025.99,
-    rating: 4,
-    category: "romance",
-    cover:
-      "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1726945848i/217387723.jpg",
-  },
-  {
-    title: "High Seasons",
-    author: "Katie Bishop",
-    price: 1709.94,
-    rating: 3.83,
-    category: "mystery",
-    cover:
-      "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1728226919i/217388179.jpg",
-  },
-  {
-    title:
-      "We Are Eating the Earth: The Race to Fix Our Food System and Save Our Climate",
-    author: "Michael Grunwarld",
-    price: 1708.17,
-    rating: 4.26,
-    category: "science",
-    cover:
-      "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1732454271i/220595471.jpg",
-  },
-  {
-    title: "Hotshot: A Life on Fire",
-    author: "River Selby",
-    price: 1200,
-    rating: 3.81,
-    category: "non-fiction",
-    cover:
-      "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1739100108i/219301091.jpg",
-  },
-  {
-    title: "Ghost Circus",
-    author: "Adrienne Kress, Jade Zhang",
-    price: 799,
-    rating: 4,
-    category: "children",
-    cover:
-      "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1740594745i/218681305.jpg",
-  },
-  {
-    title: "The Fellowship of the Ring",
-    author: "J.R.R. Tolkien",
-    price: 799,
-    rating: 4,
-    category: "classics",
-    cover:
-      "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1654215925i/61215351.jpg",
-  },
-  {
-    title: "Psylocke Vol. 1: Guardian",
-    author: "Alyssa Wong",
-    price: 799,
-    rating: 3.52,
-    category: "comics",
-    cover:
-      "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1728445659i/220240990.jpg",
-  },
-  {
-    title: "Abundance",
-    author: "Ezra Klein, Derek Thompson",
-    price: 799,
-    rating: 4.02,
-    category: "business",
-    cover:
-      "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1737312514i/176444106.jpg",
-  },
-];
+// --- Books data (loaded dynamically from Firestore) ------------------
+let BOOKS = [];
+
+async function loadBooks() {
+  try {
+    const booksCol = collection(db, "books");
+    const qBooks = query(booksCol, orderBy("title"));
+    const snap = await getDocs(qBooks);
+    BOOKS = snap.docs.map((d) => {
+      const raw = d.data() || {};
+
+      // Some existing docs might have accidental extra quotes or a misspelled field 'tittle'
+      const pick = (val, fallback) => {
+        if (val === undefined || val === null) return fallback;
+        if (typeof val === "string") {
+          // Trim and remove leading/trailing single or double quotes if user pasted with quotes
+            const trimmed = val.trim().replace(/^['"]+|['"]+$/g, "");
+            return trimmed || fallback;
+        }
+        return val;
+      };
+
+      const title = pick(raw.title ?? raw.tittle, "Untitled");
+      const author = pick(raw.author, "Unknown");
+      const category = pick(raw.category, "uncategorized").toLowerCase();
+      const cover = pick(raw.cover, "https://via.placeholder.com/200x300?text=No+Cover");
+      const price = Number(raw.price); // could be NaN
+      const rating = Number(raw.rating);
+
+      return {
+        id: d.id,
+        title,
+        author,
+        price: isNaN(price) ? 0 : price,
+        rating: isNaN(rating) ? 5 : rating,
+        category,
+        cover,
+      };
+    });
+
+    if (!BOOKS.length) {
+      console.warn("loadBooks: No book documents found in Firestore 'books' collection.");
+    } else {
+      console.log(`loadBooks: Loaded ${BOOKS.length} books`, BOOKS);
+    }
+    renderBooks(BOOKS);
+  } catch (err) {
+    console.error("Failed to load books from Firestore:", err);
+    // Fallback: show empty state
+    BOOKS = [];
+    const grid = document.getElementById("book-grid");
+    if (grid) {
+      grid.innerHTML = '<p style="padding:20px">Failed to load books.</p>';
+    }
+  }
+}
 
 // --- Render helpers --------------------------------------------------
 const el = (tag, cls, html) => {

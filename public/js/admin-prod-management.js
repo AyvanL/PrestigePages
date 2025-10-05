@@ -9,6 +9,9 @@ import {
     addDoc,
     getDocs,
     getDoc,
+    onSnapshot,
+    query,
+    orderBy,
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -16,136 +19,187 @@ import { firebaseConfig } from "./firebase-config.js";
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Add Product Form Handler
+// Add Book Form Handler
 const productForm = document.getElementById("productForm");
 productForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const title = document.getElementById("productTitle").value;
-    const description = document.getElementById("productDescription").value;
+        const strip = (s) => s.trim().replace(/^['"]+|['"]+$/g, "");
+        const title = strip(document.getElementById("productTitle").value);
+        const author = strip(document.getElementById("productAuthor").value);
+        const cover = strip(document.getElementById("productCover").value);
+        const category = strip(document.getElementById("productCategory").value).toLowerCase();
     const price = parseFloat(document.getElementById("productPrice").value);
-    const category = document.getElementById("productCategory").value;
+    const ratingRaw = parseFloat(document.getElementById("productRating").value);
+    const stockRaw = parseInt(document.getElementById("productStock").value, 10);
+
+    const rating = isNaN(ratingRaw) ? 5 : Math.min(5, Math.max(0, ratingRaw));
+    const stock = isNaN(stockRaw) || stockRaw < 0 ? 0 : stockRaw;
+
+    if (!title || !author || !cover || !category || isNaN(price)) {
+        alert("Please fill out all required fields correctly.");
+        return;
+    }
 
     try {
-        const newProduct = {
-            title,
-            description,
-            price,
-            category,
-            status: "active",
+            const newBook = {
+                title,
+                author,
+                cover,
+                category,
+            price: Number(price.toFixed(2)),
+            rating,
+            stock,
             createdAt: new Date(),
+            updatedAt: new Date(),
         };
 
-        // Add the product to Firestore
-        await addDoc(collection(db, "products"), newProduct);
-        alert("Product added successfully!");
+        await addDoc(collection(db, "books"), newBook);
+        alert("Book added successfully!");
         productForm.reset();
-        loadProductList(); // Reload the product list
+        loadProductList();
     } catch (error) {
-        console.error("Error adding product: ", error);
-        alert("Failed to add product.");
+        console.error("Error adding book: ", error);
+        alert("Failed to add book.");
     }
 });
 
-// Load Product List
-async function loadProductList() {
+let BOOK_CACHE = [];
+
+function renderBookRows(list) {
+    const strip = (s) => (typeof s === 'string' ? s.trim().replace(/^['"]+|['"]+$/g, "") : s);
     const productList = document.getElementById("product-list");
-    productList.innerHTML = '<tr><td colspan="5" style="padding:12px; text-align:center; color:#555;">Loading...</td></tr>';
-
-    try {
-        const querySnapshot = await getDocs(collection(db, "products"));
-        const rows = [];
-        querySnapshot.forEach((docu) => {
-            const product = docu.data();
-            const productId = docu.id;
-            rows.push({ product, productId });
-        });
-
-        if (rows.length === 0) {
-            productList.innerHTML = '<tr><td colspan="5" style="padding:12px; text-align:center; color:#777;">No products found.</td></tr>';
-            return;
-        }
-
-        productList.innerHTML = '';
-        rows.forEach(({ product, productId }) => {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-                <td>${product.title}</td>
-                <td>${product.price}</td>
-                <td>${product.category}</td>
-                <td class="status">${product.status}</td>
-                <td>
-                    <button class="edit" onclick="editProduct('${productId}')">Edit</button>
-                    <button class="delete" onclick="deleteProduct('${productId}')">Delete</button>
-                </td>
-            `;
-            productList.appendChild(row);
-        });
-    } catch (error) {
-        console.error("Error loading products: ", error);
-        productList.innerHTML = '<tr><td colspan="5" style="padding:12px; text-align:center; color:#b91c1c;">Failed to load products.</td></tr>';
+    if (!productList) return;
+    if (!list.length) {
+        productList.innerHTML = '<tr><td colspan="8" style="padding:12px; text-align:center; color:#777;">No books found.</td></tr>';
+        return;
     }
+    productList.innerHTML = '';
+    list.forEach(({ book, productId }) => {
+    const rawCover = book.cover || '';
+    const cleanedCover = typeof rawCover === 'string' ? rawCover.trim().replace(/^['"]+|['"]+$/g, "") : rawCover;
+    const safeCover = cleanedCover.startsWith('http://') || cleanedCover.startsWith('https://') ? cleanedCover : '';
+    const thumb = safeCover ? `<img src="${safeCover}" alt="${book.title || 'cover'}" style="width:40px; height:55px; object-fit:cover; border:1px solid #ddd; border-radius:4px;" onerror="this.onerror=null;this.replaceWith('<div style=\'width:40px;height:55px;background:#f3f3f3;border:1px solid #ddd;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#999;\'>IMG</div>')"/>` : '<div style="width:40px;height:55px;background:#eee;border:1px solid #ddd;border-radius:4px;"></div>';
+        const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${thumb}</td>
+                <td>${strip(book.title) || ''}</td>
+                <td>${strip(book.author) || ''}</td>
+                <td>${strip(book.category) || ''}</td>
+            <td>₱${Number(book.price || 0).toFixed(2)}</td>
+            <td>${(book.rating !== undefined ? Number(book.rating).toFixed(1) : '5.0')}</td>
+            <td>${book.stock !== undefined ? book.stock : 0}</td>
+            <td>
+                <button class="edit" onclick="editProduct('${productId}')">Edit</button>
+                <button class="delete" onclick="deleteProduct('${productId}')">Delete</button>
+            </td>`;
+        productList.appendChild(row);
+    });
 }
 
-// Delete Product Function
+function applySearchFilter() {
+    const q = (document.getElementById('bookSearch')?.value || '').toLowerCase().trim();
+    if (!q) {
+        renderBookRows(BOOK_CACHE);
+        return;
+    }
+    const filtered = BOOK_CACHE.filter(({ book }) => {
+        return [book.title, book.author, book.category]
+            .filter(Boolean)
+            .some(v => v.toLowerCase().includes(q));
+    });
+    renderBookRows(filtered);
+}
+
+// Realtime subscription
+function loadProductList() {
+    const productList = document.getElementById("product-list");
+    if (productList) {
+        productList.innerHTML = '<tr><td colspan="8" style="padding:12px; text-align:center; color:#555;">Loading...</td></tr>';
+    }
+    const booksCol = collection(db, 'books');
+    const qRef = query(booksCol, orderBy('title'));
+    onSnapshot(qRef, (snap) => {
+        BOOK_CACHE = snap.docs.map(d => ({ book: d.data(), productId: d.id }));
+        applySearchFilter();
+    }, (err) => {
+        console.error('Realtime books error:', err);
+        if (productList) productList.innerHTML = '<tr><td colspan="8" style="padding:12px; text-align:center; color:#b91c1c;">Failed to load books (realtime).</td></tr>';
+    });
+}
+
+// Delete Book Function
 async function deleteProduct(productId) {
     try {
-        const productDocRef = doc(db, "products", productId);
+        const productDocRef = doc(db, "books", productId);
         await deleteDoc(productDocRef);
-        alert("Product deleted successfully!");
-        loadProductList(); // Reload the product list
+        alert("Book deleted successfully!");
+        loadProductList();
     } catch (error) {
-        console.error("Error deleting product: ", error);
-        alert("Failed to delete product.");
+        console.error("Error deleting book: ", error);
+        alert("Failed to delete book.");
     }
 }
 
-// Edit Product Function
+// Edit Book Function
 async function editProduct(productId) {
-    // Get product details
-    const productDocRef = doc(db, "products", productId);
+    const productDocRef = doc(db, "books", productId);
     const productDoc = await getDoc(productDocRef);
-    const productData = productDoc.data();
+    const data = productDoc.data() || {};
 
-    // Populate the modal form with existing data
-    document.getElementById("editTitle").value = productData.title;
-    document.getElementById("editDescription").value = productData.description;
-    document.getElementById("editPrice").value = productData.price;
-    document.getElementById("editCategory").value = productData.category;
+        const strip = (s) => (typeof s === 'string' ? s.trim().replace(/^['"]+|['"]+$/g, "") : s);
+        document.getElementById("editTitle").value = strip(data.title) || "";
+        document.getElementById("editAuthor").value = strip(data.author) || "";
+        document.getElementById("editCover").value = strip(data.cover) || "";
+        document.getElementById("editCategory").value = strip(data.category) || "";
+    document.getElementById("editPrice").value = data.price || 0;
+    document.getElementById("editRating").value = data.rating || 5;
+    document.getElementById("editStock").value = data.stock || 0;
 
-    // Show the modal
     const editModal = document.getElementById("editModal");
-    editModal.style.display = "block"; // Open the modal
+    editModal.style.display = "block";
     const closeModalBtn = document.getElementById("closeModalBtn");
 
-    // Update product when the form is submitted
     const editForm = document.getElementById("editForm");
-    editForm.addEventListener("submit", async (e) => {
+    // Remove any previous submit listeners by cloning (simple approach for this context)
+    const newForm = editForm.cloneNode(true);
+    editForm.parentNode.replaceChild(newForm, editForm);
+
+    newForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-
-        const updatedProduct = {
-            title: document.getElementById("editTitle").value,
-            description: document.getElementById("editDescription").value,
+            const strip = (s) => s.trim().replace(/^['"]+|['"]+$/g, "");
+            const updated = {
+                title: strip(document.getElementById("editTitle").value),
+                author: strip(document.getElementById("editAuthor").value),
+                cover: strip(document.getElementById("editCover").value),
+                category: strip(document.getElementById("editCategory").value).toLowerCase(),
             price: parseFloat(document.getElementById("editPrice").value),
-            category: document.getElementById("editCategory").value,
+            rating: Math.min(5, Math.max(0, parseFloat(document.getElementById("editRating").value))),
+            stock: Math.max(0, parseInt(document.getElementById("editStock").value, 10) || 0),
+            updatedAt: new Date(),
         };
-
         try {
-            await updateDoc(productDocRef, updatedProduct);
-            alert("Product updated successfully!");
-            loadProductList(); // Reload the product list
-            editModal.style.display = "none"; // Close the modal
+            await updateDoc(productDocRef, updated);
+            alert("Book updated successfully!");
+            loadProductList();
+            editModal.style.display = "none";
         } catch (error) {
-            console.error("Error updating product: ", error);
-            alert("Failed to update product.");
+            console.error("Error updating book: ", error);
+            alert("Failed to update book.");
         }
     });
 
-    // Close the modal when the close button is clicked
-    closeModalBtn.addEventListener("click", () => {
-        editModal.style.display = "none"; // Close the modal
-    });
+    const closeBtnNew = document.getElementById("closeModalBtn");
+    closeBtnNew.addEventListener("click", () => (editModal.style.display = "none"));
 }
 
-// Load product list on page load
+// Load books list on page load
 loadProductList();
+
+// Search listener
+const searchEl = document.getElementById('bookSearch');
+if (searchEl) searchEl.addEventListener('input', () => applySearchFilter());
+
+// Expose functions for inline onclick attributes
+window.editProduct = editProduct;
+window.deleteProduct = deleteProduct;

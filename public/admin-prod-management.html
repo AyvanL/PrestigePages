@@ -28,35 +28,50 @@
 
       <!-- Add New Product Form Section -->
       <section class="form-container">
-        <h3>Add New Product</h3>
+        <h3>Add New Book</h3>
         <form id="productForm" class="form">
-          <label for="productTitle">Product Title</label>
+          <label for="productTitle">Title</label>
           <input type="text" id="productTitle" name="title" required>
 
-          <label for="productDescription">Description</label>
-          <textarea id="productDescription" name="description" required></textarea>
+          <label for="productAuthor">Author</label>
+          <input type="text" id="productAuthor" name="author" required>
 
-          <label for="productPrice">Price</label>
-          <input type="number" id="productPrice" name="price" required>
+          <label for="productCover">Cover URL</label>
+          <input type="url" id="productCover" name="cover" placeholder="https://..." required>
 
           <label for="productCategory">Category</label>
-          <input type="text" id="productCategory" name="category" required>
+          <input type="text" id="productCategory" name="category" placeholder="romance, mystery..." required>
 
-          <button type="submit" class="btn">Add Product</button>
+          <label for="productPrice">Price (₱)</label>
+          <input type="number" step="0.01" id="productPrice" name="price" required>
+
+          <label for="productRating">Rating (0-5)</label>
+          <input type="number" step="0.1" id="productRating" name="rating" value="5" min="0" max="5" required>
+
+          <label for="productStock">Stock</label>
+          <input type="number" id="productStock" name="stock" value="0" min="0" required>
+
+          <button type="submit" class="btn">Add Book</button>
         </form>
       </section>
 
       <!-- Product List Section -->
       <section class="product-list">
-        <h3>Product List</h3>
+        <h3>Books List</h3>
+        <div style="margin:8px 0 14px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+          <input type="text" id="bookSearch" placeholder="Search title, author, category..." style="flex:1; min-width:240px; padding:8px 10px; border:1px solid #ccc; border-radius:4px;" />
+          <small style="color:#666;">Realtime updates enabled</small>
+        </div>
         <table>
           <thead>
             <tr>
-              <th>Product Title</th>
-              <th>Price</th>
+              <th>Cover</th>
+              <th>Title</th>
+              <th>Author</th>
               <th>Category</th>
-              <th>Status</th>
-              <th>Stocks</th>
+              <th>Price (₱)</th>
+              <th>Rating</th>
+              <th>Stock</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -71,28 +86,37 @@
   <!-- Edit Product Modal -->
   <div id="editModal" class="modal">
     <div class="modal-content">
-      <h3>Edit Product</h3>
+      <h3>Edit Book</h3>
       <form id="editForm">
-        <label for="editTitle">Product Title</label>
+        <label for="editTitle">Title</label>
         <input type="text" id="editTitle" name="title" required>
 
-        <label for="editDescription">Description</label>
-        <textarea id="editDescription" name="description" required></textarea>
+        <label for="editAuthor">Author</label>
+        <input type="text" id="editAuthor" name="author" required>
 
-        <label for="editPrice">Price</label>
-        <input type="number" id="editPrice" name="price" required>
+        <label for="editCover">Cover URL</label>
+        <input type="url" id="editCover" name="cover" required>
 
         <label for="editCategory">Category</label>
         <input type="text" id="editCategory" name="category" required>
 
-        <button type="submit" class="btn">Update Product</button>
+        <label for="editPrice">Price (₱)</label>
+        <input type="number" step="0.01" id="editPrice" name="price" required>
+
+        <label for="editRating">Rating (0-5)</label>
+        <input type="number" step="0.1" id="editRating" name="rating" min="0" max="5" required>
+
+        <label for="editStock">Stock</label>
+        <input type="number" id="editStock" name="stock" min="0" required>
+
+        <button type="submit" class="btn">Update Book</button>
         <button type="button" id="closeModalBtn" class="btn cancel">Cancel</button>
       </form>
     </div>
   </div>
 
-  <!-- Optional Scripts -->
-  <script src="admin-prod-management.js"></script>
+  <!-- Scripts -->
+  <script type="module" src="js/admin-prod-management.js"></script>
 </body>
 
 </html>
