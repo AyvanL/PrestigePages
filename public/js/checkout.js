@@ -118,6 +118,7 @@ async function loadCartFromFirestore() {
   setVal("shippingPhone", data.mobile || "");
   setVal("shippingUnit", data.houseNo || "");
   setVal("shippingStreet", data.street || "");
+  setVal("shippingBaranggay", data.baranggay || "");
   setVal("shippingCity", data.city || "");
   setVal("shippingProvince", data.province || "");
   setVal("shippingPostal", data.postal || "");
@@ -248,6 +249,7 @@ async function onSubmitCheckout(e) {
     phone: getVal("shippingPhone"),
     unit: getVal("shippingUnit"),
     street: getVal("shippingStreet"),
+    baranggay: getVal("shippingBaranggay"),
     city: getVal("shippingCity"),
     province: getVal("shippingProvince"),
     postal: getVal("shippingPostal"),

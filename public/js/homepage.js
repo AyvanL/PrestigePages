@@ -1107,6 +1107,7 @@ async function printReceipt(uid, txid) {
     `${ship.email || ''}`.trim(),
     `${ship.phone || ''}`.trim(),
     `${ship.unit || ''} ${ship.street || ''}`.trim(),
+    `${ship.baranggay || ''}`.trim(),
     `${ship.city || ''}, ${ship.province || ''} ${ship.postal || ''}`.trim(),
   ].filter(Boolean);
   for (const line of shipLines) { docPdf.text(line, 14, y); addLine(); }
