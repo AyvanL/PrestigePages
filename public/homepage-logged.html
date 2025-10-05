@@ -99,6 +99,11 @@
       opacity: 0;
       animation: fadeIn 1s ease 0.3s forwards;
     }
+
+    html {
+    scroll-behavior: smooth;
+    }
+
   </style>
 </head>
 
@@ -113,7 +118,7 @@
       </button>
       <div class="brand">PrestigePages</div>
       <nav class="nav-links" aria-label="Main">
-        <a href="homepage-logged.html">Home</a>
+        <a href="#home">Home</a>
         <a href="#popular">Store</a>
         <a href="about-us-logged.html">About us</a>
         <a href="faq-logged.html">FAQ</a>
@@ -142,9 +147,8 @@
         </button>
 
         <button class="icon-btn" aria-label="Custom" id="transBtn">
-  <img src="images/file.png" alt="" class="icon-img"  width="20px"/>
-  
-</button>
+          <img src="images/file.png" alt="" class="icon-img"  width="20px"/>
+        </button>
 
         <div class="dropdown">
           <div class="dropdown-trigger">
@@ -162,7 +166,7 @@
 
   <main>
     <!-- Hero -->
-    <section class="hero">
+    <section class="hero" id="home">
       <div class="container hero-inner">
         <div class="hero-copy fade-in">
           <div class="eyebrow">New Arrivals</div>
@@ -274,7 +278,7 @@
       </section>
 
     <!-- Popular books -->
-    <section id="popular" class="container popular-section fade-in" style="padding-top: nj5em;">
+    <section id="popular" class="container popular-section fade-in" style="padding-top: 5em;">
       <div class="popular-header">
         <h2>Our Popular Books</h2>
 
@@ -417,7 +421,7 @@
   <!-- Transactions Modal -->
   <div id="transModal" class="modal">
     <div class="modal-content">
-      <h2>Your Transactions <span id="closeTrans" class="close-btn">&times;</span></h2>
+      <h2 class="modal-header">Your Transactions <span id="closeTrans" class="close-btn">&times;</span></h2>
       <div id="transContent">
         <p>Loading...</p>
       </div>

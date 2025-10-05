@@ -113,6 +113,10 @@
       font-size:0.9rem; 
       margin-bottom:6px; 
     }
+
+    main{
+      padding-bottom: 2rem;
+    }
     
   </style>
   
@@ -200,7 +204,7 @@
   <div class="nav-spacer"></div>
 
   <main>
-  <h2>FREQUENTLY ASKED QUESTIONS</h2>
+    <h2>FREQUENTLY ASKED QUESTIONS</h2>
 
   <div class="faq-contact-container">
     <!-- LEFT: FAQ -->
@@ -236,7 +240,7 @@
     </div>
 
     <!-- RIGHT: CONTACT FORM -->
-    <div class="contact-column">
+    <!-- <div class="contact-column">
       <h3 class="feature-title">Contact Us</h3>
       <form>
         <div class="form-group">
@@ -251,8 +255,90 @@
         <input type="submit" class="btn btn-secondary btn-block" value="Send">
       </form>
     </div>
-  </div>
-</main>
+  </div> -->
+
+  <!-- RIGHT: CONTACT FORM -->
+    <div class="contact-column">
+      <h3 class="feature-title">Contact Us</h3>
+      <form id="contactForm">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Name" name="name" id="contactName" required>
+        </div>
+        <div class="form-group">
+          <input type="email" class="form-control" placeholder="Email Address" name="email" id="contactEmail" required>
+        </div>
+        <div class="form-group">
+          <textarea class="form-control" rows="6" placeholder="Message" name="message" id="contactMessage" required></textarea>
+        </div>
+        <input type="submit" class="btn btn-secondary btn-block" value="Send">
+        <div id="contactStatus" style="margin-top: 1rem;"></div>
+      </form>
+    </div>
+
+    <script type="module">
+      // Add this script to faq-logged.html
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+      import { 
+        getFirestore, 
+        collection, 
+        addDoc 
+      } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+      import { firebaseConfig } from "./js/firebase-config.js";
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      document.getElementById('contactForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const name = document.getElementById('contactName').value.trim();
+        const email = document.getElementById('contactEmail').value.trim();
+        const message = document.getElementById('contactMessage').value.trim();
+        const statusDiv = document.getElementById('contactStatus');
+        const submitBtn = e.target.querySelector('input[type="submit"]');
+
+        if (!name || !email || !message) {
+          showContactStatus('Please fill in all fields.', 'error', statusDiv);
+          return;
+        }
+
+        try {
+          submitBtn.disabled = true;
+          submitBtn.value = 'Sending...';
+          
+          // Save inquiry to Firestore
+          await addDoc(collection(db, 'inquiries'), {
+            name: name,
+            email: email,
+            message: message,
+            status: 'pending',
+            createdAt: new Date()
+          });
+
+          showContactStatus('Thank you for your message! We\'ll get back to you soon.', 'success', statusDiv);
+          document.getElementById('contactForm').reset();
+          
+        } catch (error) {
+          console.error('Error sending inquiry:', error);
+          showContactStatus('Sorry, there was an error sending your message. Please try again.', 'error', statusDiv);
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.value = 'Send';
+        }
+      });
+
+      function showContactStatus(message, type, container) {
+        container.innerHTML = `<div style="color: ${type === 'success' ? 'var(--success)' : '#dc2626'}; 
+                                        padding: 8px 12px; 
+                                        border-radius: 6px; 
+                                        background: ${type === 'success' ? '#d1fae5' : '#fef2f2'};
+                                        border: 1px solid ${type === 'success' ? '#a7f3d0' : '#fecaca'};">
+          ${message}
+        </div>`;
+      }
+    </script>
+  
+  </main>
 
 
 

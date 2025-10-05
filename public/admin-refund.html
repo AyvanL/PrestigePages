@@ -24,6 +24,7 @@
       <a href="admin-customer.html">Customers</a>
       <a href="admin-transaction-management.html">Transactions</a>
       <a href="admin-refund.html" class="active">Refund</a>
+      <a href="admin-faq.html">Customer Service</a>
     </nav>
 
     <!-- Main -->
@@ -66,7 +67,8 @@
 
     async function loadRefunds(){
       const tbody = document.querySelector('#refundList');
-      tbody.innerHTML = '';
+      const colSpan = tbody.closest('table')?.querySelectorAll('thead th').length || 8;
+      tbody.innerHTML = `<tr class="loading"><td colspan="${colSpan}" style="text-align:center; padding:12px;"><i class='fas fa-spinner fa-spin'></i> Loading...</td></tr>`;
       const users = await getDocs(collection(db, 'users'));
       const rows = [];
       for (const u of users.docs){
@@ -81,24 +83,22 @@
       }
       if (rows.length === 0){
         tbody.innerHTML = '<tr><td colspan="8" style="padding:14px; text-align:center; color:#666;">No refund requests found.</td></tr>';
-        return;
+      } else {
+        tbody.innerHTML = rows.map(r=>`
+          <tr>
+            <td>${r.id}</td>
+            <td>${r.id}</td>
+            <td>${r.name}</td>
+            <td>${peso(r.amount)}</td>
+            <td>${r.method}</td>
+            <td><span class="badge muted">${r.status}</span></td>
+            <td>${r.date}</td>
+            <td>
+              <button class="btn btn-sm approve-refund" data-uid="${r.uid}" data-id="${r.id}"><i class="fa fa-check"></i> Approve</button>
+              <button class="btn btn-sm reject-refund" data-uid="${r.uid}" data-id="${r.id}" style="margin-left:6px;"><i class="fa fa-times"></i> Reject</button>
+            </td>
+          </tr>`).join('');
       }
-      rows.forEach(r=>{
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${r.id}</td>
-          <td>${r.id}</td>
-          <td>${r.name}</td>
-          <td>${peso(r.amount)}</td>
-          <td>${r.method}</td>
-          <td><span class="badge muted">${r.status}</span></td>
-          <td>${r.date}</td>
-          <td>
-            <button class="btn btn-sm approve-refund" data-uid="${r.uid}" data-id="${r.id}"><i class="fa fa-check"></i> Approve</button>
-            <button class="btn btn-sm reject-refund" data-uid="${r.uid}" data-id="${r.id}" style="margin-left:6px;"><i class="fa fa-times"></i> Reject</button>
-          </td>`;
-        tbody.appendChild(tr);
-      });
 
       // Approve handler
       tbody.addEventListener('click', async (e)=>{
@@ -118,18 +118,21 @@
         }
       });
 
-      // Reject handler
+      // Reject handler -> mark as refund-rejected (stay in refund list with distinct state)
       tbody.addEventListener('click', async (e)=>{
         const btn = e.target.closest('.reject-refund');
         if (!btn) return;
         const uid = btn.getAttribute('data-uid');
         const id = btn.getAttribute('data-id');
         if (!uid || !id) return;
-        const ok = confirm('Reject this refund request and revert to Delivered?');
+        const ok = confirm('Reject this refund request? It will be marked as refund-rejected.');
         if (!ok) return;
         try{
-          await updateDoc(doc(db,'users',uid,'transactions',id), { delivstatus: 'delivered', refundRejectedAt: serverTimestamp() });
-          btn.closest('tr')?.remove();
+          await updateDoc(doc(db,'users',uid,'transactions',id), { delivstatus: 'refund-rejected', refundRejectedAt: serverTimestamp() });
+          // change status badge text instead of removing so admin can still see it
+          const tr = btn.closest('tr');
+          tr?.querySelector('.badge')?.replaceChildren(document.createTextNode('Rejected'));
+          btn.remove(); // remove reject button to prevent duplicate actions
         }catch(err){
           alert('Failed to reject refund');
           console.error(err);

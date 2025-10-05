@@ -128,6 +128,26 @@
           </div>
         </div>
 
+        <div class="checkbox-group">
+          <div class="checkbox-item">
+            <input type="checkbox" id="terms" required>
+            <label for="terms">
+              <span class="checkmark"></span>
+              I have read and agree to the&nbsp;
+            </label>
+            <a href="terms.html" target="_blank">Terms and Conditions</a>
+          </div>
+
+          <div class="checkbox-item">
+            <input type="checkbox" id="privacy" required>
+            <label for="privacy">
+              <span class="checkmark"></span>
+              I have read and agree to the&nbsp;
+            </label>
+            <a href="privacy-policy.html" target="_blank">Privacy Policy</a>
+          </div>
+        </div>
+
         <button class="login-btn" type="submit">Sign Up</button>
       </form>
     </div>
@@ -144,167 +164,230 @@
     </div>
 
     <script type="module">
-      // Firebase imports
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-      import {
-        getAuth,
-        createUserWithEmailAndPassword,
-      } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-      import {
-        getFirestore,
-        doc,
-        setDoc,
-      } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-      import { firebaseConfig } from "./js/firebase-config.js";
+  // Firebase imports (keep same versions you used)
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+  import {
+    getAuth,
+    createUserWithEmailAndPassword,
+  } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+  import {
+    getFirestore,
+    doc,
+    setDoc,
+  } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+  import { firebaseConfig } from "./js/firebase-config.js";
 
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getFirestore(app);
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
-      // Initialize EmailJS
-      emailjs.init("V_oKhFcC3LwiidUSC");
+  // Initialize EmailJS (emailjs script must be loaded earlier in the page)
+  if (window.emailjs && typeof emailjs.init === "function") {
+    emailjs.init("V_oKhFcC3LwiidUSC");
+  } else {
+    console.warn("EmailJS not loaded - OTP emails will fail.");
+  }
 
-      let formData = null;
-      let generatedOtp = "";
+  // shared state
+  let formData = null;
+  let generatedOtp = "";
 
-      // Handle account creation
-      document
-        .getElementById("signupForm")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
+  // DOM refs
+  const signupForm = document.getElementById("signupForm");
+  const otpModal = document.getElementById("otpModal");
+  const otpInput = document.getElementById("otpInput");
+  const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+  const otpMsg = document.getElementById("otpMsg");
+  const navToggle = document.getElementById("navToggle");
 
-          const firstName = document.getElementById("firstName").value;
-          const lastName = document.getElementById("lastName").value;
-          const mobile = document.getElementById("mobile").value;
-          const email = document.getElementById("email").value;
-          const password = document.getElementById("password").value;
-          const cpassword = document.getElementById("cpassword").value;
+  // -------------------------
+  // FORM SUBMIT HANDLER
+  // -------------------------
+  signupForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-          const mobileRegex = /^09\d{9}$/;
-          if (!mobileRegex.test(mobile)) {
-            alert(
-              "❌ Invalid mobile number. It must start with 09 and be 11 digits."
-            );
-            return;
-          }
+    // Collect values
+    const firstName = document.getElementById("firstName").value.trim();
+    const lastName = document.getElementById("lastName").value.trim();
+    const mobile = document.getElementById("mobile").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const cpassword = document.getElementById("cpassword").value;
 
-          if (password !== cpassword) {
-            alert("❌ Passwords do not match. Please try again.");
-            return; // stop form submission
-          }
+    // Check checkboxes (these must exist in the form)
+    const terms = document.getElementById("terms");
+    const privacy = document.getElementById("privacy");
 
-          try {
-            // Store form data for later use after OTP verification
-            formData = {
-              firstName,
-              lastName,
-              mobile,
-              email,
-              password
-            };
+    if (!terms || !privacy) {
+      // If the checkboxes are missing for some reason, don't proceed.
+      alert("Developer error: terms/privacy checkboxes not found.");
+      return;
+    }
 
-            // Generate and send OTP
-            generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    // If either unchecked -> show required alert and stop
+    if (!terms.checked || !privacy.checked) {
+      alert(
+        "Please Read and Check the Terms and Condition and Privacy Policy before Logging In or Signing Up."
+      );
+      return;
+    }
 
-            // Send OTP via email
-            await emailjs.send("service_i1rq2k4", "template_7qxudct", {
-              to_email: email,
-              otp: generatedOtp,
-              name: firstName,
-            });
+    // Basic validation
+    const mobileRegex = /^09\d{9}$/;
+    if (!mobileRegex.test(mobile)) {
+      alert(
+        "❌ Invalid mobile number. It must start with 09 and be 11 digits."
+      );
+      return;
+    }
 
-            // Show OTP modal
-            document.getElementById("otpModal").style.display = "flex";
-          } catch (error) {
-            // show specific errors
-            if (error.code === "auth/email-already-in-use") {
-              alert(
-                "❌ This email is already registered. Please log in or use another one."
-              );
-            } else if (error.code === "auth/invalid-email") {
-              alert("❌ Invalid email format. Please enter a valid email.");
-            } else if (error.code === "auth/weak-password") {
-              alert("❌ Weak password. It should be at least 6 characters.");
-            } else {
-              alert("❌ Error: " + error.message);
-            }
-          }
-        });
+    if (password !== cpassword) {
+      alert("❌ Passwords do not match. Please try again.");
+      return;
+    }
 
-      // Toggle password visibility
-      function togglePasswordVisibility(inputId, iconId) {
-        const input = document.getElementById(inputId);
-        const icon = document.getElementById(iconId);
+    if (password.length < 6) {
+      alert("❌ Password too short. It should be at least 6 characters.");
+      return;
+    }
 
-        icon.addEventListener("click", () => {
-          const isHidden = input.type === "password";
-          input.type = isHidden ? "text" : "password";
-          icon.classList.toggle("fa-eye");
-          icon.classList.toggle("fa-eye-slash");
-        });
+    try {
+      // store data for later (OTP verification step)
+      formData = { firstName, lastName, mobile, email, password };
+
+      // generate OTP
+      generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
+      // send OTP via EmailJS (replace service/template ids with your own if different)
+      await emailjs.send("service_i1rq2k4", "template_7qxudct", {
+        to_email: email,
+        otp: generatedOtp,
+        name: firstName,
+      });
+
+      // show feedback + show OTP modal
+      otpMsg.textContent = "✅ OTP sent to your email. Check your inbox (and spam).";
+      otpInput.value = "";
+      otpModal.style.display = "flex";
+      otpInput.focus();
+    } catch (error) {
+      console.error("Send OTP error:", error);
+      // If emailjs fails it will usually throw; show a user-friendly message
+      alert("❌ Failed to send OTP. Please check the email address and try again.");
+    }
+  });
+
+  // -------------------------
+  // VERIFY OTP + CREATE ACCOUNT
+  // -------------------------
+  verifyOtpBtn.addEventListener("click", async () => {
+    const enteredOtp = otpInput.value.trim();
+    otpMsg.textContent = "";
+
+    if (!enteredOtp) {
+      otpMsg.textContent = "❌ Please enter the 6-digit code.";
+      return;
+    }
+
+    if (enteredOtp !== generatedOtp || !formData) {
+      otpMsg.textContent = "❌ Invalid OTP. Try again.";
+      return;
+    }
+
+    try {
+      // Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+      const user = userCredential.user;
+
+      // Save user extra info to Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        mobile: formData.mobile,
+        email: formData.email,
+        createdAt: new Date(),
+      });
+
+      // mark verified in local storage (optional)
+      localStorage.setItem("otpVerified", "true");
+
+      otpMsg.textContent = "✅ Verified!";
+      alert("✅ Account created successfully! Redirecting to homepage...");
+      signupForm.reset();
+      generatedOtp = "";
+      formData = null;
+      otpModal.style.display = "none";
+
+      // redirect to logged-in homepage
+      window.location.href = "homepage-logged.html";
+    } catch (error) {
+      console.error("Account creation error:", error);
+      // Friendly error messaging - Firebase returns error.code for common situations
+      if (error.code === "auth/email-already-in-use") {
+        otpMsg.textContent = "❌ Email already in use. Try logging in instead.";
+      } else if (error.code === "auth/invalid-email") {
+        otpMsg.textContent = "❌ Invalid email format.";
+      } else if (error.code === "auth/weak-password") {
+        otpMsg.textContent = "❌ Weak password. It should be at least 6 characters.";
+      } else {
+        otpMsg.textContent = "❌ Error creating account. Please try again.";
       }
+    }
+  });
 
-      togglePasswordVisibility("password", "togglePassword");
-      togglePasswordVisibility("cpassword", "toggleCPassword");
+  // allow closing OTP modal by clicking backdrop
+  otpModal.addEventListener("click", (ev) => {
+    if (ev.target === otpModal) {
+      otpModal.style.display = "none";
+    }
+  });
 
-      // Handle OTP verification
-      document.getElementById("verifyOtpBtn").addEventListener("click", async () => {
-        const enteredOtp = document.getElementById("otpInput").value.trim();
-        
-        if (enteredOtp === generatedOtp && formData) {
-          try {
-            // Create user in Firebase Auth
-            const userCredential = await createUserWithEmailAndPassword(
-              auth,
-              formData.email,
-              formData.password
-            );
-            const user = userCredential.user;
+  // -------------------------
+  // Password visibility toggles
+  // -------------------------
+  function togglePasswordVisibility(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (!input || !icon) return;
 
-            // Store extra details in Firestore
-            await setDoc(doc(db, "users", user.uid), {
-              firstName: formData.firstName,
-              lastName: formData.lastName,
-              mobile: formData.mobile,
-              email: formData.email,
-              createdAt: new Date(),
-            });
+    icon.addEventListener("click", () => {
+      const isHidden = input.type === "password";
+      input.type = isHidden ? "text" : "password";
+      icon.classList.toggle("fa-eye");
+      icon.classList.toggle("fa-eye-slash");
+    });
+  }
 
-            // Save OTP verification flag
-            localStorage.setItem("otpVerified", "true");
+  togglePasswordVisibility("password", "togglePassword");
+  togglePasswordVisibility("cpassword", "toggleCPassword");
 
-            document.getElementById("otpMsg").textContent = "✅ Verified!";
-            alert("✅ Account created successfully! Redirecting to homepage...");
-            document.getElementById("signupForm").reset();
-            window.location.href = "homepage-logged.html";
-          } catch (error) {
-            document.getElementById("otpMsg").textContent = "❌ Error creating account. Please try again.";
-            console.error("Account creation error:", error);
-          }
-        } else {
-          document.getElementById("otpMsg").textContent = "❌ Invalid OTP. Try again.";
-        }
-      });
-
-      // Mobile nav toggle
-      document.getElementById("navToggle").addEventListener("click", () => {
-        const existing = document.getElementById("mobileMenu");
-        if (existing) {
-          existing.remove();
-          return;
-        }
-        const menu = document.createElement("div");
-        menu.id = "mobileMenu";
-        menu.style.background = "var(--paper)";
-        menu.style.borderTop = "1px solid var(--line)";
-        menu.innerHTML = `<div class="container" style="padding:12px 20px 16px; display:grid; gap:10px;">
-        <a href="index.html">Home</a>
-        <a href="#popular">Store</a>
-        <a href="about-us.html">About us</a>
-      </div>`;
-        document.querySelector(".site-header").appendChild(menu);
-      });
-    </script>
+  // -------------------------
+  // Mobile nav toggle (same as your previous code)
+  // -------------------------
+  if (navToggle) {
+    navToggle.addEventListener("click", () => {
+      const existing = document.getElementById("mobileMenu");
+      if (existing) {
+        existing.remove();
+        return;
+      }
+      const menu = document.createElement("div");
+      menu.id = "mobileMenu";
+      menu.style.background = "var(--paper)";
+      menu.style.borderTop = "1px solid var(--line)";
+      menu.innerHTML = `<div class="container" style="padding:12px 20px 16px; display:grid; gap:10px;">
+          <a href="index.html">Home</a>
+          <a href="#popular">Store</a>
+          <a href="about-us.html">About us</a>
+        </div>`;
+      document.querySelector(".site-header").appendChild(menu);
+    });
+  }
+</script>
   </body>
 </html>

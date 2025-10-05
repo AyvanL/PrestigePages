@@ -159,6 +159,8 @@
           <!-- ✅ badge -->
         </button>
 
+        
+
         <div class="dropdown">
           <div class="dropdown-trigger">
             <button class="dropbtn" id="welcomeMessage">Loading....</button>
@@ -210,7 +212,7 @@
     </div>
 
     <!-- RIGHT: CONTACT FORM -->
-    <div class="contact-column">
+    <!-- <div class="contact-column">
       <h3 class="feature-title">Contact Us</h3>
       <form>
         <div class="form-group">
@@ -225,7 +227,89 @@
         <input type="submit" class="btn btn-secondary btn-block" value="Send">
       </form>
     </div>
-  </div>
+  </div> -->
+
+  <!-- RIGHT: CONTACT FORM -->
+    <div class="contact-column">
+      <h3 class="feature-title">Contact Us</h3>
+      <form id="contactForm">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Name" name="name" id="contactName" required>
+        </div>
+        <div class="form-group">
+          <input type="email" class="form-control" placeholder="Email Address" name="email" id="contactEmail" required>
+        </div>
+        <div class="form-group">
+          <textarea class="form-control" rows="6" placeholder="Message" name="message" id="contactMessage" required></textarea>
+        </div>
+        <input type="submit" class="btn btn-secondary btn-block" value="Send">
+        <div id="contactStatus" style="margin-top: 1rem;"></div>
+      </form>
+    </div>
+
+    <script type="module">
+      // Add this script to faq-logged.html
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+      import { 
+        getFirestore, 
+        collection, 
+        addDoc 
+      } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+      import { firebaseConfig } from "./js/firebase-config.js";
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      document.getElementById('contactForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const name = document.getElementById('contactName').value.trim();
+        const email = document.getElementById('contactEmail').value.trim();
+        const message = document.getElementById('contactMessage').value.trim();
+        const statusDiv = document.getElementById('contactStatus');
+        const submitBtn = e.target.querySelector('input[type="submit"]');
+
+        if (!name || !email || !message) {
+          showContactStatus('Please fill in all fields.', 'error', statusDiv);
+          return;
+        }
+
+        try {
+          submitBtn.disabled = true;
+          submitBtn.value = 'Sending...';
+          
+          // Save inquiry to Firestore
+          await addDoc(collection(db, 'inquiries'), {
+            name: name,
+            email: email,
+            message: message,
+            status: 'pending',
+            createdAt: new Date()
+          });
+
+          showContactStatus('Thank you for your message! We\'ll get back to you soon.', 'success', statusDiv);
+          document.getElementById('contactForm').reset();
+          
+        } catch (error) {
+          console.error('Error sending inquiry:', error);
+          showContactStatus('Sorry, there was an error sending your message. Please try again.', 'error', statusDiv);
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.value = 'Send';
+        }
+      });
+
+      function showContactStatus(message, type, container) {
+        container.innerHTML = `<div style="color: ${type === 'success' ? 'var(--success)' : '#dc2626'}; 
+                                        padding: 8px 12px; 
+                                        border-radius: 6px; 
+                                        background: ${type === 'success' ? '#d1fae5' : '#fef2f2'};
+                                        border: 1px solid ${type === 'success' ? '#a7f3d0' : '#fecaca'};">
+          ${message}
+        </div>`;
+      }
+    </script>
+  
   </main>
 
   <footer style="border-color: #222222">
@@ -306,6 +390,15 @@
       <div id="cartTotal"></div>
       <!-- Cart Modal -->
       <button onclick="window.location.href='checkout.html'" class="checkout">Proceed to Checkout</button>
+    </div>
+  </div>
+
+  <div id="transModal" class="modal">
+    <div class="modal-content">
+      <h2>Your Transactions <span id="closeTrans" class="close-btn">&times;</span></h2>
+      <div id="transContent">
+        <p>Loading...</p>
+      </div>
     </div>
   </div>
 

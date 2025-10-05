@@ -1,0 +1,746 @@
+/* --- Theme tokens ---------------------------------------------------- */
+:root {
+  --bg: #f6f2ea; /* page background */
+  --paper: #fffdf8; /* cards / panels */
+  --ink: #1d1c1a; /* primary text */
+  --muted-ink: #6b655f;
+  --brand: #c89b3c; /* gold */
+  --brand-ink: #3f2f0a;
+  --line: #e8e0d3; /* borders */
+  --accent: #e7d8be; /* soft highlight */
+  --success: #3a7e4b; /* green */
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  --radius-xl: 22px;
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 10px;
+  --container: 1180px;
+}
+
+/* --- Resets ---------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Layout wrapper */
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar navigation */
+.sidebar {
+  width: 220px;
+  background-color: #c89b3c;
+  display: flex;
+  flex-direction: column;   /* stack links vertically */
+  padding: 20px 0;
+}
+
+.sidebar a {
+  color: white;
+  padding: 15px 20px;
+  text-decoration: none;
+  display: block;
+}
+
+.sidebar a:hover,
+.sidebar a.active {
+  background-color: #7d5600;
+}
+
+/* Main content */
+.main-content {
+  flex: 1;
+  padding: 20px;
+  background: #f4f4f4;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+input {
+  font: inherit;
+}
+
+body {
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  color: var(--ink);
+  background: radial-gradient(1000px 500px at -10% -10%, #fff 0%, var(--bg) 60%),
+    var(--bg);
+}
+
+.container {
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: 20px;
+}
+
+/* --- Header ---------------------------------------------------------- */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: saturate(140%) blur(6px);
+  background: color-mix(in oklab, var(--bg) 85%, #fff 15%);
+  border-bottom: 1px solid var(--line);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 0;
+}
+
+.brand {
+  font-family: "Playfair Display", serif;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0.3px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 18px;
+  color: var(--muted-ink);
+}
+
+.nav-links a {
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.nav-links a:hover {
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.nav-spacer {
+  flex: 1;
+}
+
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search input {
+  width: 260px;
+  max-width: 55vw;
+  padding: 10px 36px 10px 14px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  outline: none;
+}
+
+.search svg {
+  position: absolute;
+  right: 10px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.hamburger {
+  display: none;
+}
+
+/* --- Admin Dashboard Styles ----------------------------------------- */
+
+/* Form Container */
+.form-container {
+  background-color: var(--paper);
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+
+h2,
+h3 {
+  color: var(--ink);
+  font-weight: bold;
+  font-size: 25px;
+}
+
+form {
+  display: grid;
+  gap: 12px;
+}
+
+label {
+  font-weight: 600;
+  color: var(--muted-ink);
+}
+
+input,
+textarea {
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+textarea {
+  resize: vertical;
+}
+
+button[type="submit"] {
+  padding: 10px 20px;
+  background: var(--brand);
+  color: white;
+  width: fit-content;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button[type="submit"]:hover {
+  background: #a57934;
+}
+
+/* Product List Table */
+.product-list {
+  background-color: var(--paper);
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+th {
+  background-color: var(--accent);
+  color: var(--brand-ink);
+}
+
+td {
+  background-color: var(--paper);
+}
+
+button {
+  padding: 6px 12px;
+  background: var(--brand);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background: #a57934;
+}
+
+.status {
+  font-weight: 700;
+}
+
+.status.active {
+  color: #3a7e4b; /* green */
+}
+
+.status.inactive {
+  color: #d9534f; /* red */
+}
+
+/* --- FAQ Management Specific Styles --------------------------------- */
+
+.faq-management {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.faq-form-container, 
+.faq-list-container, 
+.inquiries-container {
+  background-color: var(--paper);
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.faq-item, 
+.inquiry-item {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+}
+
+.faq-item:hover, 
+.inquiry-item:hover {
+  box-shadow: var(--shadow);
+}
+
+.faq-question, 
+.inquiry-name {
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+.faq-answer, 
+.inquiry-message {
+  color: var(--muted-ink);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.inquiry-email {
+  color: var(--brand);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.inquiry-date {
+  color: var(--muted-ink);
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.faq-actions, 
+.inquiry-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  font-size: 14px;
+}
+
+.btn-primary {
+  background: var(--brand);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #a57934;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.btn-danger {
+  background: #dc2626;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
+}
+
+.btn-success {
+  background: var(--success);
+  color: white;
+}
+
+.btn-success:hover {
+  background: #2d6b3c;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted-ink);
+}
+
+.btn-ghost:hover {
+  background: var(--accent);
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--muted-ink);
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+
+textarea.form-control {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.search-container {
+  margin-bottom: 20px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  background: var(--paper);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted-ink);
+}
+
+.empty-state i {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: var(--line);
+}
+
+/* Modal styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+  background-color: var(--paper);
+  margin: 5% auto;
+  padding: 20px;
+  border: 1px solid var(--line);
+  width: 80%;
+  max-width: 600px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--muted-ink);
+}
+
+.close:hover {
+  color: var(--ink);
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 20px;
+}
+
+.tab {
+  padding: 12px 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  color: var(--muted-ink);
+  font-weight: 500;
+}
+
+.tab.active {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-replied {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-archived {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+/* --- Responsive Design --------------------------------------------- */
+
+@media (max-width: 1024px) {
+  .faq-management {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-layout {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    position: relative;
+  }
+  
+  .main-content {
+    margin-left: 0;
+    padding: 16px;
+  }
+  
+  .faq-management {
+    gap: 16px;
+  }
+  
+  .faq-form-container, 
+  .faq-list-container, 
+  .inquiries-container {
+    padding: 16px;
+  }
+  
+  .faq-actions, 
+  .inquiry-actions {
+    flex-direction: column;
+  }
+  
+  .btn-sm {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  
+  .tabs {
+    flex-direction: column;
+  }
+  
+  .tab {
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+    border-left: 2px solid transparent;
+  }
+  
+  .tab.active {
+    border-left-color: var(--brand);
+    border-bottom-color: var(--line);
+  }
+  
+  .modal-content {
+    width: 95%;
+    margin: 10% auto;
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 12px;
+  }
+  
+  h2 {
+    font-size: 22px;
+  }
+  
+  h3 {
+    font-size: 18px;
+  }
+  
+  .faq-form-container, 
+  .faq-list-container, 
+  .inquiries-container {
+    padding: 12px;
+  }
+  
+  .faq-item, 
+  .inquiry-item {
+    padding: 12px;
+  }
+}
+
+/* Additional FAQ Management Styles */
+
+.inquiry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.detail-row {
+  display: flex;
+  margin-bottom: 12px;
+  align-items: flex-start;
+}
+
+.detail-row label {
+  font-weight: 600;
+  color: var(--muted-ink);
+  min-width: 80px;
+  margin-right: 12px;
+}
+
+.detail-row.full-width {
+  flex-direction: column;
+}
+
+.detail-row.full-width label {
+  margin-bottom: 8px;
+}
+
+.message-content {
+  background: var(--accent);
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.filter-btn.active {
+  background: var(--brand);
+  color: white;
+}
+
+.filter-btn.active:hover {
+  background: #a57934;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .inquiry-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .detail-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .detail-row label {
+    min-width: auto;
+  }
+}

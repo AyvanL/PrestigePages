@@ -20,6 +20,7 @@ const vLastName = document.getElementById('vLastName');
 const vMobile = document.getElementById('vMobile');
 const vHouseNo = document.getElementById('vHouseNo');
 const vStreet = document.getElementById('vStreet');
+const vBaranggay = document.getElementById('vBaranggay');
 const vCity = document.getElementById('vCity');
 const vProvince = document.getElementById('vProvince');
 const vPostal = document.getElementById('vPostal');
@@ -39,6 +40,7 @@ const eemail = document.getElementById('eemail');
 const emobile = document.getElementById('emobile');
 const ehouseNo = document.getElementById('ehouseNo');
 const estreet = document.getElementById('estreet');
+const eBaranggay = document.getElementById('eBaranggay');
 const ecity = document.getElementById('ecity');
 const eprovince = document.getElementById('eprovince');
 const epostal = document.getElementById('epostal');
@@ -94,7 +96,7 @@ function render(list) {
 }
 
 function formatAddress(u) {
-  const parts = [u.houseNo, u.street, u.city, u.province, u.postal].filter(Boolean);
+  const parts = [u.houseNo, u.street, u.baranggay, u.city, u.province, u.postal].filter(Boolean);
   return parts.join(', ');
 }
 
@@ -106,6 +108,7 @@ function openModal(user) {
   vMobile.textContent = user.mobile || '';
   vHouseNo.textContent = user.houseNo || '';
   vStreet.textContent = user.street || '';
+  vBaranggay.textContent = user.baranggay || '';
   vCity.textContent = user.city || '';
   vProvince.textContent = user.province || '';
   vPostal.textContent = user.postal || '';
@@ -131,6 +134,7 @@ async function handleEdit(uid) {
   emobile.value = data.mobile || '';
   ehouseNo.value = data.houseNo || '';
   estreet.value = data.street || '';
+  ebaranggay.value = data.baranggay || '';
   ecity.value = data.city || '';
   eprovince.value = data.province || '';
   epostal.value = data.postal || '';
@@ -186,6 +190,7 @@ editForm?.addEventListener('submit', async (e) => {
     mobile: emobile.value,
     houseNo: ehouseNo.value,
     street: estreet.value,
+    baranggay: ebaranggay.value,
     city: ecity.value,
     province: eprovince.value,
     postal: epostal.value,

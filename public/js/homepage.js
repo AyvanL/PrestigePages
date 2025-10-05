@@ -510,8 +510,10 @@ function renderBooks(list) {
       alert(`Added "${b.title}" to cart.`);
     });
 
-    const heart = el("button", "btn icon secondary");
-    heart.innerHTML = `
+  const heart = el("button", "btn icon secondary");
+  heart.setAttribute('data-title', b.title);
+  heart.setAttribute('data-author', b.author);
+  heart.innerHTML = `
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M12.1 20.3 4.7 13c-2.6-2.6-1.9-6.9 1.6-8.5 1.7-.8 3.7-.5 5.1.7 1.4-1.2 3.4-1.5 5.1-.7 3.5 1.6 4.2 5.9 1.6 8.5l-7.3 7.3Z" stroke="#7E6E5B" stroke-width="1.6" fill="#fff"/>
         </svg>`;
 
@@ -698,6 +700,13 @@ async function updateCart() {
   cartItemsEl.innerHTML = "";
   let total = 0;
 
+  if (cart.length === 0) {
+    cartItemsEl.innerHTML = `<p class="empty-cart-message">🛒 Your cart is empty.</p>`;
+    cartTotalEl.textContent = `Total: ₱0.00`;
+    cartCount.textContent = "0";
+    return;
+  }
+
   cart.forEach((item, i) => {
     total += item.price * item.qty;
 
@@ -781,15 +790,18 @@ function renderTransactionsSnapshot(snap) {
       <div class="tx-tabs">
         <button class="tx-tab active" data-tab="in">In Process</button>
         <button class="tx-tab" data-tab="done">Complete</button>
+        <button class="tx-tab" data-tab="refund">Refund</button>
       </div>
       <div class="tx-panels">
         <div class="tx-panel" data-tab="in"><p>No transactions yet.</p></div>
         <div class="tx-panel" data-tab="done" style="display:none;"><p>No transactions yet.</p></div>
+        <div class="tx-panel" data-tab="refund" style="display:none;"><p>No refund transactions.</p></div>
       </div>`;
     return;
   }
   const rowsIn = [];
   const rowsDone = [];
+  const rowsRefund = [];
   snap.forEach((d) => {
     const data = d.data();
     const date = data.createdAt?.toDate ? data.createdAt.toDate() : null;
@@ -819,10 +831,23 @@ function renderTransactionsSnapshot(snap) {
     const delivNorm = String(deliveryStatus||'').toLowerCase();
     const isPaid = (payNorm === 'paid' || payNorm === 'complete' || payNorm === 'completed' || payNorm === 'success');
     const isDelivered = (delivNorm === 'delivered');
+    const delivLower = String(deliveryStatus).toLowerCase();
+  const isRefundState = (delivLower === 'refund-processing' || delivLower === 'refunded' || delivLower === 'refund-rejected');
     const isComplete = isPaid && isDelivered;
-    const actionBtnHtml = isComplete
-      ? `<button class="btn secondary small btn-refund" data-txid="${d.id}">Refund</button>`
-      : `<button class="btn secondary small btn-cancel" data-txid="${d.id}">Cancel</button>`;
+    let actionBtnHtml = '';
+    if (isRefundState) {
+      if (delivLower === 'refund-processing') {
+        actionBtnHtml = '<span style="font-size:12px; color:var(--muted-ink);">Refund request pending...</span>';
+      } else if (delivLower === 'refund-rejected') {
+        actionBtnHtml = '<span style="font-size:12px; color:#b30000; font-weight:600;">Refund Rejected</span>';
+      } else { // refunded
+        actionBtnHtml = '<span style="font-size:18px; font-weight: bold; color:white; background-color: #344F1F; border: 1px solid black; padding: 8px 10px; border-radius: 5%">Refunded</span>';
+      }
+    } else if (isComplete) {
+      actionBtnHtml = `<button class="btn secondary small btn-refund" data-txid="${d.id}">Refund</button>`;
+    } else {
+      actionBtnHtml = `<button class="btn secondary small btn-cancel" data-txid="${d.id}">Cancel</button>`;
+    }
     const rowHtml = `
       <li style="border-bottom:1px solid var(--line); margin:12px 0; padding:8px 0;">
         <details>
@@ -853,18 +878,22 @@ function renderTransactionsSnapshot(snap) {
           </div>
         </details>
       </li>`;
-    if (isComplete) rowsDone.push(rowHtml); else rowsIn.push(rowHtml);
+    if (isRefundState) rowsRefund.push(rowHtml);
+    else if (isComplete) rowsDone.push(rowHtml); else rowsIn.push(rowHtml);
   });
-  const inHTML = rowsIn.length ? `<ul style="list-style:none; padding:0; margin:0">${rowsIn.join('')}</ul>` : `<p>No in‑process orders.</p>`;
-  const doneHTML = rowsDone.length ? `<ul style="list-style:none; padding:0; margin:0">${rowsDone.join('')}</ul>` : `<p>No completed orders.</p>`;
+  const inHTML = rowsIn.length ? `<ul style="list-style:none; padding:0; margin:0">${rowsIn.join('')}</ul>` : `<p class="empty-cart-message">No in‑process orders.</p>`;
+  const doneHTML = rowsDone.length ? `<ul style="list-style:none; padding:0; margin:0">${rowsDone.join('')}</ul>` : `<p class="empty-cart-message">No completed orders.</p>`;
+  const refundHTML = rowsRefund.length ? `<ul style="list-style:none; padding:0; margin:0">${rowsRefund.join('')}</ul>` : `<p class="empty-cart-message">No refund transactions.</p>`;
   transContent.innerHTML = `
     <div class="tx-tabs">
       <button class="tx-tab active" data-tab="in">In Process</button>
       <button class="tx-tab" data-tab="done">Complete</button>
+      <button class="tx-tab" data-tab="refund">Refund</button>
     </div>
     <div class="tx-panels">
       <div class="tx-panel" data-tab="in">${inHTML}</div>
       <div class="tx-panel" data-tab="done" style="display:none;">${doneHTML}</div>
+      <div class="tx-panel" data-tab="refund" style="display:none;">${refundHTML}</div>
     </div>`;
 }
 
@@ -1220,13 +1249,16 @@ wishlistBtn.addEventListener("click", async () => {
             }
 
             // Update heart button state if book is visible
-            const bookCard = document.querySelector(
-              `.card:has(button.active[data-title="${item.title}"])`
+            const heartBtn = document.querySelector(
+              `.btn.icon.secondary.active[data-title="${CSS.escape(item.title)}"][data-author="${CSS.escape(item.author)}"]`
             );
-            if (bookCard) {
-              const heartBtn = bookCard.querySelector(".btn.icon.secondary");
+            if (heartBtn) {
               heartBtn.classList.remove("active");
-              heartBtn.querySelector("svg path").setAttribute("fill", "#fff");
+              const p = heartBtn.querySelector('svg path');
+              if (p) p.setAttribute('fill', '#fff');
+            } else {
+              // Fallback: sync all if direct one not found
+              if (typeof updateAllHeartStates === 'function') updateAllHeartStates();
             }
           } catch (err) {
             console.error("Failed to remove from wishlist:", err);

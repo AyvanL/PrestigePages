@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Inquiries - Admin</title>
+  <link rel="stylesheet" href="css/admin-faq.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <a href="index.html" class="brand">Prestige Pages</a>
+      <a href="admin-orders.html">Orders</a>
+      <a href="admin-prod-management.html">Inventory</a>
+      <a href="admin-customer.html">Customers</a>
+      <a href="admin-transaction-management.html">Transactions</a>
+      <a href="admin-refund.html">Refunds</a>
+      <a href="admin-faq.html" class="active">Customer Service</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <h2>Customer Inquiries Management</h2>
+      <h3>All Customer Messages from FAQ Page</h3>
+
+      <!-- Search and Filters -->
+      <div class="search-container">
+        <input type="text" id="inquirySearch" class="search-input" placeholder="Search inquiries by name, email, or message...">
+      </div>
+
+      <!-- Status Filter -->
+      <div style="display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;">
+        <button class="btn btn-primary filter-btn active" data-status="all">All Inquiries</button>
+        <button class="btn btn-ghost filter-btn" data-status="pending">Pending</button>
+        <button class="btn btn-ghost filter-btn" data-status="replied">Replied</button>
+        <button class="btn btn-ghost filter-btn" data-status="archived">Archived</button>
+      </div>
+
+      <!-- Inquiries List -->
+      <section class="inquiries-container">
+        <div id="inquiriesList">
+          <!-- Inquiry items will be loaded here -->
+          <div class="empty-state">
+            <i class="fas fa-envelope-open-text"></i>
+            <p>Loading customer inquiries...</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- View Inquiry Modal -->
+  <div id="viewInquiryModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Customer Inquiry Details</h3>
+        <button class="close">&times;</button>
+      </div>
+      <div class="inquiry-details">
+        <div class="detail-row">
+          <label>Name:</label>
+          <span id="detailName"></span>
+        </div>
+        <div class="detail-row">
+          <label>Email:</label>
+          <span id="detailEmail"></span>
+        </div>
+        <div class="detail-row">
+          <label>Submitted:</label>
+          <span id="detailDate"></span>
+        </div>
+        <div class="detail-row">
+          <label>Status:</label>
+          <span id="detailStatus" class="status-badge"></span>
+        </div>
+        <div class="detail-row full-width">
+          <label>Message:</label>
+          <div id="detailMessage" class="message-content"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="closeViewModal">Close</button>
+        <button class="btn btn-primary" id="markRepliedBtn">Mark as Replied</button>
+        <button class="btn btn-danger" id="deleteInquiryBtn">Delete Inquiry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reply Modal -->
+  <div id="replyModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Reply to Customer</h3>
+        <button class="close">&times;</button>
+      </div>
+      <form id="replyForm">
+        <input type="hidden" id="replyInquiryId">
+        <div class="form-group">
+          <label>To:</label>
+          <div class="form-control" style="background: var(--accent);" id="replyToEmail"></div>
+        </div>
+        <div class="form-group">
+          <label>Subject:</label>
+          <input type="text" id="replySubject" class="form-control" value="Re: Your Inquiry to PrestigePages" required>
+        </div>
+        <div class="form-group">
+          <label>Your Response:</label>
+          <textarea id="replyMessage" class="form-control" rows="8" placeholder="Type your response to the customer..." required></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="cancelReply">Cancel</button>
+          <button type="submit" class="btn btn-primary">Send Response</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/admin-faq.js"></script>
+</body>
+</html>

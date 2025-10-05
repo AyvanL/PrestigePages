@@ -1,6 +1,6 @@
 // Admin Transaction Management: list, search, view transactions from Firestore
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, collection, getDocs, query, orderBy, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, query, orderBy, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
 // Initialize Firebase
@@ -49,41 +49,29 @@ function rowHtml(txn) {
   </tr>`;
 }
 
-// Fetch transactions from Firestore across users and keep only completed
-async function loadTransactions() {
-  // show loading state
-  showMessageRow('<i class="fas fa-spinner fa-spin"></i> Loading...', 'loading');
-
-  // 1) List all users
+async function aggregateTransactions() {
   const usersSnap = await getDocs(collection(db, 'users'));
   const rows = [];
-
-  // 2) For each user, load their transactions ordered by createdAt desc
   for (const userDoc of usersSnap.docs) {
     const uid = userDoc.id;
     const userData = userDoc.data() || {};
     const customerName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
-
-    const txSnap = await getDocs(query(collection(db, 'users', uid, 'transactions'), orderBy('createdAt', 'desc')));
+    const txSnap = await getDocs(query(collection(db, 'users', uid, 'transactions'), orderBy('createdAt','desc')));
     txSnap.forEach((d) => {
       const data = d.data();
       const pay = normalizeStatus(data.status);
       const deliv = normalizeStatus(data.delivstatus || data.deliveryStatus || data.fulfillmentStatus);
-  const isPaid = (pay === 'paid' || pay === 'complete' || pay === 'completed' || pay === 'success');
-  const isDelivered = (deliv === 'delivered');
-  const isRefunded = (deliv === 'refunded');
-  const isRefundProcessing = (deliv === 'refund-processing');
-  // Show Paid+Delivered (completed) and also any Refunded entries here
-  if (!((isPaid && isDelivered) || isRefunded)) return;
-
+      const isPaid = (pay === 'paid' || pay === 'complete' || pay === 'completed' || pay === 'success');
+      const isDelivered = (deliv === 'delivered');
+      const isRefunded = (deliv === 'refunded');
+      if (!((isPaid && isDelivered) || isRefunded)) return;
       const created = data.createdAt?.toDate ? data.createdAt.toDate() : null;
-      const dateStr = created ? created.toISOString().slice(0, 10) : '';
+      const dateStr = created ? created.toISOString().slice(0,10) : '';
       const amountStr = typeof data.total === 'number' ? `₱${data.total.toLocaleString()}` : '';
-
       rows.push({
         id: d.id,
         customerName: customerName || userData.email || uid,
-        orderDetails: d.id, // using tx id as order id placeholder
+        orderDetails: d.id,
         amount: amountStr,
         date: dateStr,
         status: `${(data.status || 'paid').toString().toLowerCase()} / ${(data.delivstatus || (isRefunded?'refunded':'delivered')).toString().toLowerCase()}`,
@@ -91,14 +79,31 @@ async function loadTransactions() {
       });
     });
   }
+  return rows.sort((a,b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+}
 
-  // 3) Sort all rows by date desc (fallback to createdAt implicit order)
-  TRANSACTIONS = rows.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
-  if (TRANSACTIONS.length === 0) {
-    showMessageRow('No transactions found.', 'empty');
-  } else {
-    render(TRANSACTIONS);
-  }
+let txAdminUnsub = null;
+function initRealtimeTransactions() {
+  showMessageRow('<i class="fas fa-spinner fa-spin"></i> Loading...', 'loading');
+  if (txAdminUnsub) { txAdminUnsub(); txAdminUnsub = null; }
+  // Subscribe to users collection; on any change re-aggregate completed/refunded transactions.
+  txAdminUnsub = onSnapshot(collection(db, 'users'), async () => {
+    try {
+      const rows = await aggregateTransactions();
+      TRANSACTIONS = rows;
+      if (!rows.length) {
+        showMessageRow('No transactions found.', 'empty');
+      } else {
+        render(rows);
+      }
+    } catch (e) {
+      console.error('Realtime transactions refresh failed', e);
+      showMessageRow('Failed to load transactions.', 'error');
+    }
+  }, (err) => {
+    console.error('Users snapshot failed', err);
+    showMessageRow('Realtime subscription error.', 'error');
+  });
 }
 
 // Render transaction list
@@ -152,9 +157,6 @@ tableBody?.addEventListener('click', (e) => {
 closeBtn?.addEventListener('click', closeModal);
 window.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-// Kick off
-loadTransactions().catch(err => {
-  console.error('Failed to load transactions', err);
-  showMessageRow('Failed to load transactions.', 'error');
-});
+// Kick off realtime
+initRealtimeTransactions();
     

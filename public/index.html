@@ -53,6 +53,10 @@
         opacity: 0;
         animation: fadeIn 0.8s ease forwards;
       }
+      
+      html {
+    scroll-behavior: smooth;
+  }
 
       /* Stagger card animations */
       #book-grid .card:nth-child(1) { animation-delay: 0.7s; }
@@ -91,7 +95,7 @@
         </button>
         <div class="brand">PrestigePages</div>
         <nav class="nav-links" aria-label="Main">
-          <a href="index.html">Home</a>
+          <a href="#home">Home</a>
           <a href="#popular">Store</a>
           <a href="about-us.html">About us</a>
           <a href="faq.html">FAQ</a>
@@ -100,7 +104,7 @@
         <div class="nav-spacer"></div>
 
         <div class="actions">
-          <button class="icon-btn" aria-label="Wishlist">
+          <a href="login.html" class="icon-btn" aria-label="Wishlist">
             <svg
               width="20"
               height="20"
@@ -115,7 +119,7 @@
                 fill="#fff"
               />
             </svg>
-          </button>
+          </a>
 
           <a href="login.html" class="icon-btn" aria-label="Cart">
             <svg
@@ -147,7 +151,7 @@
 
     <main>
       <!-- Hero -->
-      <section class="hero">
+      <section class="hero" id="home">
         <div class="container hero-inner">
           <div class="hero-copy fade-in">
             <div class="eyebrow">New Arrivals</div>
@@ -260,7 +264,7 @@
       </section>
       <!-- Popular books -->
       <section id="popular" class="container popular-section fade-in">
-        <div class="popular-header">
+        <div class="popular-header" style="padding-top: 5rem">
           <h2>Our Popular Books</h2>
 
           <!-- Search Input -->
@@ -479,9 +483,8 @@
         </svg>`;
 
           heart.addEventListener("click", () => {
-            const path = heart.querySelector("svg path");
-            const isActive = heart.classList.toggle("active");
-            path.setAttribute("fill", isActive ? "#FF0000" : "#fff");
+            // Logged-out landing page: redirect to login instead of toggling wishlist UI
+            window.location.href = "login.html";
           });
 
           actions.append(addBtn, heart);

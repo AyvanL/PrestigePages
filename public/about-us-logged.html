@@ -159,6 +159,10 @@
           <!-- ✅ badge -->
         </button>
 
+        <button class="icon-btn" aria-label="Custom" id="transBtn">
+          <img src="images/file.png" alt="" class="icon-img"  width="20px"/>
+        </button>
+
         <div class="dropdown">
           <div class="dropdown-trigger">
             <button class="dropbtn" id="welcomeMessage">Loading....</button>
@@ -208,92 +212,6 @@
             />
           </div>
           <div class="blob" aria-hidden="true"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Feature bar -->
-    <section class="features">
-      <div class="container feature-row">
-        <div class="feature">
-          <div class="badge" aria-hidden>
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 2 3 6v6c0 5 3.8 9.7 9 10 5.2-.3 9-5 9-10V6l-9-4Z"
-                fill="#F6E8C8"
-                stroke="#C89B3C"
-              />
-              <path
-                d="m8.5 12 2.3 2.3 4.7-4.7"
-                fill="none"
-                stroke="#3F7A3B"
-                stroke-width="2"
-                stroke-linecap="round"
-              />
-            </svg>
-          </div>
-          <div>
-            <h4>Certified</h4>
-            <p>Authentic editions from the publisher</p>
-          </div>
-        </div>
-        <div class="feature">
-          <div class="badge" aria-hidden>
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <rect
-                x="3"
-                y="8"
-                width="18"
-                height="12"
-                rx="2"
-                fill="#F6E8C8"
-                stroke="#C89B3C"
-              />
-              <path
-                d="M7 8V6a5 5 0 0 1 10 0v2"
-                stroke="#7E6E5B"
-                stroke-width="2"
-                fill="none"
-              />
-            </svg>
-          </div>
-          <div>
-            <h4>Secure</h4>
-            <p>Encrypted checkout and privacy‑first</p>
-          </div>
-        </div>
-        <div class="feature">
-          <div class="badge" aria-hidden>
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M3 14h16l2 4H5l-2-4Z"
-                fill="#F6E8C8"
-                stroke="#C89B3C"
-              />
-              <path d="M7 14V9h12l2 5" fill="none" stroke="#7E6E5B" />
-              <circle cx="8" cy="19" r="1.6" fill="#7E6E5B" />
-              <circle cx="18" cy="19" r="1.6" fill="#7E6E5B" />
-            </svg>
-          </div>
-          <div>
-            <h4>Shipping</h4>
-            <p>Fast, reliable worldwide delivery</p>
-          </div>
         </div>
       </div>
     </section>
@@ -377,6 +295,15 @@
       <div id="cartTotal"></div>
       <!-- Cart Modal -->
       <button onclick="window.location.href='checkout.html'" class="checkout">Proceed to Checkout</button>
+    </div>
+  </div>
+
+  <div id="transModal" class="modal">
+    <div class="modal-content">
+      <h2>Your Transactions <span id="closeTrans" class="close-btn">&times;</span></h2>
+      <div id="transContent">
+        <p>Loading...</p>
+      </div>
     </div>
   </div>
 
