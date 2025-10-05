@@ -1053,5 +1053,18 @@ footer {
   background: #fff;
 }
 
+/* Stock indicator styling */
+.pill.pill-out {
+  background: #ffe5e5;
+  color: #b30000;
+  border: 1px solid #f5b5b5;
+}
+
+.btn.disabled, .btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: grayscale(0.3);
+}
+
 
 

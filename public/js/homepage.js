@@ -346,9 +346,10 @@ async function loadBooks() {
       const title = pick(raw.title ?? raw.tittle, "Untitled");
       const author = pick(raw.author, "Unknown");
       const category = pick(raw.category, "uncategorized").toLowerCase();
-      const cover = pick(raw.cover, "https://via.placeholder.com/200x300?text=No+Cover");
-      const price = Number(raw.price); // could be NaN
-      const rating = Number(raw.rating);
+  const cover = pick(raw.cover, "https://via.placeholder.com/200x300?text=No+Cover");
+  const price = Number(raw.price); // could be NaN
+  const rating = Number(raw.rating);
+  const stock = Number(raw.stock);
 
       return {
         id: d.id,
@@ -358,6 +359,7 @@ async function loadBooks() {
         rating: isNaN(rating) ? 5 : rating,
         category,
         cover,
+        stock: isNaN(stock) ? 0 : stock,
       };
     });
 
@@ -437,13 +439,17 @@ function renderBooks(list) {
         })}`
       )
     );
-    priceRow.appendChild(el("div", "pill", "In stock"));
+  const stockVal = typeof b.stock === 'number' ? b.stock : 0;
+  const inStock = stockVal > 0;
+  const pill = el("div", "pill" + (inStock ? "" : " pill-out"), inStock ? (stockVal > 0 ? `In stock (${stockVal})` : "In stock") : "Out of stock");
+  priceRow.appendChild(pill);
     body.appendChild(priceRow);
 
     const actions = el("div", "actions-row");
 
-    const addBtn = el("button", "btn small");
-    addBtn.textContent = "Add to Cart";
+  const addBtn = el("button", "btn small" + (inStock ? "" : " disabled"));
+  addBtn.textContent = inStock ? "Add to Cart" : "Out of Stock";
+  addBtn.disabled = !inStock;
     addBtn.addEventListener("click", async () => {
       const existing = cart.find((c) => c.title === b.title);
       if (existing) {
