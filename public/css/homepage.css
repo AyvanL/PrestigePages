@@ -1079,5 +1079,15 @@ footer {
   filter: grayscale(0.3);
 }
 
-
+/* Inactivity Modal Style */
+#inactivityWarningModal .modal-content {
+  height: auto !important;
+  max-height: none !important;
+  width: auto;
+  max-width: 350px;
+  padding: 20px 24px;
+  text-align: center;
+  align-self: center;
+  justify-self: center;
+}
 

@@ -1559,3 +1559,110 @@ window.addEventListener("click", (e) => {
         modal.style.display = "none";
       }
     };
+
+    /* ------------------ Inactivity / Session Timeout ------------------
+   - INACTIVITY_LIMIT_MINUTES: how many minutes of inactivity before warning+logout
+   - WARNING_DURATION_SECONDS: how long (seconds) the warning modal shows before logout
+   - Change INACTIVITY_LIMIT_MINUTES below to adjust the timeout duration.
+--------------------------------------------------------------------- */
+(function(){
+  try {
+    const INACTIVITY_LIMIT_MINUTES = 1; // ⚙️ Change this number to adjust timeout
+    const WARNING_DURATION_SECONDS = 30; // Warning duration before logout (optional)
+    const INACTIVITY_LIMIT_MS = INACTIVITY_LIMIT_MINUTES * 60 * 1000;
+    const WARNING_OFFSET_MS = WARNING_DURATION_SECONDS * 1000;
+
+    let inactivityTimer, warningTimer, countdownInterval;
+
+    // Create small warning modal dynamically
+    function createWarningModal() {
+      if (document.getElementById('inactivityWarningModal')) return;
+      const modal = document.createElement('div');
+      modal.id = 'inactivityWarningModal';
+      modal.className = 'modal';
+      modal.style.display = 'none';
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width:350px; text-align:center;">
+          <h3>⚠️ Inactivity Detected</h3>
+          <p>You will be logged out in <strong id="inactivityCountdown">${WARNING_DURATION_SECONDS}</strong> seconds.</p>
+          <div style="margin-top:10px;">
+            <button id="stayLoggedInBtn" class="btn small">Stay Logged In</button>
+            <button id="logoutNowBtn" class="btn small secondary">Logout Now</button>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+      document.getElementById('stayLoggedInBtn').onclick = resetInactivity;
+      document.getElementById('logoutNowBtn').onclick = logoutNow;
+
+      // Do not cancel on backdrop click anymore
+      modal.addEventListener('click', (e)=>{ /* no-op on backdrop */ });
+
+    }
+
+    function showModal() {
+      const modal = document.getElementById('inactivityWarningModal');
+      const countdownEl = document.getElementById('inactivityCountdown');
+      if (!modal) return;
+      modal.style.display = 'flex';
+      let remaining = WARNING_DURATION_SECONDS;
+      countdownEl.textContent = remaining;
+      countdownInterval = setInterval(() => {
+        remaining--;
+        countdownEl.textContent = remaining;
+        if (remaining <= 0) clearInterval(countdownInterval);
+      }, 1000);
+    }
+
+    function hideModal() {
+      const modal = document.getElementById('inactivityWarningModal');
+      if (!modal) return;
+      modal.style.display = 'none';
+      if (countdownInterval) clearInterval(countdownInterval);
+    }
+
+    function scheduleTimers() {
+      clearTimeout(inactivityTimer);
+      clearTimeout(warningTimer);
+      warningTimer = setTimeout(showModal, INACTIVITY_LIMIT_MS - WARNING_OFFSET_MS);
+      inactivityTimer = setTimeout(logoutNow, INACTIVITY_LIMIT_MS);
+    }
+
+    function resetInactivity() {
+      hideModal();
+      scheduleTimers();
+    }
+
+    async function logoutNow() {
+      hideModal();
+      clearTimeout(inactivityTimer);
+      clearTimeout(warningTimer);
+      try {
+        await auth.signOut();
+      } catch (err) {
+        console.warn('Sign-out failed:', err);
+      }
+      window.location.href = 'login.html';
+    }
+
+    function initInactivityTracking() {
+      createWarningModal();
+      // ['click', 'mousemove', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
+      //   document.addEventListener(evt, resetInactivity, { passive: true });
+      // });
+      // document.addEventListener('visibilitychange', () => {
+      //   if (!document.hidden) resetInactivity();
+      // });
+      scheduleTimers();
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) initInactivityTracking();
+      else {
+        clearTimeout(inactivityTimer);
+        clearTimeout(warningTimer);
+      }
+    });
+  } catch (err) {
+    console.error('Inactivity timeout setup failed:', err);
+  }
+})();
