@@ -64,7 +64,7 @@ async function aggregateTransactions() {
       const pay = normalizeStatus(data.status);
       const deliv = normalizeStatus(data.delivstatus || data.deliveryStatus || data.fulfillmentStatus);
       const isPaid = (pay === 'paid' || pay === 'complete' || pay === 'completed' || pay === 'success');
-      const isDelivered = (deliv === 'delivered');
+      const isDelivered = (deliv === 'delivered' || deliv === 'refund-rejected');
       // Exclude any refunded transactions completely
       if (deliv === 'refunded') return;
       // Only show paid + delivered

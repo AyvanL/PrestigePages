@@ -62,7 +62,7 @@ async function aggregateOrders() {
       const payStatus = (payRaw === 'paid') ? 'paid' : (payRaw === 'failed' ? 'failed' : 'unpaid');
       const createdAt = formatDate(tx.createdAt);
       const delivLc = (deliv || '').toString().toLowerCase();
-      if ((payStatus === 'paid' && delivLc === 'delivered') || delivLc === 'refund-processing' || delivLc === 'refunded') {
+      if ((payStatus === 'paid' && delivLc === 'delivered') || delivLc === 'refund-processing' || delivLc === 'refunded' || delivLc === 'refund-rejected') {
         return; // skip
       }
       const tr = document.createElement('tr');
