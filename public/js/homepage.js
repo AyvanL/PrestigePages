@@ -117,7 +117,10 @@ async function loadCartFromFirestore() {
     if (data.cart && Array.isArray(data.cart)) {
       cart = data.cart;
       await updateCart();
+      console.debug('[PP] Cart loaded from Firestore with', cart.length, 'items');
     }
+  } else {
+    console.debug('[PP] No Firestore cart found for user; preserving local state.');
   }
 }
 
@@ -334,28 +337,15 @@ onAuthStateChanged(auth, async (user) => {
         } catch (e) {
           console.warn('Could not process fallback transaction', e);
         }
+        // Only clear cart if the fallback transaction actually existed and we processed it.
         try { await updateDoc(doc(db, "users", user.uid), { cart: [] }); } catch {}
         cart = []; await updateCart();
         localStorage.removeItem("pp:clearCartTx");
       }
     } catch {}
 
-    // Extra safety: if the last transaction was paid but cart still has items, clear it now
-    try {
-      const userData = (await getDoc(doc(db, "users", user.uid))).data();
-      const lastTxId = userData?.lastTransactionId;
-      if (lastTxId && Array.isArray(cart) && cart.length > 0) {
-        const txSnap = await getDoc(doc(db, "users", user.uid, "transactions", lastTxId));
-        if (txSnap.exists()) {
-          const tx = txSnap.data();
-          if (tx?.status === "paid") {
-            await updateDoc(doc(db, "users", user.uid), { cart: [] });
-            cart = [];
-            await updateCart();
-          }
-        }
-      }
-    } catch {}
+    // Removed aggressive automatic cart clearing on paid transaction to allow cart persistence across refresh.
+    // If you need to explicitly clear after successful checkout, set localStorage key `pp:clearCartTx` before redirect.
 
   // Subscribe to books collection in realtime
   initBooksRealtime();
@@ -924,6 +914,7 @@ function applyFilters() {
 async function updateCart() {
   cartItemsEl.innerHTML = "";
   let total = 0;
+  try { localStorage.setItem('pp:cartBackup', JSON.stringify(cart)); } catch {}
 
   if (cart.length === 0) {
     cartItemsEl.innerHTML = `<p class="empty-cart-message">🛒 Your cart is empty.</p>`;
@@ -992,6 +983,19 @@ if (cartBtn) {
     cartModal.style.display = "flex";
   });
 }
+
+// On initial load (before auth snapshot might apply), attempt to hydrate cart from localStorage backup
+try {
+  const backup = localStorage.getItem('pp:cartBackup');
+  if (backup) {
+    const parsed = JSON.parse(backup);
+    if (Array.isArray(parsed) && parsed.length && cart.length === 0) {
+      cart = parsed;
+      updateCart();
+      console.debug('[PP] Cart hydrated from localStorage backup with', parsed.length, 'items');
+    }
+  }
+} catch (e) { console.warn('[PP] Failed to restore cart backup', e); }
 
 if (closeCart) {
   closeCart.addEventListener("click", () => {
