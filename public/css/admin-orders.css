@@ -311,6 +311,10 @@ button:hover {
     overflow: auto;
     background-color: rgba(0, 0, 0, 0.4); /* Black with opacity */
     padding-top: 60px;
+    animation: fadeIn 0.3s ease;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(3px);
 }
 
 .modal-content {
@@ -319,9 +323,11 @@ button:hover {
     padding: 20px;
     border: 1px solid #888;
     width: 80%;
-    max-width: 500px;
+    max-width: 420px;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow);
+    padding: 24px 28px;
+    animation: slideUp 0.25s ease;
 }
 
 #closeModalBtn {
@@ -332,4 +338,113 @@ button:hover {
     border-radius: var(--radius-sm);
     cursor: pointer;
     margin-top: 10px;
+}
+
+/* ==== Heading ==== */
+.modal-content h3 {
+  margin: 0 0 10px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #222;
+  text-align: center;
+}
+
+/* ==== Select & Label Styling ==== */
+.modal-content label {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  color: #444;
+}
+
+.modal-content select {
+  background-color: #f9f9f9;
+  transition: border-color 0.2s, border 0.2s ease;
+  outline: none;
+  position: relative;
+  width: 100%;
+  padding: 10px 40px 10px 12px;
+  border-radius: 5px;
+  border: 1.5px solid #ccc;
+  color: #333;
+  font-size: 15px;
+  font-family: inherit;
+  appearance: none; /* removes default arrow */
+  background-image: linear-gradient(45deg, transparent 50%, #806a1b 50%),
+                    linear-gradient(135deg, #806a1b 50%, transparent 50%);
+  background-position: calc(100% - 18px) center, calc(100% - 12px) center;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.modal-content select:focus {
+  background: #fff;
+  border-color: #000000;
+  box-shadow: 0 0 0 3px rgba(6, 13, 20, 0.15);
+  outline: none;
+  background-size: 6px 6px, 6px 6px;
+  background-image: linear-gradient(45deg, transparent 50%, #806a1b 50%),
+                    linear-gradient(135deg, #806a1b 50%, transparent 50%);
+  background-position: calc(100% - 18px) center, calc(100% - 12px) center;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+.modal-content select:hover {
+  border-color: #44494e;
+  background-color: #fff;
+}
+
+/* ==== Buttons ==== */
+.modal-content button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.25s, transform 0.1s;
+}
+
+#statusCancelBtn {
+  background: #e0e0e0;
+  color: #333;
+}
+
+#statusCancelBtn:hover {
+  background: #d0d0d0;
+}
+
+#statusSaveBtn {
+  background: #806a1b;
+  color: white;
+}
+
+#statusSaveBtn:hover {
+  background: #5a4b13;
+}
+
+/* Button Click Effect */
+.modal-content button:active {
+  transform: scale(0.96);
+}
+
+
+
+
+/* ==== Animations ==== */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
