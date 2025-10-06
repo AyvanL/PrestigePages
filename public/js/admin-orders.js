@@ -245,3 +245,18 @@ statusSaveBtn?.addEventListener('click', async () => {
     if (statusModal) statusModal.style.display = 'none';
   }
 });
+
+const modal = document.getElementById('orderDetailsModal');
+const closeBtn = document.getElementById('closeModalBtn');
+
+// Close when clicking the close button
+closeBtn.addEventListener('click', () => {
+  modal.style.display = 'none';
+});
+
+// Close when clicking outside modal content
+modal.addEventListener('click', (event) => {
+  if (event.target === modal) {
+    modal.style.display = 'none';
+  }
+});

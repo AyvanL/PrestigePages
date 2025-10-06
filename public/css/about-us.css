@@ -17,6 +17,10 @@
       --container: 1180px;
     }
 
+    main{ 
+        padding-bottom: 60px;
+    }
+
     /* --- Resets ---------------------------------------------------------- */
     *,*::before,*::after{ 
         box-sizing: border-box; 

@@ -1071,11 +1071,11 @@ function renderTransactionsSnapshot(snap) {
     let actionBtnHtml = '';
     if (isRefundState) {
       if (delivLower === 'refund-processing') {
-        actionBtnHtml = '<span style="font-size:12px; color:var(--muted-ink);">Refund request pending...</span>';
+        actionBtnHtml = '<span style="font-size:16px; font-weight: bold; color:white; background-color: #888125ff; border: 1px solid black; padding: 8px 10px; border-radius: 8%">Refund Request Pending</span>';
       } else if (delivLower === 'refund-rejected') {
-        actionBtnHtml = '<span style="font-size:12px; color:#b30000; font-weight:600;">Refund Rejected</span>';
+        actionBtnHtml = '<span style="font-size:16px; font-weight: bold; color:white; background-color: #4f221fff; border: 1px solid black; padding: 8px 10px; border-radius: 8%">Refund Rejected</span>';
       } else { // refunded
-        actionBtnHtml = '<span style="font-size:18px; font-weight: bold; color:white; background-color: #344F1F; border: 1px solid black; padding: 8px 10px; border-radius: 5%">Refunded</span>';
+        actionBtnHtml = '<span style="font-size:18px; font-weight: bold; color:white; background-color: #344F1F; border: 1px solid black; padding: 8px 10px; border-radius: 8%">Refunded</span>';
       }
     } else if (isComplete) {
       actionBtnHtml = `<button class="btn secondary small btn-refund" data-txid="${d.id}">Refund</button>`;
@@ -1559,6 +1559,3 @@ window.addEventListener("click", (e) => {
         modal.style.display = "none";
       }
     };
-
-
-

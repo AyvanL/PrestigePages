@@ -159,7 +159,9 @@
           <!-- ✅ badge -->
         </button>
 
-        
+        <button class="icon-btn" aria-label="Custom" id="transBtn">
+          <img src="images/file.png" alt="" class="icon-img"  width="20px"/>
+        </button>
 
         <div class="dropdown">
           <div class="dropdown-trigger">
@@ -326,9 +328,6 @@
     </div>
   </div>
 
-  
-
-
   <!-- Edit Profile Modal -->
 <div id="editProfileModal" class="modal">
   <div class="modal-content">
@@ -372,14 +371,71 @@
       <div id="cartTotal"></div>
       <!-- Cart Modal -->
       <button onclick="window.location.href='checkout.html'" class="checkout">Proceed to Checkout</button>
+
+
     </div>
   </div>
 
   <div id="transModal" class="modal">
     <div class="modal-content">
-      <h2>Your Transactions <span id="closeTrans" class="close-btn">&times;</span></h2>
+      <h2 class="modal-header">Your Transactions <span id="closeTrans" class="close-btn">&times;</span></h2>
       <div id="transContent">
         <p>Loading...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Book Detail Modal -->
+  <div id="bookDetailModal" class="modal">
+    <div class="modal-content" style="max-width:1000px; width:100%;">
+      <h2 style="display:flex; justify-content:space-between; align-items:center; gap:16px; margin-top:0;">
+        <span id="bdTitle">Book</span>
+        <span id="closeBookDetail" class="close-btn" style="cursor:pointer;">&times;</span>
+      </h2>
+      <style>
+        /* Book detail modal specific layout */
+        #bdBody { display:flex; gap:28px; flex-wrap:nowrap; align-items:flex-start; }
+        #bdBody > div:first-child { flex:0 0 200px; }
+        #bdBody > div:last-child { flex:1; min-width:240px; display:flex; flex-direction:column; }
+        #bdDescription { max-height:240px; overflow:auto; }
+        #bdReviewsSection { margin-top:26px; }
+        @media (max-width: 760px){
+          #bdBody { flex-wrap:wrap; }
+          #bdDescription { max-height:none; }
+        }
+      </style>
+      <div id="bdBody">
+        <div style="flex:0 0 200px;">
+          <img id="bdCover" src="" alt="Cover" style="width:200px; height:300px; object-fit:cover; border-radius:8px; background:#eee;" />
+        </div>
+        <div style="flex:1; min-width:240px;">
+          <p id="bdAuthor" style="margin:4px 0 10px; font-weight:600; color:var(--ink);"></p>
+          <div id="bdPrice" style="font-size:20px; font-weight:700; margin-bottom:12px;">₱0.00</div>
+          <div id="bdStock" style="margin-bottom:14px; font-size:14px;"></div>
+          <div id="bdRatingSummary" style="margin-bottom:16px; font-size:14px; color:var(--muted-ink);"></div>
+          <div>
+            <h3 style="margin:0 0 6px; font-size:18px;">Description</h3>
+            <p id="bdDescription" style="margin:0 0 16px; line-height:1.45; white-space:pre-wrap; font-size:14px;"></p>
+          </div>
+        </div>
+      </div>
+      <hr style="margin:24px 0;" />
+      <div id="bdReviewsSection">
+        <h3 style="margin:0 0 12px; font-size:20px;">Reviews</h3>
+        <div id="bdReviewsList" style="display:grid; gap:14px; margin-bottom:20px; max-height:260px; overflow:auto; padding-right:4px;"></div>
+        <div id="bdReviewFormWrap" style="display:none;">
+          <h4 style="margin:0 0 8px;">Write a Review</h4>
+          <form id="bdReviewForm" style="display:grid; gap:10px;">
+            <div style="display:flex; align-items:center; gap:8px;" id="bdStarPicker" aria-label="Select rating"></div>
+            <textarea id="bdReviewText" placeholder="Share your thoughts about this book" rows="3" style="resize:vertical; padding:8px; font-family:inherit; border:1px solid var(--line); border-radius:6px;"></textarea>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button type="submit" class="btn small">Submit Review</button>
+              <button type="button" id="bdDeleteReview" class="btn secondary small" style="display:none;">Delete My Review</button>
+            </div>
+            <div id="bdReviewMsg" style="font-size:13px; color:var(--muted-ink);"></div>
+          </form>
+        </div>
+        <div id="bdPurchaseNote" style="display:none; font-size:13px; color:var(--muted-ink);">You need to purchase this book to leave a review.</div>
       </div>
     </div>
   </div>

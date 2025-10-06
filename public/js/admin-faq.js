@@ -115,7 +115,7 @@ function renderInquiries(inquiries) {
     const statusText = (inquiry.status || 'pending').charAt(0).toUpperCase() + (inquiry.status || 'pending').slice(1);
     const date = inquiry.createdAt?.toDate ? inquiry.createdAt.toDate().toLocaleString() : 'Unknown date';
     const messagePreview = inquiry.message.length > 150 ? 
-      inquiry.message.substring(0, 150) + '...' : inquiry.message;
+      inquiry.message.substring(0, 150) + '...' : inquiry.message;    
     
     return `
       <div class="inquiry-item" data-id="${inquiry.id}" data-status="${inquiry.status || 'pending'}">
@@ -180,9 +180,10 @@ function openViewModal(inquiry) {
   document.getElementById('detailName').textContent = inquiry.name || 'Unknown';
   document.getElementById('detailEmail').textContent = inquiry.email || 'No email';
   document.getElementById('detailDate').textContent = inquiry.createdAt?.toDate ? 
-    inquiry.createdAt.toDate().toLocaleString() : 'Unknown date';
+  inquiry.createdAt.toDate().toLocaleString() : 'Unknown date';
   document.getElementById('detailMessage').textContent = inquiry.message;
-  
+  document.getElementById('detailReply').textContent = inquiry.adminResponse || "❌No admin replied yet❌";  
+
   // Set status badge
   const statusBadge = document.getElementById('detailStatus');
   statusBadge.textContent = (inquiry.status || 'pending').charAt(0).toUpperCase() + 
