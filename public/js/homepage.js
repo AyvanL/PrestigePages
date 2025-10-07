@@ -915,11 +915,18 @@ async function updateCart() {
   cartItemsEl.innerHTML = "";
   let total = 0;
   try { localStorage.setItem('pp:cartBackup', JSON.stringify(cart)); } catch {}
+  const proceedBtn = document.getElementById('checkoutProceedBtn');
 
   if (cart.length === 0) {
     cartItemsEl.innerHTML = `<p class="empty-cart-message">🛒 Your cart is empty.</p>`;
     cartTotalEl.textContent = `Total: ₱0.00`;
     cartCount.textContent = "0";
+    if (proceedBtn) {
+      proceedBtn.setAttribute('aria-disabled','true');
+      proceedBtn.classList.add('disabled');
+      proceedBtn.style.pointerEvents = 'none';
+      proceedBtn.style.opacity = '0.5';
+    }
     return;
   }
 
@@ -974,6 +981,12 @@ async function updateCart() {
 
   cartTotalEl.textContent = `Total: ₱${total.toFixed(2)}`;
   cartCount.textContent = cart.length;
+  if (proceedBtn) {
+    proceedBtn.setAttribute('aria-disabled','false');
+    proceedBtn.classList.remove('disabled');
+    proceedBtn.style.pointerEvents = '';
+    proceedBtn.style.opacity = '';
+  }
 }
 
 // Show/hide cart modal

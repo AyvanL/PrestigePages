@@ -182,6 +182,16 @@ body {
   position: relative;
 }
 
+/* Checkout button disabled state */
+.checkout.disabled,
+.checkout[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+  filter: grayscale(20%);
+  transition: opacity .25s ease;
+}
+
 /* --- Hero ------------------------------------------------------------ */
 .hero {
   position: relative;
