@@ -88,6 +88,14 @@ const transBtn = document.getElementById("transBtn");
 const transModal = document.getElementById("transModal");
 const closeTrans = document.getElementById("closeTrans");
 const transContent = document.getElementById("transContent");
+// Refund reason modal elements
+const refundReasonModal = document.getElementById('refundReasonModal');
+const refundReasonForm = document.getElementById('refundReasonForm');
+const refundReasonText = document.getElementById('refundReasonText');
+const refundReasonMsg = document.getElementById('refundReasonMsg');
+const closeRefundReason = document.getElementById('closeRefundReason');
+const cancelRefundReason = document.getElementById('cancelRefundReason');
+let REFUND_TARGET_TXID = null;
 
 // --- Helper functions for Firestore cart ---
 
@@ -1175,6 +1183,53 @@ window.addEventListener("click", (e) => {
   if (e.target === transModal) transModal.style.display = "none";
 });
 
+// Refund reason modal handlers
+if (closeRefundReason) {
+  closeRefundReason.addEventListener('click', () => {
+    if (refundReasonModal) refundReasonModal.style.display = 'none';
+    REFUND_TARGET_TXID = null;
+  });
+}
+if (cancelRefundReason) {
+  cancelRefundReason.addEventListener('click', () => {
+    if (refundReasonModal) refundReasonModal.style.display = 'none';
+    REFUND_TARGET_TXID = null;
+  });
+}
+window.addEventListener('click', (e) => {
+  if (refundReasonModal && e.target === refundReasonModal) {
+    refundReasonModal.style.display = 'none';
+    REFUND_TARGET_TXID = null;
+  }
+});
+if (refundReasonForm) {
+  refundReasonForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!REFUND_TARGET_TXID) { return; }
+    const user = auth.currentUser; if (!user) return;
+    const reason = (refundReasonText?.value || '').trim();
+    if (reason.length < 5) {
+      if (refundReasonMsg) refundReasonMsg.textContent = 'Please provide at least 5 characters.';
+      return;
+    }
+    try {
+      const txRef = doc(db, 'users', user.uid, 'transactions', REFUND_TARGET_TXID);
+      const snap = await getDoc(txRef);
+      if (!snap.exists()) throw new Error('Transaction missing');
+      const data = snap.data() || {};
+      const status = (data.status || '').toString().toLowerCase();
+      if (status !== 'paid') { if (refundReasonMsg) refundReasonMsg.textContent = 'Only paid orders can be refunded.'; return; }
+      await updateDoc(txRef, { delivstatus: 'refund-processing', refundRequestedAt: serverTimestamp(), refundReason: reason });
+      if (refundReasonModal) refundReasonModal.style.display = 'none';
+      REFUND_TARGET_TXID = null;
+      alert('Refund request submitted.');
+    } catch (err) {
+      console.error('Submit refund reason failed', err);
+      if (refundReasonMsg) refundReasonMsg.textContent = 'Failed to submit refund.';
+    }
+  });
+}
+
 // Transactions actions: delegated handlers for tabs, print, refund, cancel
 if (transContent) {
   transContent.addEventListener('click', async (e) => {
@@ -1229,25 +1284,20 @@ if (transContent) {
     if (refundBtn && user) {
       const txid = refundBtn.getAttribute('data-txid');
       if (!txid) return;
-      const ok = confirm('Request a refund for this order?');
-      if (!ok) return;
       try {
         const txRef = doc(db, 'users', user.uid, 'transactions', txid);
         const snap = await getDoc(txRef);
         const data = snap.exists() ? snap.data() : {};
         const status = (data.status || '').toString().toLowerCase();
-        // Only allow refund request if payment was made
-        if (status !== 'paid') {
-          alert('Refund is only available for paid orders.');
-          return;
-        }
-        await updateDoc(txRef, { delivstatus: 'refund-processing', refundRequestedAt: serverTimestamp() });
-        alert('Refund requested. Status set to refund processing.');
-        // Update visible status text in the details row if present
-        const sum = refundBtn.closest('details')?.querySelector('span strong');
+        if (status !== 'paid') { alert('Refund is only available for paid orders.'); return; }
+        // Open reason modal
+        REFUND_TARGET_TXID = txid;
+        if (refundReasonText) refundReasonText.value = '';
+        if (refundReasonMsg) refundReasonMsg.textContent = '';
+        if (refundReasonModal) refundReasonModal.style.display = 'flex';
       } catch (err) {
-        console.error('Refund request failed', err);
-        alert('Failed to request refund.');
+        console.error('Prepare refund failed', err);
+        alert('Failed to open refund request.');
       }
     }
 

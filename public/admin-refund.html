@@ -127,8 +127,7 @@
             <td><span class="badge muted">${r.status}</span></td>
             <td>${r.date}</td>
             <td>
-              <button class="btn btn-sm approve-refund" data-uid="${r.uid}" data-id="${r.id}"><i class="fa fa-check"></i> Approve</button>
-              <button class="btn btn-sm reject-refund" data-uid="${r.uid}" data-id="${r.id}" style="margin-left:6px;"><i class="fa fa-times"></i> Reject</button>
+              <button class="btn btn-sm view-refund" data-uid="${r.uid}" data-id="${r.id}"><i class="fa fa-eye"></i> View</button>
             </td>
           </tr>`).join('');
       }
@@ -149,46 +148,89 @@
           </tr>`).join('');
       }
 
-      // Attach action handlers to requests body only
+      // Attach action handler for view button
       reqBody.addEventListener('click', async (e)=>{
-        const approve = e.target.closest('.approve-refund');
-        if (approve){
-          const uid = approve.getAttribute('data-uid');
-          const id = approve.getAttribute('data-id');
+        const view = e.target.closest('.view-refund');
+        if (view){
+          const uid = view.getAttribute('data-uid');
+          const id = view.getAttribute('data-id');
           if (!uid || !id) return;
-          const ok = confirm('Approve refund for this transaction?');
-          if (!ok) return;
           try {
-            await updateDoc(doc(db,'users',uid,'transactions',id), { delivstatus: 'refunded', refundApprovedAt: serverTimestamp() });
-            approve.closest('tr')?.remove();
-            // Refresh history list to include newly refunded
-            loadRefunds();
+            CURRENT_REFUND_UID = uid;
+            CURRENT_REFUND_TXID = id;
+            await populateRefundModal(uid,id);
+            openRefundModal();
           } catch(err){
-            alert('Failed to approve refund');
             console.error(err);
+            alert('Failed to load refund details');
           }
-          return;
-        }
-        const reject = e.target.closest('.reject-refund');
-        if (reject){
-          const uid = reject.getAttribute('data-uid');
-          const id = reject.getAttribute('data-id');
-            if (!uid || !id) return;
-            const ok = confirm('Reject this refund request? It will be marked as refund-rejected.');
-            if (!ok) return;
-            try {
-              await updateDoc(doc(db,'users',uid,'transactions',id), { delivstatus: 'refund-rejected', refundRejectedAt: serverTimestamp() });
-              reject.closest('tr')?.remove();
-              loadRefunds();
-            } catch(err){
-              alert('Failed to reject refund');
-              console.error(err);
-            }
         }
       });
     }
 
     loadRefunds();
+    // --- Refund View Modal Logic ---
+    let CURRENT_REFUND_UID = null;
+    let CURRENT_REFUND_TXID = null;
+    function qs(id){ return document.getElementById(id); }
+    const refundModal = document.createElement('div');
+    refundModal.id = 'refundViewModal';
+    refundModal.className = 'modal';
+    refundModal.style.display='none';
+    refundModal.innerHTML = `
+      <div class="modal-content" style="max-width:520px;">
+        <h2 style="margin-top:0; display:flex; justify-content:space-between; align-items:center;">Refund Request <span id="closeRefundView" class="close-btn" style="cursor:pointer;">&times;</span></h2>
+        <div style="font-size:14px; line-height:1.4; margin-bottom:12px; color:#555;">
+          Below is the customer's stated reason for requesting a refund. Review and choose an action.
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="font-size:12px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:#666;">Reason</label>
+          <div id="refundReasonDisplay" style="white-space:pre-wrap; border:1px solid var(--line,#ddd); background:#fafafa; padding:12px 14px; border-radius:8px; min-height:80px; font-size:14px;"></div>
+        </div>
+        <div id="refundModalMsg" style="min-height:18px; font-size:12px; color:#b30000;"></div>
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:6px;">
+          <button type="button" class="btn secondary" id="refundRejectBtn"><i class="fa fa-times"></i> Reject</button>
+          <button type="button" class="btn" id="refundApproveBtn"><i class="fa fa-check"></i> Approve</button>
+        </div>
+      </div>`;
+    document.body.appendChild(refundModal);
+
+    function openRefundModal(){ refundModal.style.display='flex'; }
+    function closeRefundModal(){ refundModal.style.display='none'; CURRENT_REFUND_UID=null; CURRENT_REFUND_TXID=null; qs('refundReasonDisplay').textContent=''; }
+    window.addEventListener('click', (e)=>{ if (e.target === refundModal) closeRefundModal(); });
+    refundModal.querySelector('#closeRefundView').addEventListener('click', closeRefundModal);
+
+    async function populateRefundModal(uid, txid){
+      const snap = await getDocs(collection(db,'users', uid, 'transactions'));
+      let reason = '(Not found)';
+      snap.forEach(d=>{ if (d.id === txid){ const data = d.data()||{}; reason = data.refundReason || '(No reason provided)'; }});
+      qs('refundReasonDisplay').textContent = reason;
+    }
+
+    async function approveRefund(){
+      if (!CURRENT_REFUND_UID || !CURRENT_REFUND_TXID) return;
+      try {
+        await updateDoc(doc(db,'users',CURRENT_REFUND_UID,'transactions',CURRENT_REFUND_TXID), { delivstatus:'refunded', refundApprovedAt: serverTimestamp() });
+        closeRefundModal();
+        loadRefunds();
+      } catch(err){
+        qs('refundModalMsg').textContent = 'Failed to approve refund';
+        console.error(err);
+      }
+    }
+    async function rejectRefund(){
+      if (!CURRENT_REFUND_UID || !CURRENT_REFUND_TXID) return;
+      try {
+        await updateDoc(doc(db,'users',CURRENT_REFUND_UID,'transactions',CURRENT_REFUND_TXID), { delivstatus:'refund-rejected', refundRejectedAt: serverTimestamp() });
+        closeRefundModal();
+        loadRefunds();
+      } catch(err){
+        qs('refundModalMsg').textContent = 'Failed to reject refund';
+        console.error(err);
+      }
+    }
+    refundModal.querySelector('#refundApproveBtn').addEventListener('click', approveRefund);
+    refundModal.querySelector('#refundRejectBtn').addEventListener('click', rejectRefund);
   </script>
 </body>
 </html>
