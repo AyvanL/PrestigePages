@@ -1567,8 +1567,8 @@ window.addEventListener("click", (e) => {
 --------------------------------------------------------------------- */
 (function(){
   try {
-    const INACTIVITY_LIMIT_MINUTES = 1; // ⚙️ Change this number to adjust timeout
-    const WARNING_DURATION_SECONDS = 30; // Warning duration before logout (optional)
+    const INACTIVITY_LIMIT_MINUTES = 5; // ⚙️ Change this number to adjust timeout
+    const WARNING_DURATION_SECONDS = 60; // Warning duration before logout (optional)
     const INACTIVITY_LIMIT_MS = INACTIVITY_LIMIT_MINUTES * 60 * 1000;
     const WARNING_OFFSET_MS = WARNING_DURATION_SECONDS * 1000;
 
