@@ -59,6 +59,9 @@ function rowHtml(u) {
   const name = `${u.firstName || ''} ${u.lastName || ''}`.trim();
   const email = u.email || '';
   const mobile = u.mobile || '';
+  const suspended = !!u.suspended;
+  const banBtnLabel = suspended ? 'Reactivate' : 'Ban';
+  const banBtnClass = suspended ? 'reactivate-btn' : 'ban-btn';
   return `<tr data-uid="${u.id}">
     <td>${u.id}</td>
     <td>${u.firstName || ''}</td>
@@ -69,6 +72,7 @@ function rowHtml(u) {
       <button class="view-btn" data-action="view">View</button>
       <button class="edit-btn" data-action="edit">Edit</button>
       <button class="delete-btn" data-action="delete">Delete</button>
+      <button class="${banBtnClass}" data-action="ban-toggle" data-suspended="${suspended}">${banBtnLabel}</button>
     </td>
   </tr>`;
 }
@@ -171,6 +175,7 @@ tableBody?.addEventListener('click', (e) => {
   if (action === 'view') openModal(user);
   if (action === 'edit') handleEdit(uid);
   if (action === 'delete') handleDelete(uid);
+  if (action === 'ban-toggle') handleBanToggle(user, btn);
 });
 
 modalClose?.addEventListener('click', closeModal);
@@ -200,6 +205,28 @@ editForm?.addEventListener('submit', async (e) => {
 });
 
 window.addEventListener('click', (e) => { if (e.target === editModal) editModal.style.display = 'none'; });
+
+async function handleBanToggle(user, btnEl){
+  try {
+    const currentlySuspended = !!user.suspended;
+    const confirmMsg = currentlySuspended ? 'Reactivate this account?' : 'Ban (suspend) this account? The user will be prevented from logging in.';
+    if (!confirm(confirmMsg)) return;
+    const userRef = doc(db, 'users', user.id);
+    await updateDoc(userRef, {
+      suspended: !currentlySuspended,
+      suspendedAt: !currentlySuspended ? new Date() : null,
+      reactivatedAt: currentlySuspended ? new Date() : null
+    });
+    // Update local state & button inline without full reload
+    user.suspended = !currentlySuspended;
+    btnEl.textContent = user.suspended ? 'Reactivate' : 'Ban';
+    btnEl.setAttribute('data-suspended', String(!!user.suspended));
+    btnEl.className = user.suspended ? 'reactivate-btn' : 'ban-btn';
+  } catch (err){
+    alert('Failed to toggle suspension');
+    console.error(err);
+  }
+}
 
 // Kick off
 loadUsers();

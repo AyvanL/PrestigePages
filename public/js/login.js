@@ -134,6 +134,22 @@ if (loginForm) {
       // Success -> clear counters
       clearLock();
 
+      // Suspension check
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          const uSnap = await getDoc(doc(db, 'users', user.uid));
+          if (uSnap.exists()) {
+            const uData = uSnap.data() || {};
+            if (uData.suspended) {
+              alert('🚫 This account is suspended. Please contact support.');
+              await auth.signOut();
+              return; // Stop further navigation
+            }
+          }
+        }
+      } catch (sErr) { console.warn('Suspension check failed', sErr); }
+
       // OTP flow if UI & backend exist
       if (otpModal && verifyBtn && otpInput) {
         try {

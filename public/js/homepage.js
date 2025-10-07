@@ -265,6 +265,13 @@ onAuthStateChanged(auth, async (user) => {
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
+      const uData = docSnap.data();
+      if (uData && uData.suspended) {
+        alert('🚫 Your account is suspended. Please contact support.');
+        try { await signOut(auth); } catch {}
+        window.location.href = 'login.html';
+        return;
+      }
       const firstName = docSnap.data().firstName;
       welcomeEl.textContent = firstName;
       // Load wishlist if available
@@ -278,6 +285,15 @@ onAuthStateChanged(auth, async (user) => {
     onSnapshot(userDocRef, (snap) => {
       if (!snap.exists()) return;
       const data = snap.data() || {};
+      // Realtime suspension enforcement: if admin sets suspended=true while user is online, auto logout immediately.
+      if (data.suspended) {
+        if (!window.__ppSuspendedNotified) {
+          window.__ppSuspendedNotified = true;
+          alert('🚫 Your account has been suspended while you were online. You will be logged out.');
+          signOut(auth).then(()=>{ window.location.href = 'login.html'; }).catch(()=>{ window.location.href = 'login.html'; });
+        }
+        return; // Stop further processing of wishlist/cart updates after suspension
+      }
       // Update wishlist live
       USER_WISHLIST = Array.isArray(data.wishlist) ? data.wishlist : [];
       // Update cart live (avoid overwriting if we are in the middle of local mutation? simple approach: replace)

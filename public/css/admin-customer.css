@@ -143,6 +143,20 @@
   button.delete-btn:hover {
     background: #b52d28;
   }
+
+  /* Ban / Reactivate buttons */
+  button.ban-btn {
+    background: #c62828; /* deep red */
+  }
+  button.ban-btn:hover {
+    background: #a31f1f;
+  }
+  button.reactivate-btn {
+    background: #2563eb; /* blue for reactivation */
+  }
+  button.reactivate-btn:hover {
+    background: #1e4fb8;
+  }
   
   /* Modal */
   .modal {
