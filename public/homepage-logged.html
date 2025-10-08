@@ -430,11 +430,47 @@
 
   <!-- Refund Reason Modal -->
   <div id="refundReasonModal" class="modal">
-    <div class="modal-content" style="max-width:480px; max-height: 500px; height: 50%;">
+    <div class="modal-content" style="max-width:480px; max-height: 520px; height:auto;">
       <h2 style="margin-top:0; display:flex; justify-content:space-between; align-items:center;">Refund Request <span id="closeRefundReason" class="close-btn" style="cursor:pointer;">&times;</span></h2>
-      <p style="margin-top:0; font-size:14px; color:var(--muted-ink);">Please provide a brief reason for your refund request. This will be sent to the admin for review.</p>
-      <form id="refundReasonForm" style="display:grid; gap:12px;">
-        <textarea id="refundReasonText" rows="4" placeholder="Example: Received damaged book..." style="resize:vertical; padding:10px; font-family:inherit; border:1px solid var(--line); border-radius:8px; font-size:14px;"></textarea>
+      <p style="margin-top:0; font-size:14px; color:var(--muted-ink);">Select the reason for your refund request. Only valid predefined reasons are accepted.</p>
+      <form id="refundReasonForm" style="display:grid; gap:14px;">
+        <fieldset style="border:1px solid var(--line); border-radius:10px; padding:12px 14px; display:grid; gap:8px;">
+          <legend style="font-size:13px; color:var(--muted-ink); padding:0 6px;">Reason</legend>
+          <label style="display:flex; gap:8px; align-items:flex-start; font-size:14px; cursor:pointer;">
+            <input type="radio" name="refundReason" value="Book arrived damaged" required style="margin-top:4px;" />
+            <span>Book arrived damaged</span>
+          </label>
+          <label style="display:flex; gap:8px; align-items:flex-start; font-size:14px; cursor:pointer;">
+            <input type="radio" name="refundReason" value="Wrong item received" style="margin-top:4px;" />
+            <span>Wrong item received</span>
+          </label>
+          <label style="display:flex; gap:8px; align-items:flex-start; font-size:14px; cursor:pointer;">
+            <input type="radio" name="refundReason" value="Missing pages or printing issue" style="margin-top:4px;" />
+            <span>Missing pages / printing issue</span>
+          </label>
+          <label style="display:flex; gap:8px; align-items:flex-start; font-size:14px; cursor:pointer;">
+            <input type="radio" name="refundReason" value="Item not as described" style="margin-top:4px;" />
+            <span>Item not as described</span>
+          </label>
+          <label style="display:flex; gap:8px; align-items:flex-start; font-size:14px; cursor:pointer;">
+            <input type="radio" name="refundReason" value="Package not delivered" style="margin-top:4px;" />
+            <span>Package not delivered</span>
+          </label>
+          <label style="display:flex; gap:8px; align-items:flex-start; font-size:14px; cursor:pointer;">
+            <input type="radio" name="refundReason" value="Ordered by mistake" style="margin-top:4px;" />
+            <span>Ordered by mistake</span>
+          </label>
+          <label style="display:flex; gap:6px; align-items:flex-start; font-size:14px; cursor:pointer;">
+            <input type="radio" name="refundReason" value="Other" style="margin-top:4px;" />
+            <span>Other (general)</span>
+          </label>
+        </fieldset>
+        <div style="display:grid; gap:6px;">
+          <label for="refundImagesInput" style="font-size:13px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--muted-ink);">Evidence Images</label>
+          <input id="refundImagesInput" type="file" accept="image/*" multiple style="font-size:13px;" />
+          <div id="refundImagesPreview" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+          <div id="refundImagesMsg" style="font-size:11px; color:#b30000; min-height:14px;"></div>
+        </div>
         <div id="refundReasonMsg" style="font-size:12px; color:#b30000; min-height:16px;"></div>
         <div style="display:flex; gap:10px; justify-content:flex-end;">
           <button type="button" class="btn secondary small" id="cancelRefundReason">Cancel</button>

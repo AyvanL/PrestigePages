@@ -91,11 +91,88 @@ const transContent = document.getElementById("transContent");
 // Refund reason modal elements
 const refundReasonModal = document.getElementById('refundReasonModal');
 const refundReasonForm = document.getElementById('refundReasonForm');
-const refundReasonText = document.getElementById('refundReasonText');
+// Radio-based refund reasons (textarea removed)
+// We'll query selected radio on submit instead of using a text area.
 const refundReasonMsg = document.getElementById('refundReasonMsg');
 const closeRefundReason = document.getElementById('closeRefundReason');
 const cancelRefundReason = document.getElementById('cancelRefundReason');
+// Refund evidence image elements
+const refundImagesInput = document.getElementById('refundImagesInput');
+const refundImagesPreview = document.getElementById('refundImagesPreview');
+const refundImagesMsg = document.getElementById('refundImagesMsg');
 let REFUND_TARGET_TXID = null;
+
+// In-memory selected images (processed as data URLs)
+let REFUND_IMAGE_DATA = [];
+
+function clearRefundImages(){
+  REFUND_IMAGE_DATA = [];
+  if (refundImagesPreview) refundImagesPreview.innerHTML = '';
+  if (refundImagesInput) refundImagesInput.value = '';
+  if (refundImagesMsg) refundImagesMsg.textContent = '';
+}
+
+async function fileToDataURLScaled(file, maxDim = 800, quality = 0.8){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Read failed'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          let { width, height } = img;
+            if (width > height && width > maxDim){
+              height = Math.round(height * (maxDim/width));
+              width = maxDim;
+            } else if (height >= width && height > maxDim){
+              width = Math.round(width * (maxDim/height));
+              height = maxDim;
+            }
+          canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          // Prefer JPEG for better compression unless original is png with transparency
+          let mime = 'image/jpeg';
+          if (file.type === 'image/png') {
+            // detect if transparency present; quick heuristic
+            try {
+              const imgData = ctx.getImageData(0,0,Math.min(10,width),Math.min(10,height)).data;
+              for (let i=3;i<imgData.length;i+=4){ if (imgData[i] < 255){ mime='image/png'; break; } }
+            } catch(_){}
+          }
+          const dataUrl = canvas.toDataURL(mime, quality);
+          resolve({ name: file.name, type: mime, dataUrl });
+        } catch(err){ reject(err); }
+      };
+      img.onerror = () => reject(new Error('Image decode failed'));
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+if (refundImagesInput){
+  refundImagesInput.addEventListener('change', async () => {
+    if (!refundImagesInput.files) return;
+    REFUND_IMAGE_DATA = [];
+    if (refundImagesPreview) refundImagesPreview.innerHTML = '';
+    if (refundImagesMsg) refundImagesMsg.textContent = '';
+    const files = Array.from(refundImagesInput.files).slice(0,3); // max 3
+    for (const f of files){
+      if (!/^image\//.test(f.type)) { if (refundImagesMsg) refundImagesMsg.textContent = 'Some files were skipped (not images).'; continue; }
+      if (f.size > 5 * 1024 * 1024) { if (refundImagesMsg) refundImagesMsg.textContent = 'Image too large (>5MB) skipped.'; continue; }
+      try {
+        const scaled = await fileToDataURLScaled(f);
+        REFUND_IMAGE_DATA.push(scaled);
+        const thumb = document.createElement('div');
+        thumb.style.width = '70px'; thumb.style.height='70px'; thumb.style.position='relative'; thumb.style.border='1px solid #ddd'; thumb.style.borderRadius='6px'; thumb.style.overflow='hidden';
+        thumb.innerHTML = `<img src="${scaled.dataUrl}" alt="evidence" style="width:100%;height:100%;object-fit:cover;" />`;
+        refundImagesPreview.appendChild(thumb);
+      } catch(err){ console.error('Image process failed', err); if (refundImagesMsg) refundImagesMsg.textContent = 'Failed to process an image.'; }
+    }
+  });
+}
 
 // --- Helper functions for Firestore cart ---
 
@@ -1210,12 +1287,14 @@ if (cancelRefundReason) {
   cancelRefundReason.addEventListener('click', () => {
     if (refundReasonModal) refundReasonModal.style.display = 'none';
     REFUND_TARGET_TXID = null;
+    clearRefundImages();
   });
 }
 window.addEventListener('click', (e) => {
   if (refundReasonModal && e.target === refundReasonModal) {
     refundReasonModal.style.display = 'none';
     REFUND_TARGET_TXID = null;
+    clearRefundImages();
   }
 });
 if (refundReasonForm) {
@@ -1223,11 +1302,9 @@ if (refundReasonForm) {
     e.preventDefault();
     if (!REFUND_TARGET_TXID) { return; }
     const user = auth.currentUser; if (!user) return;
-    const reason = (refundReasonText?.value || '').trim();
-    if (reason.length < 5) {
-      if (refundReasonMsg) refundReasonMsg.textContent = 'Please provide at least 5 characters.';
-      return;
-    }
+    const selected = refundReasonForm.querySelector('input[name="refundReason"]:checked');
+    const reason = selected ? selected.value : '';
+    if (!reason) { if (refundReasonMsg) refundReasonMsg.textContent = 'Please select a reason.'; return; }
     try {
       const txRef = doc(db, 'users', user.uid, 'transactions', REFUND_TARGET_TXID);
       const snap = await getDoc(txRef);
@@ -1235,9 +1312,12 @@ if (refundReasonForm) {
       const data = snap.data() || {};
       const status = (data.status || '').toString().toLowerCase();
       if (status !== 'paid') { if (refundReasonMsg) refundReasonMsg.textContent = 'Only paid orders can be refunded.'; return; }
-      await updateDoc(txRef, { delivstatus: 'refund-processing', refundRequestedAt: serverTimestamp(), refundReason: reason });
+      // Include evidence images if provided
+      const refundImages = REFUND_IMAGE_DATA.map(i => ({ name: i.name, type: i.type, dataUrl: i.dataUrl }));
+      await updateDoc(txRef, { delivstatus: 'refund-processing', refundRequestedAt: serverTimestamp(), refundReason: reason, refundImages });
       if (refundReasonModal) refundReasonModal.style.display = 'none';
       REFUND_TARGET_TXID = null;
+      clearRefundImages();
       alert('Refund request submitted.');
     } catch (err) {
       console.error('Submit refund reason failed', err);
@@ -1308,7 +1388,10 @@ if (transContent) {
         if (status !== 'paid') { alert('Refund is only available for paid orders.'); return; }
         // Open reason modal
         REFUND_TARGET_TXID = txid;
-        if (refundReasonText) refundReasonText.value = '';
+        // Clear any previous selection
+        if (refundReasonForm) {
+          refundReasonForm.querySelectorAll('input[name="refundReason"]').forEach(r=> r.checked = false);
+        }
         if (refundReasonMsg) refundReasonMsg.textContent = '';
         if (refundReasonModal) refundReasonModal.style.display = 'flex';
       } catch (err) {

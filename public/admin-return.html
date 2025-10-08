@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Admin Dashboard — Returns</title>
+  <link rel="stylesheet" href="css/admin-prod-management.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+  <style>
+    .badge { display:inline-block; padding:.25rem .55rem; border-radius:999px; font-size:.7rem; font-weight:600; letter-spacing:.5px; }
+    .badge.processing { background:#fff4d6; color:#664d04; }
+    .badge.refunded { background:#e7f7ef; color:#16794c; }
+    .badge.rejected { background:#fde4e4; color:#9f1d1d; }
+    .returns-grid { margin-top:1.2rem; }
+    table td, table th { vertical-align: middle; }
+    .filters { display:flex; gap:10px; flex-wrap:wrap; margin:10px 0 6px; }
+    .filters select, .filters input { padding:6px 8px; border:1px solid #ccc; border-radius:6px; font:inherit; }
+  </style>
+</head>
+<body>
+  <div class="dashboard-layout">
+    <nav class="sidebar">
+      <a href="index.html" class="brand">Prestige Pages</a>
+      <a href="admin-orders.html">Orders</a>
+      <a href="admin-prod-management.html">Inventory</a>
+      <a href="admin-customer.html">Customers</a>
+      <a href="admin-transaction-management.html">Transactions</a>
+      <a href="admin-refund.html">Refunds</a>
+      <a href="admin-return.html" class="active">Returns</a>
+      <a href="admin-faq.html">Customer Service</a>
+    </nav>
+    <main class="main-content">
+      <h2>Return / Refund Items</h2>
+      <div class="filters">
+        <input type="text" id="searchReturns" placeholder="Search customer or order #" />
+        <select id="statusFilter">
+          <option value="all">All statuses</option>
+          <option value="refund-processing">Processing</option>
+          <option value="refunded">Refunded</option>
+          <option value="refund-rejected">Rejected</option>
+        </select>
+      </div>
+
+      <section class="returns-grid">
+        <table>
+          <thead>
+            <tr>
+              <th>Cover</th>
+              <th>Title</th>
+              <th>Author</th>
+              <th>Reason for Return</th>
+              <th>Proof Image</th>
+              <th>Return Stock</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="returnTableBody">
+            <tr><td colspan="7" style="padding:14px; text-align:center; color:#666;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal for viewing full details -->
+  <div id="returnDetailModal" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width:640px; width:100%;">
+      <h2 style="margin-top:0; display:flex; justify-content:space-between; align-items:center;">Return Details <span id="closeReturnDetail" class="close-btn" style="cursor:pointer;">&times;</span></h2>
+      <div id="returnDetailBody" style="font-size:14px; line-height:1.5; color:#333;">Loading...</div>
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:18px;" id="returnActionsWrap"></div>
+    </div>
+  </div>
+
+  <script type="module" src="js/admin-return.js"></script>
+</body>
+</html>

@@ -23,7 +23,8 @@
       <a href="admin-prod-management.html">Inventory</a>
       <a href="admin-customer.html">Customers</a>
       <a href="admin-transaction-management.html">Transactions</a>
-      <a href="admin-refund.html" class="active">Refund</a>
+      <a href="admin-refund.html" class="active">Refunds</a>
+  <a href="admin-return.html">Returns</a>
       <a href="admin-faq.html">Customer Service</a>
     </nav>
 
@@ -78,159 +79,154 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
     import { firebaseConfig } from "./js/firebase-config.js";
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
     const peso = v => "₱" + Number(v || 0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 
+    // State
+    let CURRENT_REFUND_UID = null;
+    let CURRENT_REFUND_TXID = null;
+    const reqBody = document.getElementById('refundRequests');
+    const histBody = document.getElementById('refundHistory');
+
     async function loadRefunds(){
-      const reqBody = document.querySelector('#refundRequests');
-      const histBody = document.querySelector('#refundHistory');
       const reqColSpan = reqBody.closest('table')?.querySelectorAll('thead th').length || 8;
       const histColSpan = histBody.closest('table')?.querySelectorAll('thead th').length || 7;
       reqBody.innerHTML = `<tr class="loading"><td colspan="${reqColSpan}" style="text-align:center; padding:12px;"><i class='fas fa-spinner fa-spin'></i> Loading requests...</td></tr>`;
       histBody.innerHTML = `<tr class="loading"><td colspan="${histColSpan}" style="text-align:center; padding:12px;"><i class='fas fa-spinner fa-spin'></i> Loading history...</td></tr>`;
-
       const users = await getDocs(collection(db, 'users'));
-      const requests = []; // refund-processing
-      const history = [];  // refunded, refund-rejected
-
+      const requests = [];
+      const history = [];
       for (const u of users.docs){
         const uid = u.id; const udata = u.data()||{}; const name = `${udata.firstName||''} ${udata.lastName||''}`.trim() || udata.email || uid;
         const txs = await getDocs(collection(db, 'users', uid, 'transactions'));
         txs.forEach(d => {
-          const t = d.data()||{};
-            const deliv = (t.delivstatus||'').toString().toLowerCase();
-            const base = { uid, id: d.id, name, amount: t.total||0, method: t.paymentMethod||'', date: (t.createdAt?.toDate?t.createdAt.toDate().toLocaleString():'' )};
-            if (deliv === 'refund-processing'){
-              requests.push({ ...base, status: 'Processing' });
-            } else if (deliv === 'refunded' || deliv === 'refund-rejected') {
-              history.push({ ...base, status: deliv === 'refunded' ? 'Refunded' : 'Rejected', raw: deliv });
-            }
+          const t = d.data()||{}; const deliv = (t.delivstatus||'').toLowerCase();
+          const base = { uid, id: d.id, name, amount: t.total||0, method: t.paymentMethod||'', date: (t.createdAt?.toDate?t.createdAt.toDate().toLocaleString():'' )};
+          if (deliv === 'refund-processing') requests.push({ ...base, status: 'Processing' });
+          else if (deliv === 'refunded' || deliv === 'refund-rejected') history.push({ ...base, status: deliv === 'refunded' ? 'Refunded':'Rejected', raw: deliv });
         });
       }
-
-      // Populate requests table
-      if (requests.length === 0){
-        reqBody.innerHTML = `<tr><td colspan="${reqColSpan}" style="padding:14px; text-align:center; color:#666;">No refund requests found.</td></tr>`;
-      } else {
-        reqBody.innerHTML = requests.map(r=>`
-          <tr>
-            <td>${r.id}</td>
-            <td>${r.id}</td>
-            <td>${r.name}</td>
-            <td>${peso(r.amount)}</td>
-            <td>${r.method}</td>
-            <td><span class="badge muted">${r.status}</span></td>
-            <td>${r.date}</td>
-            <td>
-              <button class="btn btn-sm view-refund" data-uid="${r.uid}" data-id="${r.id}"><i class="fa fa-eye"></i> View</button>
-            </td>
-          </tr>`).join('');
-      }
-
-      // Populate history table
-      if (history.length === 0){
-        histBody.innerHTML = `<tr><td colspan="${histColSpan}" style="padding:14px; text-align:center; color:#666;">No processed refunds yet.</td></tr>`;
-      } else {
-        histBody.innerHTML = history.map(r=>`
-          <tr>
-            <td>${r.id}</td>
-            <td>${r.id}</td>
-            <td>${r.name}</td>
-            <td>${peso(r.amount)}</td>
-            <td>${r.method}</td>
-            <td>${r.status === 'Refunded' ? '<span class="badge success">Refunded</span>' : '<span class="badge error">Rejected</span>'}</td>
-            <td>${r.date}</td>
-          </tr>`).join('');
-      }
-
-      // Attach action handler for view button
-      reqBody.addEventListener('click', async (e)=>{
-        const view = e.target.closest('.view-refund');
-        if (view){
-          const uid = view.getAttribute('data-uid');
-          const id = view.getAttribute('data-id');
-          if (!uid || !id) return;
-          try {
-            CURRENT_REFUND_UID = uid;
-            CURRENT_REFUND_TXID = id;
-            await populateRefundModal(uid,id);
-            openRefundModal();
-          } catch(err){
-            console.error(err);
-            alert('Failed to load refund details');
-          }
-        }
-      });
+      // Render requests
+      reqBody.innerHTML = requests.length ? requests.map(r=>`
+        <tr>
+          <td>${r.id}</td><td>${r.id}</td><td>${r.name}</td>
+          <td>${peso(r.amount)}</td><td>${r.method}</td>
+          <td><span class="badge muted">${r.status}</span></td>
+          <td>${r.date}</td>
+          <td><button class="btn btn-sm view-refund" data-uid="${r.uid}" data-id="${r.id}"><i class="fa fa-eye"></i> View</button></td>
+        </tr>`).join('') : `<tr><td colspan="${reqColSpan}" style="padding:14px; text-align:center; color:#666;">No refund requests found.</td></tr>`;
+      // Render history
+      histBody.innerHTML = history.length ? history.map(r=>`
+        <tr>
+          <td>${r.id}</td><td>${r.id}</td><td>${r.name}</td>
+          <td>${peso(r.amount)}</td><td>${r.method}</td>
+          <td>${r.status === 'Refunded' ? '<span class="badge success">Refunded</span>' : '<span class="badge error">Rejected</span>'}</td>
+          <td>${r.date}</td>
+        </tr>`).join('') : `<tr><td colspan="${histColSpan}" style="padding:14px; text-align:center; color:#666;">No processed refunds yet.</td></tr>`;
     }
 
-    loadRefunds();
-    // --- Refund View Modal Logic ---
-    let CURRENT_REFUND_UID = null;
-    let CURRENT_REFUND_TXID = null;
-    function qs(id){ return document.getElementById(id); }
+    // Modal setup
+    function el(id){ return document.getElementById(id); }
     const refundModal = document.createElement('div');
     refundModal.id = 'refundViewModal';
     refundModal.className = 'modal';
     refundModal.style.display='none';
     refundModal.innerHTML = `
-      <div class="modal-content" style="max-width:520px; max-height:500px; height:50%;">
+      <div class="modal-content" style="max-width:640px; max-height:80vh; overflow:auto;">
         <h2 style="margin-top:0; display:flex; justify-content:space-between; align-items:center;">Refund Request <span id="closeRefundView" class="close-btn" style="cursor:pointer;">&times;</span></h2>
-        <div style="font-size:14px; line-height:1.4; margin-bottom:12px; color:#555;">
-          Below is the customer's stated reason for requesting a refund. Review and choose an action.
+        <div id="refundMeta" style="font-size:12px; color:#666; margin:0 0 12px;"></div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px; font-weight:600; text-transform:uppercase; color:#666;">Reason</label>
+          <div id="refundReasonDisplay" style="white-space:pre-wrap; border:1px solid var(--line,#ddd); background:#fafafa; padding:10px 12px; border-radius:8px; min-height:60px; font-size:14px;"></div>
         </div>
-        <div style="margin-bottom:16px;">
-          <label style="font-size:12px; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:#666;">Reason</label>
-          <div id="refundReasonDisplay" style="white-space:pre-wrap; border:1px solid var(--line,#ddd); background:#fafafa; padding:12px 14px; border-radius:8px; min-height:80px; font-size:14px;"></div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px; font-weight:600; text-transform:uppercase; color:#666;">Evidence Images</label>
+          <div id="refundImagesDisplay" style="display:flex; gap:8px; flex-wrap:wrap; min-height:40px;"></div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px; font-weight:600; text-transform:uppercase; color:#666;">Items</label>
+          <ul id="refundItemsList" style="list-style:none; padding:0; margin:6px 0 0; display:grid; gap:8px;"></ul>
         </div>
         <div id="refundModalMsg" style="min-height:18px; font-size:12px; color:#b30000;"></div>
-        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:6px;">
-          <button type="button" class="btn secondary" id="refundRejectBtn"><i class="fa fa-times"></i> Reject</button>
-          <button type="button" class="btn" id="refundApproveBtn"><i class="fa fa-check"></i> Approve</button>
-        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:6px;" id="refundActionsWrap"></div>
       </div>`;
     document.body.appendChild(refundModal);
 
     function openRefundModal(){ refundModal.style.display='flex'; }
-    function closeRefundModal(){ refundModal.style.display='none'; CURRENT_REFUND_UID=null; CURRENT_REFUND_TXID=null; qs('refundReasonDisplay').textContent=''; }
+    function closeRefundModal(){ refundModal.style.display='none'; CURRENT_REFUND_UID=null; CURRENT_REFUND_TXID=null; el('refundReasonDisplay').textContent=''; el('refundItemsList').innerHTML=''; el('refundImagesDisplay').innerHTML=''; el('refundMeta').textContent=''; el('refundModalMsg').textContent=''; }
     window.addEventListener('click', (e)=>{ if (e.target === refundModal) closeRefundModal(); });
     refundModal.querySelector('#closeRefundView').addEventListener('click', closeRefundModal);
 
     async function populateRefundModal(uid, txid){
-      const snap = await getDocs(collection(db,'users', uid, 'transactions'));
-      let reason = '(Not found)';
-      snap.forEach(d=>{ if (d.id === txid){ const data = d.data()||{}; reason = data.refundReason || '(No reason provided)'; }});
-      qs('refundReasonDisplay').textContent = reason;
+      const txRef = doc(db,'users',uid,'transactions',txid);
+      const snap = await getDoc(txRef);
+      if (!snap.exists()){ el('refundReasonDisplay').textContent='(Record missing)'; return; }
+      const data = snap.data()||{};
+      const deliv = (data.delivstatus||'').toLowerCase();
+      el('refundMeta').textContent = `Order: ${txid} • Status: ${deliv} • Created: ${(data.createdAt?.toDate? data.createdAt.toDate().toLocaleString():'')}`;
+      el('refundReasonDisplay').textContent = data.refundReason || '(No reason provided)';
+      // Items
+      const itemsList = el('refundItemsList');
+      const items = Array.isArray(data.items)? data.items: [];
+      itemsList.innerHTML = items.length ? items.map(i=>`<li style="border:1px solid #eee; padding:8px 10px; border-radius:6px; display:flex; gap:10px; align-items:center;">${i.cover?`<img src='${i.cover}' style='width:40px;height:60px;object-fit:cover;border-radius:4px;background:#eee;' />`:''}<div style='flex:1; min-width:0;'><div style='font-weight:600;'>${i.title||'Item'}</div><div style='font-size:12px; color:#666;'>Qty: ${i.qty||1}</div></div></li>`).join('') : '<li style="font-size:12px; color:#666;">No items.</li>';
+      // Images
+      const imgWrap = el('refundImagesDisplay');
+      const imgs = Array.isArray(data.refundImages)? data.refundImages: [];
+      if (!imgs.length){ imgWrap.innerHTML = '<div style="font-size:12px; color:#888;">No images provided.</div>'; }
+      else {
+        imgWrap.innerHTML = imgs.map((im,i)=>`<div class='thumb' data-idx='${i}' style='width:70px;height:70px;border:1px solid #ddd;border-radius:6px;overflow:hidden;cursor:pointer;'><img src='${im.dataUrl}' alt='evidence' style='width:100%;height:100%;object-fit:cover;' /></div>`).join('');
+        imgWrap.querySelectorAll('.thumb').forEach(div => {
+          div.addEventListener('click', ()=>{
+            const idx = Number(div.getAttribute('data-idx')); const im = imgs[idx]; if (!im) return; const w = window.open(); if (w){ w.document.write(`<title>Refund Image</title><img src='${im.dataUrl}' style='max-width:100%; display:block; margin:0 auto;' />`); }
+          });
+        });
+      }
+      // Actions
+      const actions = document.getElementById('refundActionsWrap');
+      actions.innerHTML = '';
+      if (deliv === 'refund-processing'){
+        actions.innerHTML = `<button type='button' class='btn secondary' id='refundRejectBtn'><i class='fa fa-times'></i> Reject</button><button type='button' class='btn' id='refundApproveBtn'><i class='fa fa-check'></i> Approve</button>`;
+        const approveBtn = document.getElementById('refundApproveBtn');
+        const rejectBtn = document.getElementById('refundRejectBtn');
+        approveBtn.addEventListener('click', ()=> finalizeRefund('refunded', approveBtn, rejectBtn));
+        rejectBtn.addEventListener('click', ()=> finalizeRefund('refund-rejected', approveBtn, rejectBtn));
+      }
     }
 
-    async function approveRefund(){
+    async function finalizeRefund(newStatus, approveBtn, rejectBtn){
       if (!CURRENT_REFUND_UID || !CURRENT_REFUND_TXID) return;
+      approveBtn && (approveBtn.disabled = true); rejectBtn && (rejectBtn.disabled=true);
       try {
-        await updateDoc(doc(db,'users',CURRENT_REFUND_UID,'transactions',CURRENT_REFUND_TXID), { delivstatus:'refunded', refundApprovedAt: serverTimestamp() });
+        const extra = newStatus === 'refunded' ? { refundApprovedAt: serverTimestamp() } : { refundRejectedAt: serverTimestamp() };
+        await updateDoc(doc(db,'users',CURRENT_REFUND_UID,'transactions',CURRENT_REFUND_TXID), { delivstatus:newStatus, ...extra });
         closeRefundModal();
         loadRefunds();
       } catch(err){
-        qs('refundModalMsg').textContent = 'Failed to approve refund';
+        const msg = document.getElementById('refundModalMsg');
+        if (msg) msg.textContent = 'Failed to update status';
         console.error(err);
+        approveBtn && (approveBtn.disabled = false); rejectBtn && (rejectBtn.disabled=false);
       }
     }
-    async function rejectRefund(){
-      if (!CURRENT_REFUND_UID || !CURRENT_REFUND_TXID) return;
-      try {
-        await updateDoc(doc(db,'users',CURRENT_REFUND_UID,'transactions',CURRENT_REFUND_TXID), { delivstatus:'refund-rejected', refundRejectedAt: serverTimestamp() });
-        closeRefundModal();
-        loadRefunds();
-      } catch(err){
-        qs('refundModalMsg').textContent = 'Failed to reject refund';
-        console.error(err);
+
+    // Single event delegation (avoid multiple bindings)
+    document.addEventListener('click', async (e) => {
+      const viewBtn = e.target.closest('.view-refund');
+      if (viewBtn){
+        const uid = viewBtn.getAttribute('data-uid');
+        const id = viewBtn.getAttribute('data-id');
+        if (!uid || !id) return;
+        CURRENT_REFUND_UID = uid; CURRENT_REFUND_TXID = id;
+        await populateRefundModal(uid,id);
+        openRefundModal();
       }
-    }
-    refundModal.querySelector('#refundApproveBtn').addEventListener('click', approveRefund);
-    refundModal.querySelector('#refundRejectBtn').addEventListener('click', rejectRefund);
+    });
+
+    loadRefunds();
   </script>
 </body>
 </html>
