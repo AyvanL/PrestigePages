@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Sales Activity</title>
+  <link rel="stylesheet" href="css/admin-prod-management.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <style>
+    .kpis{ display:grid; grid-template-columns: repeat(4,minmax(160px,1fr)); gap:12px; margin: 10px 0 16px; }
+    .kpi{ background:#fff; border:1px solid #eee; border-radius:10px; padding:12px; }
+    .kpi h4{ margin:0 0 6px; font-size:13px; color:#6b7280; font-weight:600; }
+    .kpi .val{ font-size:22px; font-weight:700; }
+    .filters{ display:flex; gap:10px; flex-wrap:wrap; margin:8px 0 10px; }
+    .filters select,.filters input{ padding:8px 10px; border:1px solid #ccc; border-radius:8px; font:inherit; }
+    table td,table th{ vertical-align: middle; }
+  </style>
+</head>
+<body>
+  <div class="dashboard-layout">
+    <nav class="sidebar">
+      <a href="index.html" class="brand">Prestige Pages</a>
+      <a href="admin-sales-activity.html" class="active">Sales Activity</a>
+      <a href="admin-orders.html">Orders</a>
+      <a href="admin-prod-management.html">Inventory</a>
+      <a href="admin-customer.html">Customers</a>
+      <a href="admin-transaction-management.html">Transactions</a>
+      <a href="admin-refund.html">Refunds</a>
+      <a href="admin-return.html">Returns</a>
+      <a href="admin-faq.html">Customer Service</a>
+    </nav>
+
+    <main class="main-content">
+      <h2>Sales Activity</h2>
+
+      <div class="kpis">
+        <div class="kpi"><h4>Total Revenue</h4><div class="val" id="kpiRevenue">₱0.00</div></div>
+        <div class="kpi"><h4>Orders</h4><div class="val" id="kpiOrders">0</div></div>
+        <div class="kpi"><h4>Items Sold</h4><div class="val" id="kpiItems">0</div></div>
+        <div class="kpi"><h4>Avg Order Value</h4><div class="val" id="kpiAOV">₱0.00</div></div>
+      </div>
+
+      <div class="filters">
+        <select id="range">
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="365">Last 12 months</option>
+        </select>
+        <input type="date" id="from" />
+        <input type="date" id="to" />
+        <button id="applyRange">Apply</button>
+      </div>
+
+      <section class="product-list">
+        <h3>Recent Sales</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Order #</th>
+              <th>Customer</th>
+              <th>Items</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="salesTable">
+            <tr><td colspan="5" style="text-align:center; padding:12px; color:#666;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="js/admin-sales-activity.js"></script>
+</body>
+</html>

@@ -81,6 +81,10 @@ function renderBookRows(list) {
     const cleanedCover = typeof rawCover === 'string' ? rawCover.trim().replace(/^['"]+|['"]+$/g, "") : rawCover;
     const safeCover = cleanedCover.startsWith('http://') || cleanedCover.startsWith('https://') ? cleanedCover : '';
     const thumb = safeCover ? `<img src="${safeCover}" alt="${book.title || 'cover'}" style="width:40px; height:55px; object-fit:cover; border:1px solid #ddd; border-radius:4px;" onerror="this.onerror=null;this.replaceWith('<div style=\'width:40px;height:55px;background:#f3f3f3;border:1px solid #ddd;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#999;\'>IMG</div>')"/>` : '<div style="width:40px;height:55px;background:#eee;border:1px solid #ddd;border-radius:4px;"></div>';
+        const stockVal = Number.isFinite(Number(book.stock)) ? Number(book.stock) : 0;
+        const stockIsZero = stockVal === 0;
+        const stockStyle = stockIsZero ? 'color:#b91c1c;font-weight:600;' : '';
+        const stockTitle = stockIsZero ? 'Out of stock' : '';
         const row = document.createElement("tr");
             row.innerHTML = `
                 <td>${thumb}</td>
@@ -89,7 +93,7 @@ function renderBookRows(list) {
                 <td>${strip(book.category) || ''}</td>
             <td>₱${Number(book.price || 0).toFixed(2)}</td>
             <td>${(book.rating !== undefined ? Number(book.rating).toFixed(1) : '5.0')}</td>
-            <td>${book.stock !== undefined ? book.stock : 0}</td>
+            <td style="${stockStyle}" title="${stockTitle}">${stockVal}</td>
             <td>
                 <button class="edit" onclick="editProduct('${productId}')">Edit</button>
                 <button class="delete" onclick="deleteProduct('${productId}')">Delete</button>
