@@ -65,6 +65,7 @@ productForm.addEventListener("submit", async (e) => {
 });
 
 let BOOK_CACHE = [];
+let SORT_MODE = 'title-asc'; // 'title-asc' | 'stock-asc' | 'stock-desc'
 
 function renderBookRows(list) {
     const strip = (s) => (typeof s === 'string' ? s.trim().replace(/^['"]+|['"]+$/g, "") : s);
@@ -99,16 +100,28 @@ function renderBookRows(list) {
 
 function applySearchFilter() {
     const q = (document.getElementById('bookSearch')?.value || '').toLowerCase().trim();
-    if (!q) {
-        renderBookRows(BOOK_CACHE);
-        return;
+    let list = BOOK_CACHE;
+    if (q) {
+        list = BOOK_CACHE.filter(({ book }) => {
+            return [book.title, book.author, book.category]
+                .filter(Boolean)
+                .some(v => v.toLowerCase().includes(q));
+        });
     }
-    const filtered = BOOK_CACHE.filter(({ book }) => {
-        return [book.title, book.author, book.category]
-            .filter(Boolean)
-            .some(v => v.toLowerCase().includes(q));
-    });
-    renderBookRows(filtered);
+    // Apply sorting
+    const byNum = (v) => {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+    };
+    const byTitle = (a, b) => ((a.book?.title || '').localeCompare(b.book?.title || ''));
+    if (SORT_MODE === 'stock-asc') {
+        list = list.slice().sort((a, b) => byNum(a.book?.stock) - byNum(b.book?.stock) || byTitle(a, b));
+    } else if (SORT_MODE === 'stock-desc') {
+        list = list.slice().sort((a, b) => byNum(b.book?.stock) - byNum(a.book?.stock) || byTitle(a, b));
+    } else {
+        list = list.slice().sort(byTitle);
+    }
+    renderBookRows(list);
 }
 
 // Realtime subscription
@@ -199,6 +212,8 @@ loadProductList();
 // Search listener
 const searchEl = document.getElementById('bookSearch');
 if (searchEl) searchEl.addEventListener('input', () => applySearchFilter());
+const sortEl = document.getElementById('bookSort');
+if (sortEl) sortEl.addEventListener('change', (e) => { SORT_MODE = e.target.value; applySearchFilter(); });
 
 // Expose functions for inline onclick attributes
 window.editProduct = editProduct;

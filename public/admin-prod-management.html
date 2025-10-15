@@ -62,6 +62,14 @@
         <h3>Books List</h3>
         <div style="margin:8px 0 14px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
           <input type="text" id="bookSearch" placeholder="Search title, author, category..." style="flex:1; min-width:240px; padding:8px 10px; border:1px solid #ccc; border-radius:4px;" />
+          <div style="display:flex; align-items:center; gap:6px;">
+            <label for="bookSort" style="font-size:13px; color:#555;">Sort</label>
+            <select id="bookSort" style="padding:8px 10px; border:1px solid #ccc; border-radius:4px; font:inherit;">
+              <option value="title-asc">Title (A–Z)</option>
+              <option value="stock-asc">Stock: Low → High</option>
+              <option value="stock-desc">Stock: High → Low</option>
+            </select>
+          </div>
           <small style="color:#666;">Realtime updates enabled</small>
         </div>
         <table>
