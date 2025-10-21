@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Customers - Admin</title>
+  <title>Users - Admin</title>
   <link rel="stylesheet" href="css/admin-customer.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
   <style>
@@ -44,7 +44,7 @@
       <a href="admin-sales-activity.html">Sales Activity</a>
       <a href="admin-orders.html">Orders</a>
       <a href="admin-prod-management.html">Inventory</a>
-      <a href="admin-customer.html" class="active">Customers</a>
+  <a href="admin-user.html" class="active">Users</a>
       <a href="admin-transaction-management.html">Transactions</a>
       <a href="admin-refund.html">Refunds</a>
   <a href="admin-return.html">Returns</a>
@@ -53,17 +53,17 @@
 
     <!-- Main Content -->
     <main class="main-content">
-      <h2>Customer Management</h2>
-      <h3>All Customers</h3>
+  <h2>User Management</h2>
+  <h3>All Users</h3>
 
       <!-- Search -->
-      <input type="text" id="searchInput" placeholder="Search customers...">
+  <input type="text" id="searchInput" placeholder="Search users...">
 
       <section class="customer-list">
         <table id="customerTable">
           <thead>
             <tr>
-              <th>Customer ID</th>
+              <th>User ID</th>
               <th>First Name</th>
               <th>Last Name</th>
               <th>Email</th>
@@ -81,7 +81,7 @@
   <div id="customerModal" class="modal">
     <div class="modal-content">
       <span class="close">&times;</span>
-      <h2><i class="fa-regular fa-id-card"></i> Customer Details</h2>
+  <h2><i class="fa-regular fa-id-card"></i> User Details</h2>
       <p class="modal-subtitle">Personal information (read-only)</p>
       <div class="view-grid">
         <div class="view-item">
