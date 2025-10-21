@@ -27,7 +27,8 @@
 /* Layout wrapper */
 .dashboard-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 /* Sidebar navigation */
@@ -37,6 +38,8 @@
   display: flex;
   flex-direction: column;   /* stack links vertically */
   padding: 20px 0;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .sidebar a {
@@ -46,16 +49,21 @@
   display: block;
 }
 
-.sidebar a:hover,
+.sidebar a:hover:not(.brand),
 .sidebar a.active {
   background-color: #7d5600;
 }
+
+/* Optional: make middle area scrollable if wrapped in .sidebar-body */
+.sidebar .sidebar-body{ overflow:auto; }
 
 /* Main content */
 .main-content {
   flex: 1;
   padding: 20px;
   background: #f4f4f4;
+  height: 100vh;
+  overflow: auto;
 }
 
 html,
@@ -121,6 +129,9 @@ body {
   font-size: 22px;
   letter-spacing: 0.3px;
 }
+
+/* Prevent pointer cursor on the logo/brand in sidebar */
+.sidebar .brand, .sidebar .brand:hover { cursor: default; }
 
 .nav-links {
   display: flex;

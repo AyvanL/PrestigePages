@@ -19,15 +19,22 @@
 <body>
   <div class="dashboard-layout">
     <nav class="sidebar">
-      <a href="index.html" class="brand">Prestige Pages</a>
-      <a href="admin-sales-activity.html" class="active">Sales Activity</a>
-      <a href="admin-orders.html">Orders</a>
-      <a href="admin-prod-management.html">Inventory</a>
-  <a href="admin-user.html">Users</a>
-      <a href="admin-transaction-management.html">Transactions</a>
-      <a href="admin-refund.html">Refunds</a>
-      <a href="admin-return.html">Returns</a>
-      <a href="admin-faq.html">Customer Service</a>
+      <div class="sidebar-header" style="display:flex; align-items:center; justify-content:space-between; gap:8px; position:relative;">
+        <a href="javascript:void(0)" class="brand">Prestige Pages</a>
+      </div>
+      <div class="sidebar-body">
+        <a href="admin-sales-activity.html" class="active">Sales Activity</a>
+        <a href="admin-orders.html">Orders</a>
+        <a href="admin-prod-management.html">Inventory</a>
+        <a href="admin-user.html">Users</a>
+        <a href="admin-transaction-management.html">Transactions</a>
+        <a href="admin-refund.html">Refunds</a>
+        <a href="admin-return.html">Returns</a>
+        <a href="admin-faq.html">Customer Service</a>
+      </div>
+      <div class="sidebar-footer" style="margin-top:auto; padding:10px 0;">
+        <a href="#" id="adminLogoutBtn" style="display:block; padding:10px 12px; color:#fff; text-decoration:none; background:#7d5600; margin:10px; border-radius:8px; text-align:center;">Log out</a>
+      </div>
     </nav>
 
     <main class="main-content">
@@ -73,5 +80,6 @@
   </div>
 
   <script type="module" src="js/admin-sales-activity.js"></script>
+  <script type="module" src="js/admin-common.js"></script>
 </body>
 </html>

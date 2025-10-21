@@ -1,10 +1,12 @@
 // Admin Customer Management: list, view, edit, delete users from Firestore
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 const tableEl = document.getElementById('customerTable');
 const tableBody = document.querySelector('#customerTable tbody');
@@ -49,6 +51,16 @@ let CURRENT_EDIT_UID = null;
 // Simple state
 let USERS = [];
 
+// Admin modal elements
+const adminModal = document.getElementById('adminModal');
+const openAdminModalBtn = document.getElementById('openAdminModal');
+const closeAdminModalBtn = document.getElementById('closeAdminModal');
+const adminListBody = document.getElementById('adminList');
+const adminUsernameInput = document.getElementById('adminUsername');
+const adminEmailInput = document.getElementById('adminEmail');
+const adminPasswordInput = document.getElementById('adminPassword');
+const createAdminBtn = document.getElementById('createAdminBtn');
+
 function showMessageRow(text, cls = '') {
   if (!tableBody) return;
   const colSpan = (tableEl?.querySelectorAll('thead th')?.length) || 6;
@@ -63,7 +75,7 @@ function rowHtml(u) {
   const banBtnLabel = suspended ? 'Reactivate' : 'Ban';
   const banBtnClass = suspended ? 'reactivate-btn' : 'ban-btn';
   return `<tr data-uid="${u.id}">
-    <td>${u.id}</td>
+    <td>${u.username || ''}</td>
     <td>${u.firstName || ''}</td>
     <td>${u.lastName || ''}</td>
     <td>${email}</td>
@@ -230,3 +242,117 @@ async function handleBanToggle(user, btnEl){
 
 // Kick off
 loadUsers();
+
+// ---------- Admin modal logic ----------
+function openAdminModal(){ if (adminModal) { adminModal.style.display = 'flex'; loadAdmins(); } }
+function closeAdminModal(){ if (adminModal) adminModal.style.display = 'none'; }
+openAdminModalBtn?.addEventListener('click', openAdminModal);
+closeAdminModalBtn?.addEventListener('click', closeAdminModal);
+window.addEventListener('click', (e)=>{ if (e.target === adminModal) closeAdminModal(); });
+
+async function loadAdmins(){
+  if (!adminListBody) return;
+  adminListBody.innerHTML = '<tr><td colspan="3" style="padding:12px; text-align:center; color:#777;">Loading...</td></tr>';
+  try {
+    const snap = await getDocs(query(collection(db,'users')));
+    const admins = [];
+    snap.forEach(d=>{ const u = { id: d.id, ...d.data() }; if ((u.role||'').toLowerCase()==='admin') admins.push(u); });
+    if (!admins.length){
+      adminListBody.innerHTML = '<tr><td colspan="3" style="padding:12px; text-align:center; color:#777;">No admin accounts found.</td></tr>';
+    } else {
+      adminListBody.innerHTML = admins.map(a=>{
+        const suspended = !!a.suspended;
+        const banLabel = suspended ? 'Reactivate' : 'Ban';
+        return `
+        <tr data-uid="${a.id}">
+          <td style="padding:10px; border-bottom:1px solid #eee;">${a.username || ''}</td>
+          <td style="padding:10px; border-bottom:1px solid #eee;">${a.email||''}</td>
+          <td style="padding:10px; border-bottom:1px solid #eee; display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="admin-ban" data-action="ban">${banLabel}</button>
+            <button class="admin-edit" data-action="edit">Edit</button>
+            <button class="admin-delete" data-action="delete">Delete</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+  } catch(err){
+    console.error('loadAdmins error', err);
+    adminListBody.innerHTML = '<tr><td colspan="3" style="padding:12px; text-align:center; color:#b91c1c;">Failed to load admins.</td></tr>';
+  }
+}
+
+// Note: Creating Auth accounts requires Firebase Auth admin or client-side createUserWithEmailAndPassword.
+// Here we only create a Firestore user doc with role=admin as requested. Use an existing user UID or email as key.
+createAdminBtn?.addEventListener('click', async ()=>{
+  const username = adminUsernameInput?.value?.trim();
+  const email = adminEmailInput?.value?.trim();
+  const password = adminPasswordInput?.value || '';
+  if (!username || !email || !password){
+    alert('Enter username, email and password for the admin account.');
+    return;
+  }
+  try {
+    // Create Firebase Auth user
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    const uid = cred.user.uid;
+    // Create Firestore profile with role=admin under UID
+    await setDoc(doc(db,'users', uid), {
+      email,
+      username,
+      role: 'admin',
+      createdAt: new Date(),
+    }, { merge: true });
+    alert('Admin account created successfully.');
+    adminUsernameInput.value = '';
+    adminEmailInput.value = '';
+    adminPasswordInput.value = '';
+    await loadAdmins();
+  } catch(err){
+    console.error('create admin error', err);
+    let msg = 'Failed to create admin account.';
+    if (err?.code === 'auth/email-already-in-use') msg = 'Email already in use.';
+    if (err?.code === 'auth/invalid-email') msg = 'Invalid email.';
+    if (err?.code === 'auth/weak-password') msg = 'Password should be at least 6 characters.';
+    alert(msg);
+  }
+});
+
+// Admin actions: ban/reactivate, edit (username/email), delete
+adminListBody?.addEventListener('click', async (e)=>{
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const tr = btn.closest('tr');
+  const uid = tr?.getAttribute('data-uid');
+  if (!uid) return;
+  const action = btn.getAttribute('data-action');
+  try {
+    if (action === 'ban'){
+      const uref = doc(db,'users', uid);
+      const snap = await getDoc(uref);
+      if (!snap.exists()) return alert('User not found');
+      const cur = snap.data();
+      const suspended = !!cur.suspended;
+      const ok = confirm(suspended ? 'Reactivate this admin?' : 'Ban (suspend) this admin?');
+      if (!ok) return;
+      await updateDoc(uref, { suspended: !suspended, suspendedAt: !suspended ? new Date() : null });
+      await loadAdmins();
+    }
+    if (action === 'edit'){
+      const newEmail = prompt('New email (leave blank to keep current):');
+      const newUsername = prompt('New username (leave blank to keep current):');
+      const delta = {};
+      if (newEmail) delta.email = newEmail;
+      if (newUsername) delta.username = newUsername;
+      if (Object.keys(delta).length){ await updateDoc(doc(db,'users', uid), delta); }
+      await loadAdmins();
+    }
+    if (action === 'delete'){
+      if (!confirm('Delete this admin profile? This does not remove their Auth account.')) return;
+      await deleteDoc(doc(db,'users', uid));
+      await loadAdmins();
+    }
+  } catch(err){
+    console.error('Admin action error', err);
+    alert('Action failed.');
+  }
+});

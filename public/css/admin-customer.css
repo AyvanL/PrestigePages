@@ -35,9 +35,10 @@
   }
   
   .dashboard-layout {
-    display: flex;
-    min-height: 100vh;
-  }
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
   
   /* Sidebar */
   .sidebar {
@@ -46,6 +47,8 @@
     display: flex;
     flex-direction: column;
     padding: 20px 0;
+    height: 100vh;
+    overflow: hidden;
   }
   
   .brand {
@@ -54,6 +57,8 @@
     font-size: 22px;
     letter-spacing: 0.3px;
   }
+  /* Prevent pointer cursor on the logo/brand in sidebar */
+  .sidebar .brand, .sidebar .brand:hover { cursor: default; }
   
   .sidebar a {
     color: white;
@@ -62,16 +67,20 @@
     display: block;
   }
   
-  .sidebar a:hover,
+  .sidebar a:hover:not(.brand),
   .sidebar a.active {
     background-color: #7d5600;
   }
+  /* Optional: wrap links in .sidebar-body to allow scrolling */
+  .sidebar .sidebar-body{ overflow:auto; }
   
   /* Main content */
   .main-content {
     flex: 1;
     padding: 20px;
     background: #f4f4f4;
+    height: 100vh;
+    overflow: auto;
   }
   
   h2, h3 {

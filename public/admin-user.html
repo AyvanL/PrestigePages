@@ -40,21 +40,31 @@
 
     <!-- Sidebar -->
     <nav class="sidebar">
-      <a href="index.html" class="brand">Prestige Pages</a>
-      <a href="admin-sales-activity.html">Sales Activity</a>
-      <a href="admin-orders.html">Orders</a>
-      <a href="admin-prod-management.html">Inventory</a>
-  <a href="admin-user.html" class="active">Users</a>
-      <a href="admin-transaction-management.html">Transactions</a>
-      <a href="admin-refund.html">Refunds</a>
-  <a href="admin-return.html">Returns</a>
-      <a href="admin-faq.html">Customer Service</a>
+      <div class="sidebar-header" style="display:flex; align-items:center; justify-content:space-between; gap:8px; position:relative;">
+        <a href="javascript:void(0)" class="brand">Prestige Pages</a>
+      </div>
+      <div class="sidebar-body">
+        <a href="admin-sales-activity.html">Sales Activity</a>
+        <a href="admin-orders.html">Orders</a>
+        <a href="admin-prod-management.html">Inventory</a>
+        <a href="admin-user.html" class="active">Users</a>
+        <a href="admin-transaction-management.html">Transactions</a>
+        <a href="admin-refund.html">Refunds</a>
+        <a href="admin-return.html">Returns</a>
+        <a href="admin-faq.html">Customer Service</a>
+      </div>
+      <div class="sidebar-footer" style="margin-top:auto; padding:10px 0;">
+        <a href="#" id="adminLogoutBtn" style="display:block; padding:10px 12px; color:#fff; text-decoration:none; background:#7d5600; margin:10px; border-radius:8px; text-align:center;">Log out</a>
+      </div>
     </nav>
 
     <!-- Main Content -->
     <main class="main-content">
-  <h2>User Management</h2>
-  <h3>All Users</h3>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+        <h2 style="margin:0;">User Management</h2>
+        <button id="openAdminModal" class="btn btn-primary" style="margin-left:auto;">Admin</button>
+      </div>
+      <h3>All Users</h3>
 
       <!-- Search -->
   <input type="text" id="searchInput" placeholder="Search users...">
@@ -63,7 +73,7 @@
         <table id="customerTable">
           <thead>
             <tr>
-              <th>User ID</th>
+              <th>Username</th>
               <th>First Name</th>
               <th>Last Name</th>
               <th>Email</th>
@@ -191,7 +201,43 @@
     </div>
   </div>
 
+  <!-- Admin Accounts Modal -->
+  <div id="adminModal" class="modal">
+    <div class="modal-content" style="max-width:760px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <h2 style="margin:0; font-size:20px;">Admin Accounts</h2>
+        <span class="close" id="closeAdminModal" style="cursor:pointer;">&times;</span>
+      </div>
+      <div style="margin:10px 0 14px; color:#6b7280;">List of users with role = <b>admin</b></div>
+      <div id="adminListWrap" style="max-height:340px; overflow:auto; border:1px solid #e5e7eb; border-radius:10px;">
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:#fafafa;">
+              <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Username</th>
+              <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Email</th>
+              <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="adminList">
+            <tr><td colspan="3" style="padding:12px; text-align:center; color:#777;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="margin-top:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+        <div style="font-size:13px; color:#6b7280;">Create a new admin account</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <input type="text" id="adminUsername" placeholder="Username" style="padding:8px 10px; border:1px solid #e5e7eb; border-radius:8px; min-width:160px;">
+          <input type="email" id="adminEmail" placeholder="Email" style="padding:8px 10px; border:1px solid #e5e7eb; border-radius:8px; min-width:220px;">
+          <input type="password" id="adminPassword" placeholder="Password" style="padding:8px 10px; border:1px solid #e5e7eb; border-radius:8px; min-width:160px;">
+          <button id="createAdminBtn" class="btn btn-primary">Create Admin</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- External JS (ES module for Firebase ESM imports) -->
   <script type="module" src="js/admin-customer-management.js"></script>
+  <script type="module" src="js/admin-common.js"></script>
 </body>
 </html>

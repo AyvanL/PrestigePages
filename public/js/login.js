@@ -15,6 +15,10 @@ import {
   doc,
   getDoc,
   deleteDoc,
+  collection,
+  query,
+  where,
+  getDocs,
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -94,7 +98,7 @@ if (loginForm) {
   loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const email = document.getElementById("email")?.value?.trim() || "";
+  let email = document.getElementById("email")?.value?.trim() || "";
     const password = document.getElementById("password")?.value || "";
 
     const now = Date.now();
@@ -125,6 +129,15 @@ if (loginForm) {
         return;
       }
 
+      // If user typed a username (no @), resolve to email via Firestore users collection
+      if (email && !email.includes('@')){
+        try {
+          const qy = query(collection(db,'users'), where('username','==', email));
+          const snap = await getDocs(qy);
+          if (!snap.empty){ email = (snap.docs[0].data().email)||email; }
+        } catch {}
+      }
+
       // Persist session
       await setPersistence(auth, browserLocalPersistence);
 
@@ -150,7 +163,7 @@ if (loginForm) {
         }
       } catch (sErr) { console.warn('Suspension check failed', sErr); }
 
-      // OTP flow if UI & backend exist
+  // OTP flow if UI & backend exist
       if (otpModal && verifyBtn && otpInput) {
         try {
           await sendEmailOTP({ email });
@@ -160,11 +173,32 @@ if (loginForm) {
           // If sending OTP fails, still redirect or show error
           console.error("sendEmailOTP error:", err);
           alert("✅ Signed in but failed to request OTP. Redirecting...");
-          window.location.href = "homepage-logged.html";
+          // Role-based redirect
+          try {
+            const user = auth.currentUser;
+            if (user) {
+              const uSnap = await getDoc(doc(db,'users',user.uid));
+              const role = (uSnap.data()?.role||'').toLowerCase();
+              window.location.href = role ? "admin-sales-activity.html" : "homepage-logged.html";
+            } else {
+              window.location.href = "homepage-logged.html";
+            }
+          } catch { window.location.href = "homepage-logged.html"; }
         }
       } else {
-        // No OTP UI = redirect directly
-        window.location.href = "homepage-logged.html";
+        // No OTP UI = redirect directly (role-based)
+        try {
+          const user = auth.currentUser;
+          if (user) {
+            const uSnap = await getDoc(doc(db,'users',user.uid));
+            const role = (uSnap.data()?.role||'').toLowerCase();
+            window.location.href = role ? "admin-sales-activity.html" : "homepage-logged.html";
+          } else {
+            window.location.href = "homepage-logged.html";
+          }
+        } catch {
+          window.location.href = "homepage-logged.html";
+        }
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -228,7 +262,19 @@ if (verifyBtn) {
         await deleteDoc(docRef).catch(() => {});
         alert("✅ Login successful!");
         localStorage.removeItem("pendingEmail");
-        window.location.href = "homepage-logged.html";
+        // Role-based redirect after OTP
+        try {
+          const user = auth.currentUser;
+          if (user) {
+            const uSnap = await getDoc(doc(db,'users',user.uid));
+            const role = (uSnap.data()?.role||'').toLowerCase();
+            window.location.href = role ? "admin-sales-activity.html" : "homepage-logged.html";
+          } else {
+            window.location.href = "homepage-logged.html";
+          }
+        } catch {
+          window.location.href = "homepage-logged.html";
+        }
       } else {
         if (otpMessageEl) otpMessageEl.textContent = "❌ Invalid code.";
       }

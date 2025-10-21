@@ -27,7 +27,8 @@
 /* Layout wrapper */
 .dashboard-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh; /* lock viewport height */
+  overflow: hidden; /* prevent page scroll; we'll scroll main only */
 }
 
 /* Sidebar navigation */
@@ -37,6 +38,8 @@
   display: flex;
   flex-direction: column;   /* stack links vertically */
   padding: 20px 0;
+  height: 100vh; /* fixed to viewport */
+  overflow: hidden; /* keep internal */
 }
 
 .sidebar a {
@@ -46,9 +49,14 @@
   display: block;
 }
 
-.sidebar a:hover,
+.sidebar a:hover:not(.brand),
 .sidebar a.active {
   background-color: #7d5600;
+}
+
+/* Optional: if you have a bottom actions area in sidebar later */
+.sidebar .sidebar-body {
+  overflow: auto;
 }
 
 /* Main content */
@@ -56,6 +64,8 @@
   flex: 1;
   padding: 20px;
   background: #f4f4f4;
+  height: 100vh; /* fill available */
+  overflow: auto; /* scroll only content */
 }
 
 html,
@@ -122,6 +132,11 @@ body {
   letter-spacing: 0.3px;
 }
 
+/* Prevent pointer cursor on the logo/brand in sidebar */
+.sidebar .brand, .sidebar .brand:hover {
+  cursor: default;
+}
+
 .nav-links {
   display: flex;
   gap: 18px;
@@ -138,6 +153,9 @@ body {
   color: var(--ink);
   box-shadow: var(--shadow);
 }
+
+/* Prevent pointer cursor on the logo/brand in sidebar (redundant guard) */
+.sidebar .brand:hover { cursor: default; }
 
 .nav-spacer {
   flex: 1;
