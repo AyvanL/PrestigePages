@@ -27,6 +27,81 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Load custom hero content from CMS
+async function loadHeroContent() {
+  try {
+    const docRef = doc(db, 'content', 'hero-section');
+    const docSnap = await getDoc(docRef);
+    
+    // Default values
+    const defaults = {
+      eyebrow: 'New Arrivals',
+      title: 'Experience our\nNew Exclusive Books',
+      description: 'Discover hand‑picked titles from acclaimed authors. Enjoy quality hardbacks, digital editions, and secure shipping right to your door.',
+      imageUrl: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=700&auto=format&fit=crop',
+      primaryButton: 'Shop Now',
+      secondaryButton: 'Learn more'
+    };
+    
+    const data = docSnap.exists() ? docSnap.data() : defaults;
+    
+    // Update eyebrow text
+    const eyebrowEl = document.querySelector('.hero .eyebrow');
+    if (eyebrowEl) {
+      eyebrowEl.textContent = data.eyebrow || defaults.eyebrow;
+    }
+    
+    // Update title (handle line breaks)
+    const titleEl = document.querySelector('.hero h1');
+    if (titleEl) {
+      titleEl.innerHTML = (data.title || defaults.title).replace(/\n/g, '<br>');
+    }
+    
+    // Update description
+    const descEl = document.querySelector('.hero-copy > p');
+    if (descEl) {
+      descEl.textContent = data.description || defaults.description;
+    }
+    
+    // Update hero image
+    const imageEl = document.querySelector('.hero-art .stack img');
+    if (imageEl) {
+      imageEl.src = data.imageUrl || defaults.imageUrl;
+    }
+    
+    // Update primary button text
+    const primaryBtnEl = document.querySelector('.hero .cta .btn:not(.secondary)');
+    if (primaryBtnEl) {
+      primaryBtnEl.textContent = data.primaryButton || defaults.primaryButton;
+    }
+    
+    // Update secondary button text
+    const secondaryBtnEl = document.querySelector('.hero .cta .btn.secondary');
+    if (secondaryBtnEl) {
+      secondaryBtnEl.textContent = data.secondaryButton || defaults.secondaryButton;
+    }
+  } catch (error) {
+    console.error('Error loading hero content:', error);
+    // Load defaults on error
+    const eyebrowEl = document.querySelector('.hero .eyebrow');
+    const titleEl = document.querySelector('.hero h1');
+    const descEl = document.querySelector('.hero-copy > p');
+    const imageEl = document.querySelector('.hero-art .stack img');
+    const primaryBtnEl = document.querySelector('.hero .cta .btn:not(.secondary)');
+    const secondaryBtnEl = document.querySelector('.hero .cta .btn.secondary');
+    
+    if (eyebrowEl) eyebrowEl.textContent = 'New Arrivals';
+    if (titleEl) titleEl.innerHTML = 'Experience our<br />New Exclusive Books';
+    if (descEl) descEl.textContent = 'Discover hand‑picked titles from acclaimed authors. Enjoy quality hardbacks, digital editions, and secure shipping right to your door.';
+    if (imageEl) imageEl.src = 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=700&auto=format&fit=crop';
+    if (primaryBtnEl) primaryBtnEl.textContent = 'Shop Now';
+    if (secondaryBtnEl) secondaryBtnEl.textContent = 'Learn more';
+  }
+}
+
+// Load hero content on page load
+loadHeroContent();
+
 // Elements
 const profileFirstName = document.getElementById("profileFirstName");
 const profileLastName = document.getElementById("profileLastName");

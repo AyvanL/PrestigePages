@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Content Management - Admin</title>
+  <link rel="stylesheet" href="css/admin-content-management.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar-header" style="display:flex; align-items:center; justify-content:space-between; gap:8px; position:relative;">
+        <a href="javascript:void(0)" class="brand">Prestige Pages</a>
+      </div>
+      <div class="sidebar-body">
+        <a href="admin-sales-activity.html">Sales Activity</a>
+        <a href="admin-orders.html">Orders</a>
+        <a href="admin-prod-management.html">Inventory</a>
+        <a href="admin-user.html">Users</a>
+        <a href="admin-transaction-management.html">Transactions</a>
+        <a href="admin-refund.html">Refunds</a>
+        <a href="admin-return.html">Returns</a>
+        <a href="admin-faq.html">Customer Service</a>
+        <a href="admin-content-management.html" class="active">Content Management</a>
+      </div>
+      <div class="sidebar-footer" style="margin-top:auto; padding:10px 0;">
+        <a href="#" id="adminLogoutBtn" style="display:block; padding:10px 12px; color:#fff; text-decoration:none; background:#7d5600; margin:10px; border-radius:8px; text-align:center;">Log out</a>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <h2>Content Management System</h2>
+      <p style="color:#666; margin-bottom:24px;">Manage homepage hero section and static page content</p>
+
+      <!-- Hero Section Editor -->
+      <section class="content-card">
+        <div class="card-header">
+          <div>
+            <h3><i class="fas fa-star"></i> Homepage Hero Section</h3>
+            <p style="color:#666; font-size:14px; margin-top:4px;">Edit the main banner on the homepage</p>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <form id="heroForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="heroEyebrow">Eyebrow Text</label>
+                <input type="text" id="heroEyebrow" class="form-input" placeholder="New Arrivals">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="heroTitle">Main Title</label>
+                <textarea id="heroTitle" class="form-input" rows="2" placeholder="Experience our&#10;New Exclusive Books"></textarea>
+                <small style="color:#666;">Use line breaks to split text across multiple lines</small>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="heroDescription">Description</label>
+                <textarea id="heroDescription" class="form-input" rows="3" placeholder="Discover hand‑picked titles from acclaimed authors..."></textarea>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="heroImage">Hero Image URL</label>
+                <input type="url" id="heroImage" class="form-input" placeholder="https://images.unsplash.com/...">
+                <small style="color:#666;">Enter a full URL to an image (e.g., from Unsplash)</small>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" id="previewBtn">
+                <i class="fas fa-eye"></i> Preview
+              </button>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Changes
+              </button>
+            </div>
+          </form>
+
+          <!-- Preview Section -->
+          <div id="previewSection" class="preview-section" style="display:none;">
+            <h4>Preview</h4>
+            <div class="hero-preview">
+              <div class="preview-content">
+                <div class="preview-eyebrow" id="previewEyebrow">New Arrivals</div>
+                <h2 id="previewTitle">Experience our<br />New Exclusive Books</h2>
+                <p id="previewDescription">Discover hand‑picked titles from acclaimed authors. Enjoy quality hardbacks, digital editions, and secure shipping right to your door.</p>
+              </div>
+              <div class="preview-image">
+                <img id="previewImage" src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=700&auto=format&fit=crop" alt="Hero preview">
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Current Status -->
+      <section class="content-card">
+        <div class="card-header">
+          <h3><i class="fas fa-info-circle"></i> Current Live Content</h3>
+        </div>
+        <div class="card-body">
+          <div id="currentContent" class="current-content">
+            <p style="color:#666;">Loading current hero content...</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="js/admin-common.js"></script>
+  <script type="module" src="js/admin-content-management.js"></script>
+</body>
+</html>
