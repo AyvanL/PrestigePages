@@ -182,27 +182,12 @@
     <section class="hero">
       <div class="container hero-inner">
         <div class="hero-copy">
-          <h1 id="aboutTitle">About Us</h1>
-          <p id="aboutParagraph1" style="text-align: justify">
-            <b>PrestigePages</b> is a digital purchasing system built to
-            simplify how libraries, bookstores, and readers handle book
-            transactions. The platform makes it easy to browse detailed
-            catalogs, purchase books securely, and manage collections with
-            ease. By streamlining the entire process, PrestigePages helps
-            readers gain quicker access to books while ensuring a smooth,
-            permanent purchasing experience.
-          </p>
+          <h1 id="aboutTitle"></h1>
+          <p id="aboutParagraph1" style="text-align: justify"></p>
 
           <br />
 
-          <p id="aboutParagraph2" style="text-align: justify">
-            For staff and administrators, PrestigePages offers powerful tools
-            for managing inventory, tracking sales, overseeing users, and
-            sending notifications—all within a single organized dashboard.
-            With features like advanced search, filtering, and secure payment
-            integration, the system eliminates manual paperwork and delivers a
-            smarter, faster, and more user-friendly way to manage books.
-          </p>
+          <p id="aboutParagraph2" style="text-align: justify"></p>
         </div>
         <div class="hero-art">
           <div class="stack">
@@ -367,7 +352,7 @@
   <!-- Load About Us Content from Firebase -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { getFirestore, doc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
     
     // Firebase config for About Us
     const aboutFirebaseConfig = {
@@ -384,13 +369,13 @@
     const aboutApp = initializeApp(aboutFirebaseConfig, 'about-app');
     const aboutDb = getFirestore(aboutApp);
 
-    async function loadAboutContent() {
-      console.log('🔍 Loading About Us content from Firebase...');
-      try {
-        const docRef = doc(aboutDb, 'content', 'about-us');
-        const docSnap = await getDoc(docRef);
-        
-        console.log('📄 Document exists:', docSnap.exists());
+    // Real-time listener for About Us content
+    function setupAboutUsRealtime() {
+      console.log('🔍 Setting up real-time listener for About Us...');
+      const docRef = doc(aboutDb, 'content', 'about-us');
+      
+      onSnapshot(docRef, (docSnap) => {
+        console.log('� About Us content updated!');
         
         if (docSnap.exists()) {
           const data = docSnap.data();
@@ -399,8 +384,6 @@
           const titleEl = document.getElementById('aboutTitle');
           const p1El = document.getElementById('aboutParagraph1');
           const p2El = document.getElementById('aboutParagraph2');
-          
-          console.log('Elements found:', { titleEl: !!titleEl, p1El: !!p1El, p2El: !!p2El });
           
           if (titleEl && data.title) {
             titleEl.textContent = data.title;
@@ -417,18 +400,18 @@
         } else {
           console.warn('⚠️ No About Us document found in Firebase');
         }
-      } catch (error) {
-        console.error('❌ Error loading About Us content:', error);
-      }
+      }, (error) => {
+        console.error('❌ Error with real-time listener:', error);
+      });
     }
 
-    // Load content when DOM is ready
+    // Setup real-time listener when DOM is ready
     if (document.readyState === 'loading') {
       console.log('⏳ Waiting for DOM...');
-      document.addEventListener('DOMContentLoaded', loadAboutContent);
+      document.addEventListener('DOMContentLoaded', setupAboutUsRealtime);
     } else {
-      console.log('✓ DOM ready, loading now...');
-      loadAboutContent();
+      console.log('✓ DOM ready, setting up listener...');
+      setupAboutUsRealtime();
     }
   </script>
 </body>

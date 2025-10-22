@@ -27,22 +27,23 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Load custom hero content from CMS
-async function loadHeroContent() {
-  try {
-    const docRef = doc(db, 'content', 'hero-section');
-    const docSnap = await getDoc(docRef);
-    
-    // Default values
-    const defaults = {
-      eyebrow: 'New Arrivals',
-      title: 'Experience our\nNew Exclusive Books',
-      description: 'Discover hand‑picked titles from acclaimed authors. Enjoy quality hardbacks, digital editions, and secure shipping right to your door.',
-      imageUrl: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=700&auto=format&fit=crop',
-      primaryButton: 'Shop Now',
-      secondaryButton: 'Learn more'
-    };
-    
+// Real-time hero content from CMS
+function setupHeroRealtime() {
+  const docRef = doc(db, 'content', 'hero-section');
+  
+  // Default values
+  const defaults = {
+    eyebrow: 'New Arrivals',
+    title: 'Experience our\nNew Exclusive Books',
+    description: 'Discover hand‑picked titles from acclaimed authors. Enjoy quality hardbacks, digital editions, and secure shipping right to your door.',
+    imageUrl: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=700&auto=format&fit=crop',
+    primaryButton: 'Shop Now',
+    secondaryButton: 'Learn more'
+  };
+  
+  // Set up real-time listener
+  onSnapshot(docRef, (docSnap) => {
+    console.log('🔄 Hero content updated!');
     const data = docSnap.exists() ? docSnap.data() : defaults;
     
     // Update eyebrow text
@@ -80,8 +81,8 @@ async function loadHeroContent() {
     if (secondaryBtnEl) {
       secondaryBtnEl.textContent = data.secondaryButton || defaults.secondaryButton;
     }
-  } catch (error) {
-    console.error('Error loading hero content:', error);
+  }, (error) => {
+    console.error('Error with hero real-time listener:', error);
     // Load defaults on error
     const eyebrowEl = document.querySelector('.hero .eyebrow');
     const titleEl = document.querySelector('.hero h1');
@@ -96,12 +97,12 @@ async function loadHeroContent() {
     if (imageEl) imageEl.src = 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=700&auto=format&fit=crop';
     if (primaryBtnEl) primaryBtnEl.textContent = 'Shop Now';
     if (secondaryBtnEl) secondaryBtnEl.textContent = 'Learn more';
-  }
+  });
 }
 
-// Load hero content on page load (only on homepage, not about-us page)
+// Setup hero real-time listener on page load (only on homepage, not about-us page)
 if (document.querySelector('.hero .cta')) {
-  loadHeroContent();
+  setupHeroRealtime();
 }
 
 // Elements
