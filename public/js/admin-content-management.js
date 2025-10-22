@@ -28,7 +28,16 @@ const aboutForm = document.getElementById('aboutForm');
 const aboutTitle = document.getElementById('aboutTitle');
 const aboutParagraph1 = document.getElementById('aboutParagraph1');
 const aboutParagraph2 = document.getElementById('aboutParagraph2');
+const aboutImage = document.getElementById('aboutImage');
 const currentAboutContent = document.getElementById('currentAboutContent');
+
+// About Us Preview elements
+const previewAboutBtn = document.getElementById('previewAboutBtn');
+const previewAboutSection = document.getElementById('previewAboutSection');
+const previewAboutTitle = document.getElementById('previewAboutTitle');
+const previewAboutParagraph1 = document.getElementById('previewAboutParagraph1');
+const previewAboutParagraph2 = document.getElementById('previewAboutParagraph2');
+const previewAboutImage = document.getElementById('previewAboutImage');
 
 // Load current hero content
 async function loadHeroContent() {
@@ -87,6 +96,17 @@ previewBtn.addEventListener('click', () => {
   previewSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 });
 
+// About Us Preview functionality
+previewAboutBtn.addEventListener('click', () => {
+  previewAboutTitle.textContent = aboutTitle.value || 'About Us';
+  previewAboutParagraph1.textContent = aboutParagraph1.value || 'First paragraph preview text...';
+  previewAboutParagraph2.textContent = aboutParagraph2.value || 'Second paragraph preview text...';
+  previewAboutImage.src = aboutImage.value || 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=700&auto=format&fit=crop';
+  
+  previewAboutSection.style.display = 'block';
+  previewAboutSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+});
+
 // Save hero content
 heroForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -139,6 +159,7 @@ async function loadAboutContent() {
       aboutTitle.value = data.title || '';
       aboutParagraph1.value = data.paragraph1 || '';
       aboutParagraph2.value = data.paragraph2 || '';
+      aboutImage.value = data.imageUrl || 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=700&auto=format&fit=crop';
       displayCurrentAboutContent(data);
     } else {
       currentAboutContent.innerHTML = '<p style="color: #666;">No content saved yet. Save your first version above.</p>';
@@ -173,6 +194,13 @@ function displayCurrentAboutContent(data) {
           ${data.paragraph2 || 'Not set'}
         </div>
       </div>
+      <div>
+        <strong style="color: #2c3e50;">Image URL:</strong>
+        <div style="padding: 10px; background: #f8f9fa; border-left: 3px solid #3498db; margin-top: 5px;">
+          ${data.imageUrl || 'Not set'}
+        </div>
+        ${data.imageUrl ? `<img src="${data.imageUrl}" alt="About Us" style="max-width: 300px; margin-top: 10px; border-radius: 8px;" />` : ''}
+      </div>
       <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0; color: #666;">
         <small><i class="fas fa-clock"></i> Last updated: ${lastUpdated}</small>
       </div>
@@ -194,6 +222,7 @@ aboutForm.addEventListener('submit', async (e) => {
       title: aboutTitle.value.trim(),
       paragraph1: aboutParagraph1.value.trim(),
       paragraph2: aboutParagraph2.value.trim(),
+      imageUrl: aboutImage.value.trim(),
       updatedAt: new Date().toISOString()
     };
     

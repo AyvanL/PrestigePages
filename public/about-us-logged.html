@@ -192,6 +192,7 @@
         <div class="hero-art">
           <div class="stack">
             <img
+              id="aboutImage"
               alt="Book stack"
               src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=700&auto=format&fit=crop"
             />
@@ -384,6 +385,7 @@
           const titleEl = document.getElementById('aboutTitle');
           const p1El = document.getElementById('aboutParagraph1');
           const p2El = document.getElementById('aboutParagraph2');
+          const imgEl = document.getElementById('aboutImage');
           
           if (titleEl && data.title) {
             titleEl.textContent = data.title;
@@ -396,6 +398,10 @@
           if (p2El && data.paragraph2) {
             p2El.textContent = data.paragraph2;
             console.log('✏️ Paragraph 2 updated');
+          }
+          if (imgEl && data.imageUrl) {
+            imgEl.src = data.imageUrl;
+            console.log('✏️ Image updated to:', data.imageUrl);
           }
         } else {
           console.warn('⚠️ No About Us document found in Firebase');

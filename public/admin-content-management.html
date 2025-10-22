@@ -142,10 +142,36 @@
               <textarea id="aboutParagraph2" class="form-input" rows="6" placeholder="Enter the second paragraph..." required></textarea>
             </div>
 
-            <button type="submit" class="btn-primary">
-              <i class="fas fa-save"></i> Save About Us Content
-            </button>
+            <div class="form-row">
+              <label for="aboutImage">About Us Image URL</label>
+              <input type="url" id="aboutImage" class="form-input" placeholder="https://images.unsplash.com/..." required>
+              <small style="color:#666;">Enter a full URL to an image (e.g., from Unsplash)</small>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" id="previewAboutBtn">
+                <i class="fas fa-eye"></i> Preview
+              </button>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Changes
+              </button>
+            </div>
           </form>
+
+          <!-- Preview Section -->
+          <div id="previewAboutSection" class="preview-section" style="display:none;">
+            <h4>Preview</h4>
+            <div class="about-preview">
+              <div class="preview-content">
+                <h2 id="previewAboutTitle">About Us</h2>
+                <p id="previewAboutParagraph1">First paragraph preview text...</p>
+                <p id="previewAboutParagraph2">Second paragraph preview text...</p>
+              </div>
+              <div class="preview-image">
+                <img id="previewAboutImage" src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=700&auto=format&fit=crop" alt="About preview">
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
