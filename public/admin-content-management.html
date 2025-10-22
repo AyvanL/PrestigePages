@@ -115,6 +115,51 @@
           </div>
         </div>
       </section>
+
+      <!-- About Us Section Editor -->
+      <section class="content-card">
+        <div class="card-header">
+          <div>
+            <h3><i class="fas fa-info-circle"></i> About Us Page Content</h3>
+            <p style="color:#666; font-size:14px; margin-top:4px;">Edit the description text on the About Us page</p>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <form id="aboutForm">
+            <div class="form-row">
+              <label for="aboutTitle">Title</label>
+              <input type="text" id="aboutTitle" class="form-input" placeholder="About Us" required>
+            </div>
+
+            <div class="form-row">
+              <label for="aboutParagraph1">First Paragraph</label>
+              <textarea id="aboutParagraph1" class="form-input" rows="6" placeholder="Enter the first paragraph..." required></textarea>
+            </div>
+
+            <div class="form-row">
+              <label for="aboutParagraph2">Second Paragraph</label>
+              <textarea id="aboutParagraph2" class="form-input" rows="6" placeholder="Enter the second paragraph..." required></textarea>
+            </div>
+
+            <button type="submit" class="btn-primary">
+              <i class="fas fa-save"></i> Save About Us Content
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Current About Us Content -->
+      <section class="content-card">
+        <div class="card-header">
+          <h3><i class="fas fa-eye"></i> Current About Us Content</h3>
+        </div>
+        <div class="card-body">
+          <div id="currentAboutContent" class="current-content">
+            <p style="color:#666;">Loading current About Us content...</p>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 

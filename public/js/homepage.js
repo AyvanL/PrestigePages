@@ -99,8 +99,10 @@ async function loadHeroContent() {
   }
 }
 
-// Load hero content on page load
-loadHeroContent();
+// Load hero content on page load (only on homepage, not about-us page)
+if (document.querySelector('.hero .cta')) {
+  loadHeroContent();
+}
 
 // Elements
 const profileFirstName = document.getElementById("profileFirstName");
@@ -639,6 +641,8 @@ const stars = (n) => {
 
 function renderBooks(list) {
   const grid = document.getElementById("book-grid");
+  if (!grid) return; // Exit if book-grid doesn't exist (e.g., on About Us page)
+  
   grid.innerHTML = "";
 
   list.forEach((b) => {

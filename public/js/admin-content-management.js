@@ -23,6 +23,13 @@ const previewImage = document.getElementById('previewImage');
 // Current content display
 const currentContent = document.getElementById('currentContent');
 
+// About Us Form elements
+const aboutForm = document.getElementById('aboutForm');
+const aboutTitle = document.getElementById('aboutTitle');
+const aboutParagraph1 = document.getElementById('aboutParagraph1');
+const aboutParagraph2 = document.getElementById('aboutParagraph2');
+const currentAboutContent = document.getElementById('currentAboutContent');
+
 // Load current hero content
 async function loadHeroContent() {
   try {
@@ -120,3 +127,92 @@ heroForm.addEventListener('submit', async (e) => {
 
 // Initialize
 loadHeroContent();
+
+// Load current About Us content
+async function loadAboutContent() {
+  try {
+    const docRef = doc(db, 'content', 'about-us');
+    const docSnap = await getDoc(docRef);
+    
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      aboutTitle.value = data.title || '';
+      aboutParagraph1.value = data.paragraph1 || '';
+      aboutParagraph2.value = data.paragraph2 || '';
+      displayCurrentAboutContent(data);
+    } else {
+      currentAboutContent.innerHTML = '<p style="color: #666;">No content saved yet. Save your first version above.</p>';
+    }
+  } catch (error) {
+    console.error('Error loading About Us content:', error);
+    currentAboutContent.innerHTML = '<p style="color: #e74c3c;">Error loading content.</p>';
+  }
+}
+
+// Display current About Us content
+function displayCurrentAboutContent(data) {
+  const lastUpdated = data.updatedAt ? new Date(data.updatedAt).toLocaleString() : 'Never';
+  
+  currentAboutContent.innerHTML = `
+    <div style="display: grid; gap: 15px;">
+      <div>
+        <strong style="color: #2c3e50;">Title:</strong>
+        <div style="padding: 10px; background: #f8f9fa; border-left: 3px solid #3498db; margin-top: 5px;">
+          ${data.title || 'Not set'}
+        </div>
+      </div>
+      <div>
+        <strong style="color: #2c3e50;">First Paragraph:</strong>
+        <div style="padding: 10px; background: #f8f9fa; border-left: 3px solid #3498db; margin-top: 5px; white-space: pre-wrap;">
+          ${data.paragraph1 || 'Not set'}
+        </div>
+      </div>
+      <div>
+        <strong style="color: #2c3e50;">Second Paragraph:</strong>
+        <div style="padding: 10px; background: #f8f9fa; border-left: 3px solid #3498db; margin-top: 5px; white-space: pre-wrap;">
+          ${data.paragraph2 || 'Not set'}
+        </div>
+      </div>
+      <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0; color: #666;">
+        <small><i class="fas fa-clock"></i> Last updated: ${lastUpdated}</small>
+      </div>
+    </div>
+  `;
+}
+
+// Save About Us content
+aboutForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const submitBtn = e.submitter;
+  const originalText = submitBtn.innerHTML;
+  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+  submitBtn.disabled = true;
+  
+  try {
+    const aboutData = {
+      title: aboutTitle.value.trim(),
+      paragraph1: aboutParagraph1.value.trim(),
+      paragraph2: aboutParagraph2.value.trim(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    await setDoc(doc(db, 'content', 'about-us'), aboutData);
+    
+    // Update current content display
+    displayCurrentAboutContent(aboutData);
+    
+    // Show success message
+    alert('✅ About Us content updated successfully! Changes will appear on the About Us page.');
+    
+  } catch (error) {
+    console.error('Error saving About Us content:', error);
+    alert('❌ Error saving content. Please try again.');
+  } finally {
+    submitBtn.innerHTML = originalText;
+    submitBtn.disabled = false;
+  }
+});
+
+// Initialize About Us content
+loadAboutContent();
