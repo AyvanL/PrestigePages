@@ -54,6 +54,7 @@
     color: white;
     padding: 15px 20px;
     text-decoration: none;
+    display: block;
   }
   
   .sidebar a:hover:not(.brand),

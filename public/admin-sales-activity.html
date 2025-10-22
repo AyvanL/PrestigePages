@@ -59,6 +59,64 @@
         <button id="applyRange">Apply</button>
       </div>
 
+      <!-- Customer Insights Section -->
+      <section class="product-list" style="margin-bottom:20px;">
+        <h3>Customer Insights</h3>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; padding:12px;">
+          <div style="background:#f9fafb; padding:16px; border-radius:8px; border:1px solid #e5e7eb;">
+            <div style="font-size:13px; color:#6b7280; margin-bottom:4px;">Total Customers</div>
+            <div style="font-size:24px; font-weight:700;" id="totalCustomers">0</div>
+          </div>
+          <div style="background:#f0f9ff; padding:16px; border-radius:8px; border:1px solid #bae6fd;">
+            <div style="font-size:13px; color:#0369a1; margin-bottom:4px;">New Customers</div>
+            <div style="font-size:24px; font-weight:700; color:#0369a1;" id="newCustomers">0</div>
+          </div>
+          <div style="background:#f0fdf4; padding:16px; border-radius:8px; border:1px solid #bbf7d0;">
+            <div style="font-size:13px; color:#15803d; margin-bottom:4px;">Returning Customers</div>
+            <div style="font-size:24px; font-weight:700; color:#15803d;" id="returningCustomers">0</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Top Customers Section -->
+      <section class="product-list" style="margin-bottom:20px;">
+        <h3>Top Customers</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Customer</th>
+              <th>Email</th>
+              <th>Orders</th>
+              <th>Total Spent</th>
+            </tr>
+          </thead>
+          <tbody id="topCustomersTable">
+            <tr><td colspan="5" style="text-align:center; padding:12px; color:#666;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Top Selling Books Section -->
+      <section class="product-list" style="margin-bottom:20px;">
+        <h3>Top Selling Books</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Cover</th>
+              <th>Title</th>
+              <th>Author</th>
+              <th>Units Sold</th>
+              <th>Revenue</th>
+            </tr>
+          </thead>
+          <tbody id="topBooksTable">
+            <tr><td colspan="6" style="text-align:center; padding:12px; color:#666;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </section>
+
       <section class="product-list">
         <h3>Recent Sales</h3>
         <table>
