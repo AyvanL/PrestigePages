@@ -66,6 +66,55 @@ productForm.addEventListener("submit", async (e) => {
 
 let BOOK_CACHE = [];
 let SORT_MODE = 'title-asc'; // 'title-asc' | 'stock-asc' | 'stock-desc'
+const LOW_STOCK_THRESHOLD = 3;
+
+// Render Stock Alerts (Out of Stock + Low on Stock)
+function renderStockAlerts() {
+    const outList = document.getElementById('outOfStockList');
+    const lowList = document.getElementById('lowStockList');
+    const outEmpty = document.getElementById('outEmpty');
+    const lowEmpty = document.getElementById('lowEmpty');
+    const outCount = document.getElementById('outCount');
+    const lowCount = document.getElementById('lowCount');
+    const lowThresholdVal = document.getElementById('lowThresholdVal');
+    
+    if (!outList || !lowList) return; // Stock Alerts card not present
+    
+    if (lowThresholdVal) lowThresholdVal.textContent = String(LOW_STOCK_THRESHOLD);
+
+    const out = [];
+    const low = [];
+    
+    BOOK_CACHE.forEach(({ book }) => {
+        const stock = Number(book?.stock) || 0;
+        const title = (book?.title || '').toString();
+        const rawCover = book?.cover || '';
+        const cleanedCover = typeof rawCover === 'string' ? rawCover.trim().replace(/^['"]+|['"]+$/g, "") : rawCover;
+        const safeCover = typeof cleanedCover === 'string' && (cleanedCover.startsWith('http://') || cleanedCover.startsWith('https://')) ? cleanedCover : '';
+        
+        const thumb = safeCover
+            ? `<img src="${safeCover}" alt="${title || 'cover'}" style="width:32px; height:44px; object-fit:cover; border:1px solid #ddd; border-radius:4px;" onerror="this.onerror=null;this.replaceWith('<div style=\\'width:32px;height:44px;background:#f3f3f3;border:1px solid #ddd;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#999;\\'>IMG</div>')"/>`
+            : '<div style="width:32px;height:44px;background:#eee;border:1px solid #ddd;border-radius:4px;"></div>';
+
+        const item = `<li style="border:1px solid #eee; border-radius:8px; background:#fff; padding:8px 10px; display:flex; align-items:center; gap:10px; min-height:50px;">
+            ${thumb}
+            <div style="flex:1; min-width:0; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; font-size:14px;">${title}</div>
+            <span style="flex-shrink:0; padding:4px 10px; text-align:center; font-weight:700; font-size:13px; background:#f3f4f6; color:#111827; border:1px solid #e5e7eb; border-radius:999px;">${stock}</span>
+        </li>`;
+        
+        if (stock === 0) out.push(item);
+        else if (stock > 0 && stock <= LOW_STOCK_THRESHOLD) low.push(item);
+    });
+
+    outList.innerHTML = out.join('');
+    lowList.innerHTML = low.join('');
+    
+    if (outCount) outCount.textContent = String(out.length);
+    if (lowCount) lowCount.textContent = String(low.length);
+    if (outEmpty) outEmpty.style.display = out.length ? 'none' : 'block';
+    if (lowEmpty) lowEmpty.style.display = low.length ? 'none' : 'block';
+}
+
 
 function renderBookRows(list) {
     const strip = (s) => (typeof s === 'string' ? s.trim().replace(/^['"]+|['"]+$/g, "") : s);
@@ -139,6 +188,7 @@ function loadProductList() {
     onSnapshot(qRef, (snap) => {
         BOOK_CACHE = snap.docs.map(d => ({ book: d.data(), productId: d.id }));
         applySearchFilter();
+        renderStockAlerts();
     }, (err) => {
         console.error('Realtime books error:', err);
         if (productList) productList.innerHTML = '<tr><td colspan="8" style="padding:12px; text-align:center; color:#b91c1c;">Failed to load books (realtime).</td></tr>';

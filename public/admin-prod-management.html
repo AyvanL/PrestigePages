@@ -36,34 +36,62 @@
     <main class="main-content">
       <h2>Product Management</h2>
 
-      <!-- Add New Product Form Section -->
-      <section class="form-container">
-        <h3>Add New Book</h3>
-        <form id="productForm" class="form">
-          <label for="productTitle">Title</label>
-          <input type="text" id="productTitle" name="title" required>
+      <!-- Top grid: Add form + Stock Alerts -->
+      <div class="top-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px; align-items:stretch; margin-bottom:20px;">
+        <!-- Add New Product Form Section -->
+        <section class="form-container" style="margin-bottom:0; height:100%; display:flex; flex-direction:column;">
+          <h3>Add New Book</h3>
+          <form id="productForm" class="form">
+            <label for="productTitle">Title</label>
+            <input type="text" id="productTitle" name="title" required>
 
-          <label for="productAuthor">Author</label>
-          <input type="text" id="productAuthor" name="author" required>
+            <label for="productAuthor">Author</label>
+            <input type="text" id="productAuthor" name="author" required>
 
-          <label for="productCover">Cover URL</label>
-          <input type="url" id="productCover" name="cover" placeholder="https://..." required>
+            <label for="productCover">Cover URL</label>
+            <input type="url" id="productCover" name="cover" placeholder="https://..." required>
 
-          <label for="productCategory">Category</label>
-          <input type="text" id="productCategory" name="category" placeholder="romance, mystery..." required>
+            <label for="productCategory">Category</label>
+            <input type="text" id="productCategory" name="category" placeholder="romance, mystery..." required>
 
-          <label for="productPrice">Price (₱)</label>
-          <input type="number" step="0.01" id="productPrice" name="price" required>
+            <label for="productPrice">Price (₱)</label>
+            <input type="number" step="0.01" id="productPrice" name="price" required>
 
-          <label for="productRating">Rating (0-5)</label>
-          <input type="number" step="0.1" id="productRating" name="rating" value="5" min="0" max="5" required>
+            <label for="productRating">Rating (0-5)</label>
+            <input type="number" step="0.1" id="productRating" name="rating" value="5" min="0" max="5" required>
 
-          <label for="productStock">Stock</label>
-          <input type="number" id="productStock" name="stock" value="0" min="0" required>
+            <label for="productStock">Stock</label>
+            <input type="number" id="productStock" name="stock" value="0" min="0" required>
 
-          <button type="submit" class="btn">Add Book</button>
-        </form>
-      </section>
+            <button type="submit" class="btn">Add Book</button>
+          </form>
+        </section>
+
+        <!-- Stock Alerts Section -->
+        <section class="form-container" id="stockAlertsCard" style="margin-bottom:0; height:100%; display:flex; flex-direction:column;">
+          <h3 style="margin:0 0 10px;">Stock Alerts <small style="font-weight:500; color:#6b7280; font-size:14px;">Low threshold: <span id="lowThresholdVal">3</span></small></h3>
+          <div style="display:grid; grid-template-rows: 1fr 1fr; gap:14px; flex:1 1 auto; min-height:0;">
+            <!-- Out of Stock Section (50%) -->
+            <div style="display:flex; flex-direction:column; min-height:0;">
+              <div style="font-weight:700; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;">
+                <span>Out of Stock</span>
+                <span id="outCount" style="background:#fde4e4; color:#9f1d1d; padding:2px 8px; border-radius:999px; font-size:12px;">0</span>
+              </div>
+              <ul id="outOfStockList" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px; max-height:320px; overflow-y:auto; overflow-x:hidden;"></ul>
+              <div id="outEmpty" style="display:none; color:#6b7280; font-size:13px; padding:8px;">No out of stock books.</div>
+            </div>
+            <!-- Low on Stock Section (50%) -->
+            <div style="display:flex; flex-direction:column; min-height:0;">
+              <div style="font-weight:700; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;">
+                <span>Low on Stock</span>
+                <span id="lowCount" style="background:#fff4d6; color:#664d04; padding:2px 8px; border-radius:999px; font-size:12px;">0</span>
+              </div>
+              <ul id="lowStockList" style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px; max-height:320px; overflow-y:auto; overflow-x:hidden;"></ul>
+              <div id="lowEmpty" style="display:none; color:#6b7280; font-size:13px; padding:8px;">No low stock books.</div>
+            </div>
+          </div>
+        </section>
+      </div>
 
       <!-- Product List Section -->
       <section class="product-list">

@@ -24,6 +24,7 @@ document.addEventListener('click', async (e) => {
 });
 
 // Auto-logout if current user becomes suspended
+let SUSPEND_ALERTED = false;
 onAuthStateChanged(auth, async (user) => {
   if (!user) return;
   const userRef = doc(db, 'users', user.uid);
@@ -31,6 +32,7 @@ onAuthStateChanged(auth, async (user) => {
   try {
     const snap = await getDoc(userRef);
     if (snap.exists() && snap.data()?.suspended) {
+      if (!SUSPEND_ALERTED) { SUSPEND_ALERTED = true; alert('Your account has been suspended.'); }
       await signOut(auth).catch(()=>{});
       localStorage.removeItem('pendingEmail');
       window.location.href = 'index.html';
@@ -44,6 +46,7 @@ onAuthStateChanged(auth, async (user) => {
     try {
       const data = snap.data() || {};
       if (data.suspended) {
+        if (!SUSPEND_ALERTED) { SUSPEND_ALERTED = true; alert('Your account has been suspended.'); }
         signOut(auth).finally(() => {
           localStorage.removeItem('pendingEmail');
           window.location.href = 'index.html';
