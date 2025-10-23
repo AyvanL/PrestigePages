@@ -207,7 +207,10 @@
     <div class="modal-content" style="max-width:760px;">
       <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
         <h2 style="margin:0; font-size:20px;">Admin Accounts</h2>
-        <span class="close" id="closeAdminModal" style="cursor:pointer;">&times;</span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button id="openAuditTrailBtn" class="btn btn-outline" title="View admin activity logs">Audit Trail</button>
+          <span class="close" id="closeAdminModal" style="cursor:pointer;">&times;</span>
+        </div>
       </div>
       <div style="margin:10px 0 14px; color:#6b7280;">List of users with role = <b>admin</b></div>
       <div id="adminListWrap" style="max-height:340px; overflow:auto; border:1px solid #e5e7eb; border-radius:10px;">
@@ -234,6 +237,39 @@
           <button id="createAdminBtn" class="btn btn-primary">Create Admin</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Audit Trail Modal -->
+  <div id="auditModal" class="modal">
+    <div class="modal-content" style="max-width:900px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <h2 style="margin:0; font-size:20px;">Audit Trail</h2>
+        <span class="close" id="closeAuditModal" style="cursor:pointer;">&times;</span>
+      </div>
+      <div class="modal-subtitle">Track admin actions with timestamps. Use the filter to view by admin.</div>
+
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+        <label for="auditAdminFilter" style="font-weight:600; font-size:13px; color:#374151;">Filter by admin</label>
+        <select id="auditAdminFilter" style="padding:8px 10px; border:1px solid #e5e7eb; border-radius:8px; min-width:220px;"></select>
+      </div>
+
+      <div style="max-height:420px; overflow:auto; border:1px solid #e5e7eb; border-radius:10px;">
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:#fafafa;">
+              <th style="text-align:left; padding:10px; border-bottom:1px solid #eee; width:200px;">Time</th>
+              <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Admin</th>
+              <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Action</th>
+              <th style="text-align:left; padding:10px; border-bottom:1px solid #eee;">Changes</th>
+            </tr>
+          </thead>
+          <tbody id="auditTableBody">
+            <tr><td colspan="4" style="padding:12px; text-align:center; color:#777;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:10px; font-size:12.5px; color:#6b7280;">Times shown in your local timezone.</div>
     </div>
   </div>
 

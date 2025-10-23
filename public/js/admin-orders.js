@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { logAudit } from './admin-audit.js';
 import { firebaseConfig } from "./firebase-config.js";
 
 // Initialize Firebase
@@ -203,7 +204,14 @@ orderList?.addEventListener('click', async (e) => {
     if (!uid || !txid) return;
     const ok = confirm('Delete this order? This cannot be undone.');
     if (!ok) return;
-    try { await deleteDoc(doc(db, 'users', uid, 'transactions', txid)); delBtn.closest('tr')?.remove(); }
+    try {
+      const txRef = doc(db, 'users', uid, 'transactions', txid);
+      const beforeSnap = await getDoc(txRef).catch(()=>null);
+      const before = beforeSnap?.exists() ? beforeSnap.data() : null;
+      await deleteDoc(txRef);
+      await logAudit({ action: 'delete_order', targetResource: 'order', resourceId: txid, targetUserId: uid, details: { before, after: null } });
+      delBtn.closest('tr')?.remove();
+    }
     catch (err) { console.error('Failed to delete order', err); alert('Failed to delete order'); }
     return;
   }
@@ -213,6 +221,7 @@ orderList?.addEventListener('click', async (e) => {
     const uid = viewBtn.getAttribute('data-uid');
     const txid = viewBtn.getAttribute('data-txid');
     if (uid && txid) viewOrderDetails(uid, txid);
+    // Viewing doesn't change data; skip audit to reduce noise
   }
 });
 
@@ -226,10 +235,11 @@ statusSaveBtn?.addEventListener('click', async () => {
   const deliv = statusDeliverySel?.value || 'pending';
   const pay = statusPaymentSel?.value || 'unpaid';
   try {
-    await updateDoc(doc(db, 'users', uid, 'transactions', txid), {
-      delivstatus: deliv,
-      status: pay,
-    });
+    const txRef = doc(db, 'users', uid, 'transactions', txid);
+    const beforeSnap = await getDoc(txRef).catch(()=>null);
+    const before = beforeSnap?.exists() ? { delivstatus: beforeSnap.data().delivstatus, status: beforeSnap.data().status } : null;
+    await updateDoc(txRef, { delivstatus: deliv, status: pay });
+    await logAudit({ action: 'update_order_status', targetResource: 'order', resourceId: txid, targetUserId: uid, details: { before, after: { delivstatus: deliv, status: pay } } });
     // Update the row inline without full reload
     const row = document.querySelector(`button.open-status[data-uid='${uid}'][data-txid='${txid}']`)?.closest('tr');
     if (row) {

@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { logAudit } from './admin-audit.js';
 import { firebaseConfig } from "./firebase-config.js";
 
 const app = initializeApp(firebaseConfig);
@@ -117,6 +118,8 @@ heroForm.addEventListener('submit', async (e) => {
   submitBtn.disabled = true;
   
   try {
+    const beforeSnap = await getDoc(doc(db, 'content', 'hero-section')).catch(()=>null);
+    const before = beforeSnap?.exists() ? beforeSnap.data() : null;
     const heroData = {
       eyebrow: heroEyebrow.value.trim(),
       title: heroTitle.value.trim(),
@@ -125,7 +128,8 @@ heroForm.addEventListener('submit', async (e) => {
       updatedAt: new Date().toISOString()
     };
     
-    await setDoc(doc(db, 'content', 'hero-section'), heroData);
+  await setDoc(doc(db, 'content', 'hero-section'), heroData);
+  await logAudit({ action: 'update_content', targetResource: 'content:hero', resourceId: 'hero-section', details: { before, after: heroData } });
     
     // Update current content display
     displayCurrentContent(heroData);
@@ -218,6 +222,8 @@ aboutForm.addEventListener('submit', async (e) => {
   submitBtn.disabled = true;
   
   try {
+    const beforeSnap = await getDoc(doc(db, 'content', 'about-us')).catch(()=>null);
+    const before = beforeSnap?.exists() ? beforeSnap.data() : null;
     const aboutData = {
       title: aboutTitle.value.trim(),
       paragraph1: aboutParagraph1.value.trim(),
@@ -226,7 +232,8 @@ aboutForm.addEventListener('submit', async (e) => {
       updatedAt: new Date().toISOString()
     };
     
-    await setDoc(doc(db, 'content', 'about-us'), aboutData);
+  await setDoc(doc(db, 'content', 'about-us'), aboutData);
+  await logAudit({ action: 'update_content', targetResource: 'content:about-us', resourceId: 'about-us', details: { before, after: aboutData } });
     
     // Update current content display
     displayCurrentAboutContent(aboutData);

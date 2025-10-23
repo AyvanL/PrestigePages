@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
+import { logAudit } from './admin-audit.js';
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -95,7 +96,14 @@ bodyEl.addEventListener('click', async (e) => {
     const txid = delBtn.getAttribute('data-txid');
     if (!uid || !txid) return;
     if (!confirm('Delete this refunded transaction? This cannot be undone.')) return;
-    try { await deleteDoc(doc(db,'users',uid,'transactions',txid)); loadReturns(); }
+    try {
+      const ref = doc(db,'users',uid,'transactions',txid);
+      const beforeSnap = await getDoc(ref).catch(()=>null);
+      const before = beforeSnap?.exists() ? beforeSnap.data() : null;
+      await deleteDoc(ref);
+      await logAudit({ action: 'delete_refund_record', targetResource: 'refund', resourceId: txid, targetUserId: uid, details: { before, after: null } });
+      loadReturns();
+    }
     catch(err){ alert('Delete failed'); console.error(err); }
     return;
   }

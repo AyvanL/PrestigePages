@@ -3,6 +3,7 @@ import {
   getFirestore, 
   collection, 
   getDocs,
+  getDoc,
   updateDoc, 
   deleteDoc, 
   doc, 
@@ -12,6 +13,7 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
+import { logAudit } from './admin-audit.js';
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -258,6 +260,8 @@ async function sendEmailToCustomer(customerEmail, customerName, subject, message
 // Mark inquiry as replied and store response in Firebase
 async function markInquiryReplied(id, responseData = null) {
   try {
+    const beforeSnap = await getDoc(doc(db, 'inquiries', id)).catch(()=>null);
+    const before = beforeSnap?.exists() ? beforeSnap.data() : null;
     const inquiryRef = doc(db, 'inquiries', id);
     const updateData = {
       status: 'replied',
@@ -274,6 +278,7 @@ async function markInquiryReplied(id, responseData = null) {
     }
 
     await updateDoc(inquiryRef, updateData);
+    await logAudit({ action: 'mark_inquiry_replied', targetResource: 'inquiry', resourceId: id, details: { before, after: { ...(responseData||{}), ...updateData } } });
     return true;
   } catch (error) {
     console.error('Error marking inquiry as replied:', error);
@@ -286,7 +291,11 @@ async function deleteInquiry(id) {
   if (!confirm('Are you sure you want to delete this inquiry? This action cannot be undone.')) return;
   
   try {
-    await deleteDoc(doc(db, 'inquiries', id));
+    const ref = doc(db, 'inquiries', id);
+    const beforeSnap = await getDoc(ref).catch(()=>null);
+    const before = beforeSnap?.exists() ? beforeSnap.data() : null;
+    await deleteDoc(ref);
+    await logAudit({ action: 'delete_inquiry', targetResource: 'inquiry', resourceId: id, details: { before, after: null } });
     closeModals();
     alert('Inquiry deleted successfully!');
   } catch (error) {
@@ -385,8 +394,11 @@ function setupEventListeners() {
       const inquiry = INQUIRIES.find(i => i.id === CURRENT_INQUIRY_ID);
       const customerName = inquiry?.name || 'Valued Customer';
 
-      // Send email via EmailJS
-      await sendEmailToCustomer(customerEmail, customerName, subject, message);
+  // Send email via EmailJS
+  const beforeSnap = await getDoc(doc(db, 'inquiries', CURRENT_INQUIRY_ID)).catch(()=>null);
+  const before = beforeSnap?.exists() ? beforeSnap.data() : null;
+  await sendEmailToCustomer(customerEmail, customerName, subject, message);
+  await logAudit({ action: 'reply_inquiry', targetResource: 'inquiry', resourceId: CURRENT_INQUIRY_ID, details: { before, after: { subject, response: message, to: customerEmail } } });
       
       // Mark as replied in Firebase and store response
       await markInquiryReplied(CURRENT_INQUIRY_ID, {

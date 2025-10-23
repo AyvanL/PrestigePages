@@ -1,7 +1,7 @@
 // Admin Customer Management: list, view, edit, delete users from Firestore
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, query, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
 const app = initializeApp(firebaseConfig);
@@ -42,7 +42,8 @@ const eemail = document.getElementById('eemail');
 const emobile = document.getElementById('emobile');
 const ehouseNo = document.getElementById('ehouseNo');
 const estreet = document.getElementById('estreet');
-const eBaranggay = document.getElementById('eBaranggay');
+// Note: HTML id is 'ebaranggay' (lowercase b)
+const eBaranggay = document.getElementById('ebaranggay');
 const ecity = document.getElementById('ecity');
 const eprovince = document.getElementById('eprovince');
 const epostal = document.getElementById('epostal');
@@ -60,6 +61,43 @@ const adminUsernameInput = document.getElementById('adminUsername');
 const adminEmailInput = document.getElementById('adminEmail');
 const adminPasswordInput = document.getElementById('adminPassword');
 const createAdminBtn = document.getElementById('createAdminBtn');
+// Audit UI
+const openAuditTrailBtn = document.getElementById('openAuditTrailBtn');
+const auditModal = document.getElementById('auditModal');
+const closeAuditModalBtn = document.getElementById('closeAuditModal');
+const auditAdminFilter = document.getElementById('auditAdminFilter');
+const auditTableBody = document.getElementById('auditTableBody');
+
+let CURRENT_ADMIN = null; // { uid, email, username }
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
+  const uref = doc(db, 'users', user.uid);
+  const snap = await getDoc(uref).catch(()=>null);
+  const udata = snap?.exists() ? snap.data() : {};
+  CURRENT_ADMIN = { uid: user.uid, email: user.email || udata.email || '', username: udata.username || '' };
+});
+
+async function logAudit(entry){
+  try {
+    const admin = CURRENT_ADMIN || {};
+    const payload = {
+      adminId: admin.uid || null,
+      adminEmail: admin.email || null,
+      adminUsername: admin.username || null,
+      action: entry?.action || 'unknown',
+      targetUserId: entry?.targetUserId || null,
+      targetEmail: entry?.targetEmail || null,
+      targetUsername: entry?.targetUsername || null,
+      details: entry?.details || null,
+      createdAt: serverTimestamp(),
+      clientTime: new Date(),
+    };
+    await addDoc(collection(db, 'admin_audit'), payload);
+  } catch (e) {
+    console.warn('logAudit failed', e);
+  }
+}
 
 function showMessageRow(text, cls = '') {
   if (!tableBody) return;
@@ -150,7 +188,7 @@ async function handleEdit(uid) {
   emobile.value = data.mobile || '';
   ehouseNo.value = data.houseNo || '';
   estreet.value = data.street || '';
-  ebaranggay.value = data.baranggay || '';
+  eBaranggay.value = data.baranggay || '';
   ecity.value = data.city || '';
   eprovince.value = data.province || '';
   epostal.value = data.postal || '';
@@ -159,7 +197,11 @@ async function handleEdit(uid) {
 
 async function handleDelete(uid) {
   if (!confirm('Delete this user? This will remove profile data but not their Auth account.')) return;
-  await deleteDoc(doc(db, 'users', uid));
+  const userRef = doc(db, 'users', uid);
+  const snap = await getDoc(userRef).catch(()=>null);
+  const before = snap?.exists() ? snap.data() : null;
+  await deleteDoc(userRef);
+  await logAudit({ action: 'delete_user', targetUserId: uid, details: before ? { before } : null });
   await loadUsers();
 }
 
@@ -201,17 +243,32 @@ editForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!CURRENT_EDIT_UID) return;
   const userRef = doc(db, 'users', CURRENT_EDIT_UID);
-  await updateDoc(userRef, {
+  const snap = await getDoc(userRef).catch(()=>null);
+  const cur = snap?.exists() ? snap.data() : {};
+  const before = {
+    firstName: cur.firstName || '',
+    lastName: cur.lastName || '',
+    mobile: cur.mobile || '',
+    houseNo: cur.houseNo || '',
+    street: cur.street || '',
+    baranggay: cur.baranggay || '',
+    city: cur.city || '',
+    province: cur.province || '',
+    postal: cur.postal || '',
+  };
+  const after = {
     firstName: efirstName.value,
     lastName: elastName.value,
     mobile: emobile.value,
     houseNo: ehouseNo.value,
     street: estreet.value,
-    baranggay: ebaranggay.value,
+    baranggay: eBaranggay.value,
     city: ecity.value,
     province: eprovince.value,
     postal: epostal.value,
-  });
+  };
+  await updateDoc(userRef, after);
+  await logAudit({ action: 'edit_user', targetUserId: CURRENT_EDIT_UID, targetEmail: eemail?.value || null, details: { before, after } });
   editModal.style.display = 'none';
   await loadUsers();
 });
@@ -224,6 +281,7 @@ async function handleBanToggle(user, btnEl){
     const confirmMsg = currentlySuspended ? 'Reactivate this account?' : 'Ban (suspend) this account? The user will be prevented from logging in.';
     if (!confirm(confirmMsg)) return;
     const userRef = doc(db, 'users', user.id);
+    const before = { suspended: !!user.suspended };
     await updateDoc(userRef, {
       suspended: !currentlySuspended,
       suspendedAt: !currentlySuspended ? new Date() : null,
@@ -234,6 +292,8 @@ async function handleBanToggle(user, btnEl){
     btnEl.textContent = user.suspended ? 'Reactivate' : 'Ban';
     btnEl.setAttribute('data-suspended', String(!!user.suspended));
     btnEl.className = user.suspended ? 'reactivate-btn' : 'ban-btn';
+    const after = { suspended: !!user.suspended };
+    await logAudit({ action: user.suspended ? 'ban_user' : 'reactivate_user', targetUserId: user.id, targetEmail: user.email || null, targetUsername: user.username || null, details: { before, after } });
   } catch (err){
     alert('Failed to toggle suspension');
     console.error(err);
@@ -275,6 +335,11 @@ async function loadAdmins(){
         </tr>`;
       }).join('');
     }
+    // Populate audit filter dropdown
+    if (auditAdminFilter) {
+      const options = [ { value: '', label: 'All admins' }, ...admins.map(a => ({ value: a.id, label: a.username || a.email || a.id })) ];
+      auditAdminFilter.innerHTML = options.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+    }
   } catch(err){
     console.error('loadAdmins error', err);
     adminListBody.innerHTML = '<tr><td colspan="3" style="padding:12px; text-align:center; color:#b91c1c;">Failed to load admins.</td></tr>';
@@ -302,6 +367,7 @@ createAdminBtn?.addEventListener('click', async ()=>{
       role: 'admin',
       createdAt: new Date(),
     }, { merge: true });
+    await logAudit({ action: 'create_admin', targetUserId: uid, targetEmail: email, targetUsername: username });
     alert('Admin account created successfully.');
     adminUsernameInput.value = '';
     adminEmailInput.value = '';
@@ -334,21 +400,36 @@ adminListBody?.addEventListener('click', async (e)=>{
       const suspended = !!cur.suspended;
       const ok = confirm(suspended ? 'Reactivate this admin?' : 'Ban (suspend) this admin?');
       if (!ok) return;
+      const before = { suspended };
       await updateDoc(uref, { suspended: !suspended, suspendedAt: !suspended ? new Date() : null });
+      const after = { suspended: !suspended };
+      await logAudit({ action: !suspended ? 'ban_admin' : 'reactivate_admin', targetUserId: uid, targetEmail: cur.email || null, targetUsername: cur.username || null, details: { before, after } });
       await loadAdmins();
     }
     if (action === 'edit'){
+      const snap = await getDoc(doc(db,'users', uid));
+      if (!snap.exists()) return alert('User not found');
+      const cur = snap.data();
+      const before = { email: cur.email || null, username: cur.username || null };
       const newEmail = prompt('New email (leave blank to keep current):');
       const newUsername = prompt('New username (leave blank to keep current):');
       const delta = {};
       if (newEmail) delta.email = newEmail;
       if (newUsername) delta.username = newUsername;
-      if (Object.keys(delta).length){ await updateDoc(doc(db,'users', uid), delta); }
+      if (Object.keys(delta).length){
+        await updateDoc(doc(db,'users', uid), delta);
+        const after = { email: delta.email ?? before.email, username: delta.username ?? before.username };
+        await logAudit({ action: 'edit_admin', targetUserId: uid, targetEmail: after.email || null, targetUsername: after.username || null, details: { before, after } });
+      }
       await loadAdmins();
     }
     if (action === 'delete'){
       if (!confirm('Delete this admin profile? This does not remove their Auth account.')) return;
-      await deleteDoc(doc(db,'users', uid));
+      const uref = doc(db,'users', uid);
+      const snap = await getDoc(uref).catch(()=>null);
+      const before = snap?.exists() ? snap.data() : null;
+      await deleteDoc(uref);
+      await logAudit({ action: 'delete_admin_profile', targetUserId: uid, details: before ? { before } : null });
       await loadAdmins();
     }
   } catch(err){
@@ -356,3 +437,126 @@ adminListBody?.addEventListener('click', async (e)=>{
     alert('Action failed.');
   }
 });
+
+// ---------- Audit Trail modal logic ----------
+function openAuditModal(){ if (auditModal) { auditModal.style.display = 'flex'; loadAuditTrail(); } }
+function closeAuditModal(){ if (auditModal) auditModal.style.display = 'none'; }
+openAuditTrailBtn?.addEventListener('click', openAuditModal);
+closeAuditModalBtn?.addEventListener('click', closeAuditModal);
+window.addEventListener('click', (e)=>{ if (e.target === auditModal) closeAuditModal(); });
+
+let AUDIT_CACHE = [];
+function renderAuditRows(rows){
+  if (!auditTableBody) return;
+  if (!rows.length) {
+    auditTableBody.innerHTML = '<tr><td colspan="4" style="padding:12px; text-align:center; color:#777;">No audit entries.</td></tr>';
+    return;
+  }
+  const formatValue = (v) => {
+    if (v === undefined) return '—';
+    if (v === null) return 'null';
+    if (typeof v === 'object') return JSON.stringify(v);
+    return String(v);
+  };
+  const displayName = (obj, r) => {
+    if (!obj || typeof obj !== 'object') {
+      const t = r?.targetUsername || r?.targetEmail || r?.resourceId || r?.targetUserId || '';
+      return t || 'item';
+    }
+    const fullName = (obj.firstName || obj.lastName) ? `${obj.firstName || ''} ${obj.lastName || ''}`.trim() : '';
+    return obj.title || obj.name || obj.username || obj.email || fullName || r?.resourceId || r?.targetUserId || 'item';
+  };
+  const formatChanges = (r) => {
+    const d = r.details || {};
+    const before = d.before ?? null;
+    const after = d.after ?? null;
+    const action = (r.action || '').toLowerCase();
+
+    // Special cases: add/create/delete concise labels
+    if ((/delete|remove/).test(action)) {
+      const label = displayName(before, r);
+      return `<span style="color:#b91c1c; font-weight:600;">Deleted</span>: ${label}`;
+    }
+    if ((/add|create/).test(action)) {
+      const label = displayName(after, r) || displayName(null, r);
+      return `<span style="color:#166534; font-weight:600;">Added</span>: ${label}`;
+    }
+
+    if (before || after) {
+      // Build a header label for edits/updates
+      const headerLines = [];
+      const lowerAct = action;
+      const isUpdate = (/edit|update|change/).test(lowerAct);
+      if (isUpdate) {
+        // Prefer name/title from 'after', else 'before'
+        const label = displayName(after || before || {}, r);
+        // Transaction/order id hint when available
+        if (r.resourceId && (/order|transaction|status/).test(lowerAct)) {
+          headerLines.push(`<div><strong>Transaction:</strong> ${r.resourceId}</div>`);
+        } else {
+          headerLines.push(`<div><strong>Item:</strong> ${label}</div>`);
+        }
+      }
+
+      const SKIP = new Set(['updatedAt','createdAt','updated_at','created_at']);
+      const keys = new Set([...(before ? Object.keys(before) : []), ...(after ? Object.keys(after) : [])]);
+      const lines = [];
+      let count = 0;
+      for (const k of keys) {
+        if (SKIP.has(k)) continue;
+        const b = before ? before[k] : undefined;
+        const a = after ? after[k] : undefined;
+        if (JSON.stringify(b) !== JSON.stringify(a)) {
+          lines.push(`<div><strong>${k}:</strong> <span style="color:#b91c1c;">${formatValue(b)}</span> → <span style="color:#166534;">${formatValue(a)}</span></div>`);
+          count++;
+          if (count >= 6) { lines.push('<div>…</div>'); break; }
+        }
+      }
+      if (!lines.length) return '<span style="color:#666;">No field changes</span>';
+      return (headerLines.join('') + lines.join(''));
+    }
+    // Fallbacks
+    if (d && Object.keys(d).length) {
+      const safe = JSON.stringify(d).slice(0, 300);
+      return `<code style="font-size:12px; color:#444;">${safe}${safe.length===300?'…':''}</code>`;
+    }
+    const targetLabel = r.targetUsername || r.targetEmail || r.targetUserId || r.resourceId || '—';
+    return targetLabel;
+  };
+
+  auditTableBody.innerHTML = rows.map(r => {
+    const time = r.createdAt?.toDate ? r.createdAt.toDate() : (r.clientTime ? new Date(r.clientTime) : null);
+    const timeStr = time ? time.toLocaleString() : '';
+    const adminLabel = r.adminUsername || r.adminEmail || r.adminId || '—';
+    const action = r.action || '—';
+    const changes = formatChanges(r);
+    return `<tr>
+      <td style="padding:10px; border-bottom:1px solid #eee;">${timeStr}</td>
+      <td style="padding:10px; border-bottom:1px solid #eee;">${adminLabel}</td>
+      <td style="padding:10px; border-bottom:1px solid #eee;">${action}</td>
+      <td style="padding:10px; border-bottom:1px solid #eee;">${changes}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadAuditTrail(){
+  if (!auditTableBody) return;
+  auditTableBody.innerHTML = '<tr><td colspan="4" style="padding:12px; text-align:center; color:#777;">Loading...</td></tr>';
+  try {
+    const qy = query(collection(db, 'admin_audit'), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(qy);
+    AUDIT_CACHE = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    applyAuditFilter();
+  } catch (e) {
+    console.error('loadAuditTrail failed', e);
+    auditTableBody.innerHTML = '<tr><td colspan="4" style="padding:12px; text-align:center; color:#b91c1c;">Failed to load audit trail.</td></tr>';
+  }
+}
+
+function applyAuditFilter(){
+  const adminId = auditAdminFilter?.value || '';
+  const rows = adminId ? AUDIT_CACHE.filter(r => r.adminId === adminId) : AUDIT_CACHE;
+  renderAuditRows(rows);
+}
+
+auditAdminFilter?.addEventListener('change', applyAuditFilter);

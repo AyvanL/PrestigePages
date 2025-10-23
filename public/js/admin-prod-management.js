@@ -14,6 +14,7 @@ import {
     orderBy,
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
+import { logAudit } from './admin-audit.js';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -54,7 +55,8 @@ productForm.addEventListener("submit", async (e) => {
             updatedAt: new Date(),
         };
 
-        await addDoc(collection(db, "books"), newBook);
+    const ref = await addDoc(collection(db, "books"), newBook);
+    await logAudit({ action: 'add_book', targetResource: 'book', resourceId: ref.id, details: { before: null, after: newBook } });
         alert("Book added successfully!");
         productForm.reset();
         loadProductList();
@@ -199,7 +201,10 @@ function loadProductList() {
 async function deleteProduct(productId) {
     try {
         const productDocRef = doc(db, "books", productId);
+        const beforeSnap = await getDoc(productDocRef).catch(()=>null);
+        const before = beforeSnap?.exists() ? beforeSnap.data() : null;
         await deleteDoc(productDocRef);
+        await logAudit({ action: 'delete_book', targetResource: 'book', resourceId: productId, details: { before, after: null } });
         alert("Book deleted successfully!");
         loadProductList();
     } catch (error) {
@@ -246,7 +251,10 @@ async function editProduct(productId) {
             updatedAt: new Date(),
         };
         try {
+            const beforeSnap = await getDoc(productDocRef).catch(()=>null);
+            const before = beforeSnap?.exists() ? beforeSnap.data() : null;
             await updateDoc(productDocRef, updated);
+            await logAudit({ action: 'edit_book', targetResource: 'book', resourceId: productId, details: { before, after: updated } });
             alert("Book updated successfully!");
             loadProductList();
             editModal.style.display = "none";
