@@ -11,6 +11,28 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 const statusEl = document.getElementById("status");
+const homeBtn = document.getElementById('homeBtn');
+const countdownMsg = document.getElementById('countdownMsg');
+
+function setHomeButtonEnabled(enabled) {
+  if (!homeBtn) return;
+  if (enabled) {
+    homeBtn.style.pointerEvents = '';
+    homeBtn.style.opacity = '';
+    homeBtn.removeAttribute('tabindex');
+    homeBtn.setAttribute('aria-disabled', 'false');
+    if (countdownMsg) countdownMsg.textContent = '';
+  } else {
+    homeBtn.style.pointerEvents = 'none';
+    homeBtn.style.opacity = '0.6';
+    homeBtn.setAttribute('tabindex', '-1');
+    homeBtn.setAttribute('aria-disabled', 'true');
+    if (countdownMsg) countdownMsg.textContent = 'Confirming your payment...';
+  }
+}
+
+// Disable Back to Home until status is confirmed
+setHomeButtonEnabled(false);
 
 function setStatus(text, cls) {
   if (!statusEl) return;
@@ -114,6 +136,8 @@ async function markTransactionPaid(user, txId) {
     lastTransactionAt: serverTimestamp(),
     cart: [],
   });
+  // Payment confirmed -> enable navigation
+  setHomeButtonEnabled(true);
 }
 
 onAuthStateChanged(auth, async (user) => {
@@ -157,6 +181,8 @@ onAuthStateChanged(auth, async (user) => {
       // Clear cart for user now
       await updateDoc(doc(db, 'users', user.uid), { cart: [], lastTransactionId: txId, lastTransactionAt: serverTimestamp() });
       try { localStorage.removeItem("pp:clearCartTx"); } catch {}
+      // COD placed -> allow navigation
+      setHomeButtonEnabled(true);
     } else {
       // Online: proceed to mark as paid (also clears cart in helper)
       await markTransactionPaid(user, txId);
@@ -167,5 +193,6 @@ onAuthStateChanged(auth, async (user) => {
   } catch (err) {
     console.error("Failed to mark transaction paid:", err);
     setStatus("We couldn't verify your payment automatically. We'll keep checking.", "error");
+    // Keep disabled until verified; user can refresh if needed
   }
 });

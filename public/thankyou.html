@@ -62,30 +62,6 @@
     <div id="countdownMsg" style="margin-top:10px; font-size:0.9rem; color:#666; font-family:inherit;"></div>
   </div>
   <script type="module" src="js/thankyou.js"></script>
-  <script>
-    (function(){
-      const btn = document.getElementById('homeBtn');
-      const msg = document.getElementById('countdownMsg');
-      if(!btn) return;
-      let remaining = 5; // seconds
-      btn.style.pointerEvents = 'none';
-      btn.style.opacity = '0.6';
-      btn.setAttribute('tabindex','-1');
-      function tick(){
-        if (remaining > 0){
-          msg.textContent = `You can go back in ${remaining}s...`;
-          remaining--;
-          setTimeout(tick,1000);
-        } else {
-          msg.textContent = '';
-          btn.style.pointerEvents = '';
-          btn.style.opacity = '';
-          btn.removeAttribute('tabindex');
-          btn.setAttribute('aria-disabled','false');
-        }
-      }
-      tick();
-    })();
-  </script>
+  
 </body>
 </html>

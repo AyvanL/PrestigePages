@@ -71,6 +71,39 @@ function ensureDeliveryOptions() {
   `;
 }
 
+// Update delivery options with currency conversion
+window.updateDeliveryPrices = function(currency, exchangeRates, currencySymbols) {
+  const sel = document.getElementById("delivery");
+  if (!sel) return;
+  
+  const savedValue = sel.value;
+  const rate = exchangeRates[currency];
+  const symbol = currencySymbols[currency];
+  
+  // Convert prices
+  const normalPHP = 49;
+  const expressPHP = 100;
+  const normalConverted = currency === 'PHP' ? normalPHP : (normalPHP / 56.25) * rate;
+  const expressConverted = currency === 'PHP' ? expressPHP : (expressPHP / 56.25) * rate;
+  
+  // Format prices
+  let normalPrice, expressPrice;
+  if (currency === 'JPY') {
+    normalPrice = `${symbol}${Math.round(normalConverted)}`;
+    expressPrice = `${symbol}${Math.round(expressConverted)}`;
+  } else {
+    normalPrice = `${symbol}${normalConverted.toFixed(2)}`;
+    expressPrice = `${symbol}${expressConverted.toFixed(2)}`;
+  }
+  
+  // Update options
+  sel.innerHTML = `
+    <option value="" disabled ${!savedValue ? 'selected' : ''}>Select delivery</option>
+    <option value="normal" ${savedValue === 'normal' ? 'selected' : ''}>Normal Delivery ${normalPrice}</option>
+    <option value="express" ${savedValue === 'express' ? 'selected' : ''}>Express Delivery ${expressPrice}</option>
+  `;
+};
+
 // Delivery fee
 function getShippingFee() {
   const val = document.getElementById("delivery")?.value;
@@ -93,12 +126,20 @@ function updateTotals() {
   const totalEl =
     document.getElementById("cart-total") ||
     document.querySelector(".order-summary");
-  if (totalEl) totalEl.textContent = `₱${total.toLocaleString()}`;
+  if (totalEl) {
+    totalEl.textContent = `₱${total.toLocaleString()}`;
+    totalEl.setAttribute('data-price-php', total);
+    totalEl.setAttribute('data-price-usd', (total / 56.25).toFixed(2));
+  }
 
   const shipMethodEl = document.getElementById("shipping-method");
   const shipAmtEl = document.getElementById("shipping-amount");
   if (shipMethodEl) shipMethodEl.textContent = getDeliveryLabel();
-  if (shipAmtEl) shipAmtEl.textContent = `₱${fee.toLocaleString()}`;
+  if (shipAmtEl) {
+    shipAmtEl.textContent = `₱${fee.toLocaleString()}`;
+    shipAmtEl.setAttribute('data-price-php', fee);
+    shipAmtEl.setAttribute('data-price-usd', (fee / 56.25).toFixed(2));
+  }
 }
 
 // Load cart and profile
@@ -140,13 +181,16 @@ async function updateCart() {
 
   let subtotal = 0;
   cart.forEach((item) => {
+    const priceInPHP = Number(item.price);
+    const priceInUSD = priceInPHP / 56.25;
+    
     const li = document.createElement("li");
     li.innerHTML = `
       <img src="${item.cover}" alt="${item.title}" class="book-cover">
       <div class="book-details">
         <div class="book-title">${item.title}</div>
         <div class="book-author">by ${item.author}</div>
-        <div class="book-price">₱${Number(item.price).toLocaleString()}</div>
+        <div class="book-price" data-price-php="${priceInPHP}" data-price-usd="${priceInUSD.toFixed(2)}">₱${priceInPHP.toLocaleString()}</div>
         <div class="book-quantity">Quantity: ${Number(item.qty || 1)}</div>
       </div>
     `;
@@ -155,15 +199,21 @@ async function updateCart() {
     li.style.animation = "";
     cartList.appendChild(li);
 
-    subtotal += Number(item.price) * Number(item.qty || 1);
+    subtotal += priceInPHP * Number(item.qty || 1);
   });
 
   currentSubtotal = subtotal;
   updateTotals();
+  
+  // Apply currency conversion after rendering
+  const savedCurrency = localStorage.getItem('currency') || 'PHP';
+  if (window.convertCheckoutPrices && savedCurrency !== 'PHP') {
+    setTimeout(() => window.convertCheckoutPrices(savedCurrency), 100);
+  }
 }
 
 // Create PayMongo Checkout Session via your Vercel function
-async function createCheckoutSession({ amount, email, reference, description }) {
+async function createPayMongoCheckoutSession({ amount, email, reference, description }) {
   // Detect correct base for return URLs (Live Server uses /public)
   const hasPublic = location.pathname.includes("/public/");
   const returnBase = location.origin + (hasPublic ? "/public" : "");
@@ -233,6 +283,65 @@ async function createCheckoutSession({ amount, email, reference, description }) 
   return { checkout_url, id };
 }
 
+// Create Stripe Checkout Session via your Vercel function
+async function createStripeCheckoutSession({ amount, email, reference, description, items }) {
+  // Detect correct base for return URLs (Live Server uses /public)
+  const hasPublic = location.pathname.includes("/public/");
+  const returnBase = location.origin + (hasPublic ? "/public" : "");
+
+  const STRIPE_API =
+    (typeof window !== "undefined" && window.STRIPE_API_BASE) ||
+    "https://prestige-pages-backend.vercel.app/api/stripe";
+
+  const payload = {
+    items: items.map(item => ({
+      name: item.title,
+      description: `by ${item.author}`,
+      amount: Math.round((item.price / 56.25) * 100), // Convert PHP to USD cents
+      quantity: item.qty,
+      images: [item.cover],
+    })),
+    success_url: `${returnBase}/thankyou.html?ref=${encodeURIComponent(reference)}`,
+    cancel_url: `${returnBase}/checkout.html?canceled=1`,
+    customer_email: email,
+    metadata: {
+      reference: String(reference || ""),
+      email: String(email || ""),
+    },
+  };
+
+  let res;
+  try {
+    res = await fetch(STRIPE_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch (networkErr) {
+    console.error("Network error calling Stripe API:", networkErr);
+    throw new Error("Failed to fetch Stripe API (network/CORS)");
+  }
+
+  const bodyText = await res.text().catch(() => "");
+  if (!res.ok) {
+    console.error("Stripe API error:", res.status, bodyText);
+    throw new Error(`Stripe API ${res.status}: ${bodyText}`);
+  }
+
+  let data;
+  try {
+    data = JSON.parse(bodyText);
+  } catch {
+    throw new Error("Invalid JSON from Stripe API: " + bodyText);
+  }
+
+  // Stripe returns { url, id }
+  const checkout_url = data?.url;
+  const id = data?.id || data?.sessionId || null;
+  if (!checkout_url) throw new Error("No checkout URL in Stripe response");
+  return { checkout_url, id };
+}
+
 async function onSubmitCheckout(e) {
   e.preventDefault();
   const user = auth.currentUser;
@@ -273,6 +382,9 @@ async function onSubmitCheckout(e) {
     price: Number(it.price), qty: Number(it.qty || 1),
   }));
 
+  // Get current currency
+  const currentCurrency = localStorage.getItem('currency') || 'PHP';
+
   let txRef = null;
   try {
     // Build base order
@@ -283,6 +395,7 @@ async function onSubmitCheckout(e) {
       // Save the user-facing label (e.g., "Online Payment") instead of the code (e.g., "ONLINE")
       paymentMethod: paymentMethodLabel,
       delivstatus: "pending",
+      currency: currentCurrency, // Save current currency
       createdAt: serverTimestamp(),
     };
 
@@ -314,22 +427,51 @@ async function onSubmitCheckout(e) {
       return;
     }
 
-    // ONLINE payment path -> PayMongo Checkout
+    // ONLINE payment path -> Choose payment gateway based on currency
     txRef = await addDoc(collection(db, "users", user.uid, "transactions"), {
       ...baseOrder,
       status: "initiated",
     });
 
-    const { checkout_url, id: checkoutId } = await createCheckoutSession({
-      amount: amountCentavos,
-      email: shipping.email || user.email,
-      reference: txRef.id,
-      description: `PrestigePages Order ${txRef.id}`,
-    });
+    let checkout_url, checkoutId;
 
-    await updateDoc(doc(db, "users", user.uid, "transactions", txRef.id), {
-      checkoutSessionId: checkoutId || null,
-    });
+    if (currentCurrency === 'USD') {
+      // Use Stripe for USD
+      console.log('💳 Using Stripe for USD payment');
+      const result = await createStripeCheckoutSession({
+        amount: amountCentavos,
+        email: shipping.email || user.email,
+        reference: txRef.id,
+        description: `PrestigePages Order ${txRef.id}`,
+        items: items,
+      });
+      checkout_url = result.checkout_url;
+      checkoutId = result.id;
+      
+      // Update transaction with Stripe session info
+      await updateDoc(doc(db, "users", user.uid, "transactions", txRef.id), {
+        checkoutSessionId: checkoutId || null,
+        paymentGateway: 'stripe',
+      });
+    } else {
+      // Use PayMongo for PHP and other currencies
+      console.log('💳 Using PayMongo for PHP payment');
+      const result = await createPayMongoCheckoutSession({
+        amount: amountCentavos,
+        email: shipping.email || user.email,
+        reference: txRef.id,
+        description: `PrestigePages Order ${txRef.id}`,
+      });
+      checkout_url = result.checkout_url;
+      checkoutId = result.id;
+      
+      // Update transaction with PayMongo session info
+      await updateDoc(doc(db, "users", user.uid, "transactions", txRef.id), {
+        checkoutSessionId: checkoutId || null,
+        paymentGateway: 'paymongo',
+      });
+    }
+
     await updateDoc(doc(db, "users", user.uid), {
       lastTransactionId: txRef.id, lastTransactionAt: serverTimestamp(),
     });

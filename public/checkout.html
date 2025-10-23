@@ -181,7 +181,91 @@
         <button type="submit" class="conbtn" form="shippingForm">Continue</button>
       </div>
 
+  <script>
+    // Currency conversion support for checkout page
+    const currencySymbols = {
+      USD: '$',
+      EUR: '€',
+      GBP: '£',
+      JPY: '¥',
+      PHP: '₱'
+    };
+
+    let exchangeRates = {
+      USD: 1,
+      EUR: 0.92,
+      GBP: 0.79,
+      JPY: 149.50,
+      PHP: 56.25
+    };
+
+    // Fetch live exchange rates
+    async function fetchExchangeRates() {
+      try {
+        const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+        const data = await response.json();
+        
+        if (data && data.rates) {
+          exchangeRates = {
+            USD: 1,
+            EUR: data.rates.EUR || 0.92,
+            GBP: data.rates.GBP || 0.79,
+            JPY: data.rates.JPY || 149.50,
+            PHP: data.rates.PHP || 56.25
+          };
+          console.log('✅ Checkout: Live exchange rates loaded');
+        }
+      } catch (error) {
+        console.warn('⚠️ Checkout: Using fallback rates');
+      }
+    }
+
+    // Make conversion function globally accessible
+    window.convertCheckoutPrices = function(currency) {
+      const rate = exchangeRates[currency];
+      const symbol = currencySymbols[currency];
+      
+      const priceElements = document.querySelectorAll('[data-price-usd]');
+      
+      priceElements.forEach(element => {
+        let convertedPrice;
+        
+        if (currency === 'PHP' && element.hasAttribute('data-price-php')) {
+          convertedPrice = parseFloat(element.getAttribute('data-price-php'));
+        } else {
+          const priceInUSD = parseFloat(element.getAttribute('data-price-usd'));
+          convertedPrice = priceInUSD * rate;
+        }
+        
+        let formattedPrice;
+        if (currency === 'JPY') {
+          formattedPrice = `${symbol}${Math.round(convertedPrice).toLocaleString()}`;
+        } else {
+          formattedPrice = `${symbol}${convertedPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        }
+        
+        element.textContent = formattedPrice;
+      });
+      
+      // Also update delivery option prices
+      if (window.updateDeliveryPrices) {
+        window.updateDeliveryPrices(currency, exchangeRates, currencySymbols);
+      }
+      
+      console.log(`💱 Checkout prices converted to ${currency}`);
+    };
+
+    // Initialize
+    fetchExchangeRates();
+  </script>
+  
   <script type="module" src="js/homepage.js"></script>
+  <!-- Force PHP currency for checkout page before loading checkout logic -->
+  <script>
+    try {
+      localStorage.setItem('currency', 'PHP');
+    } catch {}
+  </script>
   <script type="module" src="js/checkout.js"></script>
 
   
