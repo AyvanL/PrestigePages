@@ -166,6 +166,15 @@ const transBtn = document.getElementById("transBtn");
 const transModal = document.getElementById("transModal");
 const closeTrans = document.getElementById("closeTrans");
 const transContent = document.getElementById("transContent");
+// Notifications UI
+const notifBtn = document.getElementById('notifBtn');
+const notifPanel = document.getElementById('notifPanel');
+const notifList = document.getElementById('notifList');
+const notifEmpty = document.getElementById('notifEmpty');
+const notifBadge = document.getElementById('notifBadge');
+let NOTIFS = [];
+let UNREAD_COUNT = 0;
+let LAST_TX_STATE = {}; // txid -> { status, delivstatus }
 // Refund reason modal elements
 const refundReasonModal = document.getElementById('refundReasonModal');
 const refundReasonForm = document.getElementById('refundReasonForm');
@@ -528,6 +537,8 @@ onAuthStateChanged(auth, async (user) => {
 
   // Subscribe to books collection in realtime
   initBooksRealtime();
+  // Subscribe to notifications for current user's transactions
+  try { subscribeUserNotifications(user.uid); } catch(e){ console.warn('notif subscribe failed', e); }
   } else {
     // Not logged in → redirect to login
     window.location.href = "login.html";
@@ -544,6 +555,106 @@ logoutBtn.addEventListener("click", async () => {
     alert("Logout failed: " + error.message);
   }
 });
+
+// -------- Notifications logic --------
+function pushNotif(message){
+  const n = { id: String(Date.now())+Math.random().toString(36).slice(2), message, time: new Date() };
+  NOTIFS.unshift(n);
+  UNREAD_COUNT++;
+  renderNotifs();
+}
+
+function formatTime(d){ try { return d.toLocaleString(); } catch { return ''; } }
+
+function renderNotifs(){
+  if (!notifList || !notifEmpty || !notifBadge) return;
+  if (!NOTIFS.length){
+    notifList.innerHTML = '';
+    notifEmpty.style.display = 'block';
+  } else {
+    notifEmpty.style.display = 'none';
+    notifList.innerHTML = NOTIFS.map(n=>`<li class=\"notif-item\" data-id=\"${n.id}\"><div class=\"notif-text\">${n.message}<span class=\"notif-time\">${formatTime(n.time)}</span></div><button class=\"notif-del\" title=\"Delete\">&times;</button></li>`).join('');
+  }
+  // Update badge (cap at 9+)
+  const count = UNREAD_COUNT;
+  if (count>0){ notifBadge.style.display='inline-block'; notifBadge.textContent = count>9 ? '9+' : String(count); }
+  else { notifBadge.style.display='none'; }
+}
+
+function humanizeStatus(s){
+  if (!s) return 'pending';
+  const v = String(s).toLowerCase();
+  if (v==='paid'||v==='unpaid'||v==='failed') return v;
+  return v.replace(/-/g,' ');
+}
+
+function subscribeUserNotifications(uid){
+  const txCol = collection(db, 'users', uid, 'transactions');
+  let initialized = false;
+  onSnapshot(txCol, (snap) => {
+    const nextState = { ...LAST_TX_STATE };
+    snap.docChanges().forEach(ch => {
+      const id = ch.doc.id;
+      const data = ch.doc.data()||{};
+      const prev = LAST_TX_STATE[id] || {};
+      const curr = { status: data.status || '', delivstatus: data.delivstatus || '' };
+      nextState[id] = curr;
+      if (!initialized){ return; } // Skip first load
+      if (ch.type === 'modified'){
+        if (prev.status !== curr.status && curr.status){
+          pushNotif(`<b>Payment</b> for order <b>${id}</b> changed: ${humanizeStatus(prev.status)} → <b>${humanizeStatus(curr.status)}</b>`);
+        }
+        if (prev.delivstatus !== curr.delivstatus && curr.delivstatus){
+          const dv = humanizeStatus(curr.delivstatus);
+          if (['refunded','refund rejected','refund processing'].includes(dv)){
+            if (dv==='refunded') pushNotif(`<b>Refund</b> for order <b>${id}</b> was <b>approved</b>.`);
+            else if (dv==='refund rejected') pushNotif(`<b>Refund</b> for order <b>${id}</b> was <b>rejected</b>.`);
+            else pushNotif(`<b>Refund</b> for order <b>${id}</b> is <b>processing</b>.`);
+          } else {
+            pushNotif(`<b>Delivery</b> for order <b>${id}</b> changed: ${humanizeStatus(prev.delivstatus)} → <b>${dv}</b>`);
+          }
+        }
+      }
+    });
+    LAST_TX_STATE = nextState;
+    if (!initialized){ initialized = true; }
+  }, (err) => console.warn('notif snapshot error', err));
+}
+
+// Toggle panel
+if (notifBtn){
+  notifBtn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    if (!notifPanel) return;
+    const isOpen = notifPanel.style.display === 'block';
+    notifPanel.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen){
+      // mark as viewed: reset unread count and update badge
+      UNREAD_COUNT = 0;
+      renderNotifs();
+    }
+  });
+}
+
+// Close on outside click
+window.addEventListener('click', (e)=>{
+  if (!notifPanel || notifPanel.style.display!=='block') return;
+  const within = notifPanel.contains(e.target) || (notifBtn && notifBtn.contains(e.target));
+  if (!within){ notifPanel.style.display='none'; }
+});
+
+// Delete notification (delegated)
+if (notifPanel){
+  notifPanel.addEventListener('click', (e)=>{
+    const btn = e.target.closest('.notif-del');
+    if (!btn) return;
+    const li = btn.closest('.notif-item');
+    const id = li?.getAttribute('data-id');
+    if (!id) return;
+    NOTIFS = NOTIFS.filter(n => n.id !== id);
+    renderNotifs();
+  });
+}
 
 // --- Books data (loaded dynamically from Firestore) ------------------
 let BOOKS = [];

@@ -122,12 +122,7 @@ if (loginForm) {
     }
 
     try {
-      // Admin shortcut (keeps previous behavior)
-      if (email === "admin" && password === "admin") {
-        clearLock();
-        window.location.href = "admin-orders.html";
-        return;
-      }
+      // Removed legacy admin shortcut (email/password "admin")
 
       // If user typed a username (no @), resolve to email via Firestore users collection
       if (email && !email.includes('@')){

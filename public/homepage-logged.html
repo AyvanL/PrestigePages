@@ -101,8 +101,21 @@
     }
 
     html {
-    scroll-behavior: smooth;
+      scroll-behavior: smooth;
     }
+
+  /* Notifications dropdown */
+    .notif-panel { position: fixed; top: 64px; right: 20px; width: 320px; max-height: 60vh; overflow:auto; background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow: 0 10px 30px rgba(0,0,0,.15); z-index: 2000; display:none; }
+    .notif-header { padding:10px 12px; font-weight:700; border-bottom:1px solid #eee; background:#fafafa; }
+    .notif-empty { padding:14px; color:#6b7280; font-size:13px; }
+    .notif-list { list-style:none; margin:0; padding:0; }
+  .notif-item { padding:10px 12px; border-bottom:1px solid #f0f0f0; font-size:13px; display:flex; gap:8px; align-items:flex-start; }
+  .notif-text { flex:1; }
+  .notif-del { border:none; background:transparent; color:#9ca3af; cursor:pointer; padding:4px; border-radius:6px; }
+  .notif-del:hover { background:#f3f4f6; color:#6b7280; }
+    .notif-item b { color:#111827; }
+    .notif-time { display:block; color:#6b7280; font-size:11px; margin-top:4px; }
+    .actions { position: relative; }
 
   </style>
 </head>
@@ -150,6 +163,13 @@
           <img src="images/file.png" alt="" class="icon-img"  width="20px"/>
         </button>
 
+        <div style="position:relative; display:inline-block;">
+          <button class="icon-btn" aria-label="Notifications" id="notifBtn">
+            <img src="images/notification.png" alt="" class="icon-img" width="20"/>
+          </button>
+          <span id="notifBadge" class="cart-badge" style="display:none;">0</span>
+        </div>
+
         <div class="dropdown">
           <div class="dropdown-trigger">
             <button class="dropbtn" id="welcomeMessage">Loading....</button>
@@ -163,6 +183,12 @@
       </div>
     </div>
   </header>  
+  <!-- Notifications Panel -->
+  <div id="notifPanel" class="notif-panel" aria-live="polite">
+    <div class="notif-header">Notifications</div>
+    <ul id="notifList" class="notif-list"></ul>
+    <div id="notifEmpty" class="notif-empty">No notifications yet.</div>
+  </div>
 
   <main>
     <!-- Hero -->
