@@ -177,6 +177,7 @@
           </div>
           <div class="dropdown-content">
             <a href="profile.html">Profile</a>
+            <a href="#" id="settingsBtn">Settings</a>
             <a href="#" id="logoutBtn">Logout</a>
           </div>
         </div>
@@ -545,6 +546,30 @@
         </div>
         <div id="bdPurchaseNote" style="display:none; font-size:13px; color:var(--muted-ink);">You need to purchase this book to leave a review.</div>
       </div>
+    </div>
+  </div>
+  
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content" style="max-width:480px;">
+      <h2 style="margin-top:0; display:flex; justify-content:space-between; align-items:center;">Checkout Settings <span id="closeSettings" class="close-btn" style="cursor:pointer;">&times;</span></h2>
+      <form id="settingsForm" style="display:grid; gap:14px;">
+        <div>
+          <label style="font-weight:700; display:block; margin-bottom:6px;">Shipping Option</label>
+          <label style="display:flex; align-items:center; gap:8px; margin-bottom:6px;"><input type="radio" name="shipOpt" value="normal"> Normal Delivery</label>
+          <label style="display:flex; align-items:center; gap:8px;"><input type="radio" name="shipOpt" value="express"> Express Delivery</label>
+        </div>
+        <div>
+          <label style="font-weight:700; display:block; margin-bottom:6px;">Payment Method</label>
+          <label style="display:flex; align-items:center; gap:8px; margin-bottom:6px;"><input type="radio" name="payOpt" value="COD"> Cash on Delivery</label>
+          <label style="display:flex; align-items:center; gap:8px;"><input type="radio" name="payOpt" value="ONLINE"> Online Payment</label>
+        </div>
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:6px;">
+          <button type="button" class="btn secondary" id="cancelSettings">Cancel</button>
+          <button type="submit" class="btn" id="saveSettings">Save</button>
+        </div>
+      </form>
+      <div id="settingsMsg" style="font-size:12.5px; color:#6b7280; margin-top:6px;"></div>
     </div>
   </div>
   <script type="module" src="js/homepage.js"></script>

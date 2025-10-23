@@ -12,6 +12,7 @@ import {
   setDoc,
   arrayUnion,
   arrayRemove,
+  addDoc,
   collection,
   getDocs,
   deleteDoc,
@@ -135,6 +136,13 @@ const editCity = document.getElementById("editCity");
 const editProvince = document.getElementById("editProvince");
 const editPostal = document.getElementById("editPostal");
 const closeProfileBtn = document.getElementById("closeProfile");
+// Settings modal elements
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsModal = document.getElementById('settingsModal');
+const closeSettings = document.getElementById('closeSettings');
+const cancelSettings = document.getElementById('cancelSettings');
+const settingsForm = document.getElementById('settingsForm');
+const settingsMsg = document.getElementById('settingsMsg');
 
 // checkout modal elements may not exist here
 const modal = document.getElementById("checkoutModal");
@@ -420,6 +428,40 @@ window.addEventListener("click", function () {
   }
 });
 
+// ------- Settings modal handlers -------
+function openSettings(){ if (settingsModal) { prefillSettings(); settingsModal.style.display='flex'; } }
+function closeSettingsModal(){ if (settingsModal) settingsModal.style.display='none'; }
+function getPref(key, fallback){ try { return localStorage.getItem(key) || fallback; } catch { return fallback; } }
+function setPref(key, val){ try { localStorage.setItem(key, val); } catch {} }
+
+function prefillSettings(){
+  const ship = getPref('pp:pref:delivery','');
+  const pay = getPref('pp:pref:payment','');
+  if (ship) { const el = settingsForm?.querySelector(`input[name="shipOpt"][value="${ship}"]`); if (el) el.checked = true; }
+  if (pay) { const el = settingsForm?.querySelector(`input[name="payOpt"][value="${pay}"]`); if (el) el.checked = true; }
+}
+
+settingsBtn?.addEventListener('click', (e)=>{ e.preventDefault(); openSettings(); });
+closeSettings?.addEventListener('click', closeSettingsModal);
+cancelSettings?.addEventListener('click', closeSettingsModal);
+settingsModal?.addEventListener('click', (e)=>{ if (e.target === settingsModal) closeSettingsModal(); });
+
+settingsForm?.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const ship = settingsForm.querySelector('input[name="shipOpt"]:checked')?.value || '';
+  const pay  = settingsForm.querySelector('input[name="payOpt"]:checked')?.value || '';
+  if (!ship || !pay){ if (settingsMsg) settingsMsg.textContent = 'Please choose both shipping and payment options.'; return; }
+  setPref('pp:pref:delivery', ship);
+  setPref('pp:pref:payment', pay);
+  // Save on profile for cross-device persistence (best-effort)
+  try {
+    const user = auth.currentUser;
+    if (user){ await updateDoc(doc(db,'users', user.uid), { prefDelivery: ship, prefPayment: pay }); }
+  } catch {}
+  if (settingsMsg) settingsMsg.textContent = 'Saved. These preferences will be pre-selected at checkout.';
+  setTimeout(()=>{ settingsMsg && (settingsMsg.textContent=''); closeSettingsModal(); }, 800);
+});
+
 
 // Check if user is logged in
 onAuthStateChanged(auth, async (user) => {
@@ -539,6 +581,8 @@ onAuthStateChanged(auth, async (user) => {
   initBooksRealtime();
   // Subscribe to notifications for current user's transactions
   try { subscribeUserNotifications(user.uid); } catch(e){ console.warn('notif subscribe failed', e); }
+  // Also listen to persisted notifications collection
+  try { listenUserNotifications(user.uid); } catch(e){ console.warn('notif list listen failed', e); }
   } else {
     // Not logged in → redirect to login
     window.location.href = "login.html";
@@ -556,15 +600,55 @@ logoutBtn.addEventListener("click", async () => {
   }
 });
 
-// -------- Notifications logic --------
-function pushNotif(message){
-  const n = { id: String(Date.now())+Math.random().toString(36).slice(2), message, time: new Date() };
-  NOTIFS.unshift(n);
-  UNREAD_COUNT++;
-  renderNotifs();
+// -------- Notifications logic (persisted in Firestore) --------
+function formatTime(d){ try { return d.toLocaleString(); } catch { return ''; } }
+
+// Listen to user's saved notifications
+let NOTIF_UNSUB = null;
+async function listenUserNotifications(uid){
+  try {
+    if (NOTIF_UNSUB) { NOTIF_UNSUB(); NOTIF_UNSUB = null; }
+    const colRef = collection(db, 'users', uid, 'notifications');
+    const qNotifs = query(colRef, orderBy('createdAt','desc'));
+    NOTIF_UNSUB = onSnapshot(qNotifs, (snap) => {
+      const list = [];
+      let unread = 0;
+      snap.forEach(d => {
+        const data = d.data() || {};
+        const created = data.createdAt?.toDate ? data.createdAt.toDate() : (data.createdAt instanceof Date ? data.createdAt : new Date());
+        const read = !!data.read;
+        if (!read) unread++;
+        list.push({ id: d.id, message: data.message || '', time: created, read });
+      });
+      NOTIFS = list; UNREAD_COUNT = unread; renderNotifs();
+    }, (err) => { console.warn('notifications snapshot failed', err); });
+  } catch (e) { console.warn('listenUserNotifications failed', e); }
 }
 
-function formatTime(d){ try { return d.toLocaleString(); } catch { return ''; } }
+// Write a notification (idempotency via optional key)
+async function writeUserNotification(uid, { message, key = null, extra = {} }){
+  try {
+    const colRef = collection(db, 'users', uid, 'notifications');
+    if (key) {
+      // Deterministic doc id: overwrite same key to avoid duplicates
+      const docRef = doc(db, 'users', uid, 'notifications', key);
+      await setDoc(docRef, { message, read: false, createdAt: serverTimestamp(), ...extra }, { merge: true });
+    } else {
+      await addDoc(colRef, { message, read: false, createdAt: serverTimestamp(), ...extra });
+    }
+  } catch (e) { console.warn('writeUserNotification failed', e); }
+}
+
+// Mark all unread as read (best-effort)
+async function markAllNotificationsRead(){
+  try {
+    const user = auth.currentUser; if (!user) return;
+    const toMark = NOTIFS.filter(n => !n.read).map(n => n.id);
+    for (const id of toMark){
+      try { await updateDoc(doc(db, 'users', user.uid, 'notifications', id), { read: true, readAt: serverTimestamp() }); } catch {}
+    }
+  } catch (e) { console.warn('markAllNotificationsRead failed', e); }
+}
 
 function renderNotifs(){
   if (!notifList || !notifEmpty || !notifBadge) return;
@@ -602,16 +686,16 @@ function subscribeUserNotifications(uid){
       if (!initialized){ return; } // Skip first load
       if (ch.type === 'modified'){
         if (prev.status !== curr.status && curr.status){
-          pushNotif(`<b>Payment</b> for order <b>${id}</b> changed: ${humanizeStatus(prev.status)} → <b>${humanizeStatus(curr.status)}</b>`);
+          writeUserNotification(uid, { message: `<b>Payment</b> for order <b>${id}</b> updated: ${humanizeStatus(prev.status)} → <b>${humanizeStatus(curr.status)}</b>`, key: `${id}::status::${curr.status}`, extra: { type: 'payment', txId: id, status: curr.status } });
         }
         if (prev.delivstatus !== curr.delivstatus && curr.delivstatus){
           const dv = humanizeStatus(curr.delivstatus);
           if (['refunded','refund rejected','refund processing'].includes(dv)){
-            if (dv==='refunded') pushNotif(`<b>Refund</b> for order <b>${id}</b> was <b>approved</b>.`);
-            else if (dv==='refund rejected') pushNotif(`<b>Refund</b> for order <b>${id}</b> was <b>rejected</b>.`);
-            else pushNotif(`<b>Refund</b> for order <b>${id}</b> is <b>processing</b>.`);
+            if (dv==='refunded') writeUserNotification(uid, { message: `<b>Refund</b> for order <b>${id}</b> was <b>approved</b>.`, key: `${id}::refund::approved`, extra: { type: 'refund', txId: id, state: 'approved' } });
+            else if (dv==='refund rejected') writeUserNotification(uid, { message: `<b>Refund</b> for order <b>${id}</b> was <b>rejected</b>.`, key: `${id}::refund::rejected`, extra: { type: 'refund', txId: id, state: 'rejected' } });
+            else writeUserNotification(uid, { message: `<b>Refund</b> for order <b>${id}</b> is <b>processing</b>.`, key: `${id}::refund::processing`, extra: { type: 'refund', txId: id, state: 'processing' } });
           } else {
-            pushNotif(`<b>Delivery</b> for order <b>${id}</b> changed: ${humanizeStatus(prev.delivstatus)} → <b>${dv}</b>`);
+            writeUserNotification(uid, { message: `<b>Delivery</b> for order <b>${id}</b> updated: ${humanizeStatus(prev.delivstatus)} → <b>${dv}</b>`, key: `${id}::delivery::${curr.delivstatus}`, extra: { type: 'delivery', txId: id, delivstatus: curr.delivstatus } });
           }
         }
       }
@@ -629,9 +713,10 @@ if (notifBtn){
     const isOpen = notifPanel.style.display === 'block';
     notifPanel.style.display = isOpen ? 'none' : 'block';
     if (!isOpen){
-      // mark as viewed: reset unread count and update badge
+      // mark as viewed: reset unread count and update badge + persist read flags
       UNREAD_COUNT = 0;
       renderNotifs();
+      markAllNotificationsRead();
     }
   });
 }
@@ -651,6 +736,12 @@ if (notifPanel){
     const li = btn.closest('.notif-item');
     const id = li?.getAttribute('data-id');
     if (!id) return;
+    // Persisted delete
+    const user = auth.currentUser;
+    if (user){
+      deleteDoc(doc(db, 'users', user.uid, 'notifications', id)).catch(()=>{});
+    }
+    // UI will refresh from snapshot; fallback remove immediately
     NOTIFS = NOTIFS.filter(n => n.id !== id);
     renderNotifs();
   });

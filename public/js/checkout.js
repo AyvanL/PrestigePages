@@ -30,6 +30,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Populate delivery options if empty
   ensureDeliveryOptions();
 
+  // Apply saved preferences (localStorage) before wiring
+  applySavedPrefs();
+
   // Wire submit even if the button is outside the form
   const form = document.getElementById("shippingForm");
   const continueBtn = document.querySelector(".conbtn");
@@ -47,6 +50,18 @@ document.addEventListener("DOMContentLoaded", () => {
   // Update totals when delivery option changes
   document.getElementById("delivery")?.addEventListener("change", updateTotals);
 });
+
+function applySavedPrefs(){
+  try {
+    const selDel = document.getElementById('delivery');
+    const selPay = document.getElementById('payment');
+    const prefDel = localStorage.getItem('pp:pref:delivery');
+    const prefPay = localStorage.getItem('pp:pref:payment');
+    if (selDel && prefDel && ['normal','express'].includes(prefDel)) selDel.value = prefDel;
+    if (selPay && prefPay && ['COD','ONLINE'].includes(prefPay)) selPay.value = prefPay;
+    updateTotals();
+  } catch {}
+}
 
 // Helpers
 const setVal = (id, val) => {
@@ -168,6 +183,17 @@ async function loadCartFromFirestore() {
     cart = data.cart;
     await updateCart();
   }
+
+  // Apply saved preferences from Firestore if present
+  try {
+    const selDel = document.getElementById('delivery');
+    const selPay = document.getElementById('payment');
+    const prefDel = data.prefDelivery;
+    const prefPay = data.prefPayment;
+    if (selDel && prefDel && ['normal','express'].includes(prefDel)) selDel.value = prefDel;
+    if (selPay && prefPay && ['COD','ONLINE'].includes(prefPay)) selPay.value = prefPay;
+    updateTotals();
+  } catch {}
 }
 
 // Render cart
@@ -482,7 +508,8 @@ async function onSubmitCheckout(e) {
     alert(`Failed to start payment. ${err?.message || ""}`);
     if (txRef) {
       try {
-        await updateDoc(doc(db, "users", user.uid, "transactions", txRef.id), { status: "failed" });
+        // Do not mark as failed here; network/CORS issues starting checkout don't mean payment failed.
+        await updateDoc(doc(db, "users", user.uid, "transactions", txRef.id), { status: "initiated", startError: String(err?.message||'') });
       } catch {}
     }
   } finally {
