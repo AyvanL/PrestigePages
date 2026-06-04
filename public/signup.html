@@ -21,8 +21,6 @@
     />
   </head>
   <body>
-    <!-- Include EmailJS -->
-    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
     <header class="site-header">
       <div class="container nav">
         <button
@@ -146,17 +144,6 @@
       </form>
     </div>
 
-    <!-- OTP Modal -->
-    <div class="modal" id="otpModal">
-      <div class="modal-content">
-        <h3>Enter OTP</h3>
-        <p>We sent a 6-digit code to your email</p>
-        <input type="text" id="otpInput" maxlength="6" placeholder="Enter OTP">
-        <button id="verifyOtpBtn">Verify</button>
-        <p id="otpMsg"></p>
-      </div>
-    </div>
-
     <script type="module">
   // Firebase imports (keep same versions you used)
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
@@ -176,23 +163,8 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // Initialize EmailJS (emailjs script must be loaded earlier in the page)
-  if (window.emailjs && typeof emailjs.init === "function") {
-    emailjs.init("V_oKhFcC3LwiidUSC");
-  } else {
-    console.warn("EmailJS not loaded - OTP emails will fail.");
-  }
-
-  // shared state
-  let formData = null;
-  let generatedOtp = "";
-
   // DOM refs
   const signupForm = document.getElementById("signupForm");
-  const otpModal = document.getElementById("otpModal");
-  const otpInput = document.getElementById("otpInput");
-  const verifyOtpBtn = document.getElementById("verifyOtpBtn");
-  const otpMsg = document.getElementById("otpMsg");
   const navToggle = document.getElementById("navToggle");
 
   // -------------------------
@@ -247,97 +219,36 @@
     }
 
     try {
-      // store data for later (OTP verification step)
-      formData = { firstName, lastName, mobile, email, password };
-
-      // generate OTP
-      generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-
-      // send OTP via EmailJS (replace service/template ids with your own if different)
-      await emailjs.send("service_i1rq2k4", "template_7qxudct", {
-        to_email: email,
-        otp: generatedOtp,
-        name: firstName,
-      });
-
-      // show feedback + show OTP modal
-      otpMsg.textContent = "✅ OTP sent to your email. Check your inbox (and spam).";
-      otpInput.value = "";
-      otpModal.style.display = "flex";
-      otpInput.focus();
-    } catch (error) {
-      console.error("Send OTP error:", error);
-      // If emailjs fails it will usually throw; show a user-friendly message
-      alert("❌ Failed to send OTP. Please check the email address and try again.");
-    }
-  });
-
-  // -------------------------
-  // VERIFY OTP + CREATE ACCOUNT
-  // -------------------------
-  verifyOtpBtn.addEventListener("click", async () => {
-    const enteredOtp = otpInput.value.trim();
-    otpMsg.textContent = "";
-
-    if (!enteredOtp) {
-      otpMsg.textContent = "❌ Please enter the 6-digit code.";
-      return;
-    }
-
-    if (enteredOtp !== generatedOtp || !formData) {
-      otpMsg.textContent = "❌ Invalid OTP. Try again.";
-      return;
-    }
-
-    try {
-      // Create user in Firebase Auth
+      // Create the account immediately without OTP verification
       const userCredential = await createUserWithEmailAndPassword(
         auth,
-        formData.email,
-        formData.password
+        email,
+        password
       );
       const user = userCredential.user;
 
-      // Save user extra info to Firestore
       await setDoc(doc(db, "users", user.uid), {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        mobile: formData.mobile,
-        email: formData.email,
+        firstName,
+        lastName,
+        mobile,
+        email,
         createdAt: new Date(),
       });
 
-      // mark verified in local storage (optional)
-      localStorage.setItem("otpVerified", "true");
-
-      otpMsg.textContent = "✅ Verified!";
       alert("✅ Account created successfully! Redirecting to homepage...");
       signupForm.reset();
-      generatedOtp = "";
-      formData = null;
-      otpModal.style.display = "none";
-
-      // redirect to logged-in homepage
       window.location.href = "homepage-logged.html";
     } catch (error) {
       console.error("Account creation error:", error);
-      // Friendly error messaging - Firebase returns error.code for common situations
       if (error.code === "auth/email-already-in-use") {
-        otpMsg.textContent = "❌ Email already in use. Try logging in instead.";
+        alert("❌ Email already in use. Try logging in instead.");
       } else if (error.code === "auth/invalid-email") {
-        otpMsg.textContent = "❌ Invalid email format.";
+        alert("❌ Invalid email format.");
       } else if (error.code === "auth/weak-password") {
-        otpMsg.textContent = "❌ Weak password. It should be at least 6 characters.";
+        alert("❌ Weak password. It should be at least 6 characters.");
       } else {
-        otpMsg.textContent = "❌ Error creating account. Please try again.";
+        alert("❌ Error creating account. Please try again.");
       }
-    }
-  });
-
-  // allow closing OTP modal by clicking backdrop
-  otpModal.addEventListener("click", (ev) => {
-    if (ev.target === otpModal) {
-      otpModal.style.display = "none";
     }
   });
 
