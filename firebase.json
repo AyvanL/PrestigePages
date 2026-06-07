@@ -8,6 +8,10 @@
     ],
     "rewrites": [
       {
+        "source": "/api/signup",
+        "function": "signupApi"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

@@ -67,3 +67,6 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# Local Firebase service account credential
+prestige-pages-firebase-adminsdk-fbsvc-873319e470.json

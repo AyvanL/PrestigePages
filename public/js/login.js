@@ -198,6 +198,11 @@ if (loginForm) {
     } catch (error) {
       console.error("Login error:", error);
 
+      if (error?.code === "auth/user-disabled") {
+        alert("🚫 This account is disabled or under review. Please contact support.");
+        return;
+      }
+
       // Increment failed attempts only for sign-in failures
       failedAttempts = readInt(STORAGE_ATTEMPTS_KEY) + 1;
       localStorage.setItem(STORAGE_ATTEMPTS_KEY, String(failedAttempts));

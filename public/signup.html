@@ -118,6 +118,11 @@
           <i class="fa-solid fa-phone"></i>
           <input type="tel" id="mobile" placeholder="Mobile Number" required />
         </div>
+
+        <div style="position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;" aria-hidden="true">
+          <label for="website">Website</label>
+          <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
+        </div>
           
 
         <div class="checkbox-group">
@@ -144,155 +149,6 @@
       </form>
     </div>
 
-    <script type="module">
-  // Firebase imports (keep same versions you used)
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-  import {
-    getAuth,
-    createUserWithEmailAndPassword,
-  } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-  import {
-    getFirestore,
-    doc,
-    setDoc,
-  } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-  import { firebaseConfig } from "./js/firebase-config.js";
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-
-  // DOM refs
-  const signupForm = document.getElementById("signupForm");
-  const navToggle = document.getElementById("navToggle");
-
-  // -------------------------
-  // FORM SUBMIT HANDLER
-  // -------------------------
-  signupForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    // Collect values
-    const firstName = document.getElementById("firstName").value.trim();
-    const lastName = document.getElementById("lastName").value.trim();
-    const mobile = document.getElementById("mobile").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-    const cpassword = document.getElementById("cpassword").value;
-
-    // Check checkboxes (these must exist in the form)
-    const terms = document.getElementById("terms");
-    const privacy = document.getElementById("privacy");
-
-    if (!terms || !privacy) {
-      // If the checkboxes are missing for some reason, don't proceed.
-      alert("Developer error: terms/privacy checkboxes not found.");
-      return;
-    }
-
-    // If either unchecked -> show required alert and stop
-    if (!terms.checked || !privacy.checked) {
-      alert(
-        "Please Read and Check the Terms and Condition and Privacy Policy before Logging In or Signing Up."
-      );
-      return;
-    }
-
-    // Basic validation
-    const mobileRegex = /^09\d{9}$/;
-    if (!mobileRegex.test(mobile)) {
-      alert(
-        "❌ Invalid mobile number. It must start with 09 and be 11 digits."
-      );
-      return;
-    }
-
-    if (password !== cpassword) {
-      alert("❌ Passwords do not match. Please try again.");
-      return;
-    }
-
-    if (password.length < 6) {
-      alert("❌ Password too short. It should be at least 6 characters.");
-      return;
-    }
-
-    try {
-      // Create the account immediately without OTP verification
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const user = userCredential.user;
-
-      await setDoc(doc(db, "users", user.uid), {
-        firstName,
-        lastName,
-        mobile,
-        email,
-        createdAt: new Date(),
-      });
-
-      alert("✅ Account created successfully! Redirecting to homepage...");
-      signupForm.reset();
-      window.location.href = "homepage-logged.html";
-    } catch (error) {
-      console.error("Account creation error:", error);
-      if (error.code === "auth/email-already-in-use") {
-        alert("❌ Email already in use. Try logging in instead.");
-      } else if (error.code === "auth/invalid-email") {
-        alert("❌ Invalid email format.");
-      } else if (error.code === "auth/weak-password") {
-        alert("❌ Weak password. It should be at least 6 characters.");
-      } else {
-        alert("❌ Error creating account. Please try again.");
-      }
-    }
-  });
-
-  // -------------------------
-  // Password visibility toggles
-  // -------------------------
-  function togglePasswordVisibility(inputId, iconId) {
-    const input = document.getElementById(inputId);
-    const icon = document.getElementById(iconId);
-    if (!input || !icon) return;
-
-    icon.addEventListener("click", () => {
-      const isHidden = input.type === "password";
-      input.type = isHidden ? "text" : "password";
-      icon.classList.toggle("fa-eye");
-      icon.classList.toggle("fa-eye-slash");
-    });
-  }
-
-  togglePasswordVisibility("password", "togglePassword");
-  togglePasswordVisibility("cpassword", "toggleCPassword");
-
-  // -------------------------
-  // Mobile nav toggle (same as your previous code)
-  // -------------------------
-  if (navToggle) {
-    navToggle.addEventListener("click", () => {
-      const existing = document.getElementById("mobileMenu");
-      if (existing) {
-        existing.remove();
-        return;
-      }
-      const menu = document.createElement("div");
-      menu.id = "mobileMenu";
-      menu.style.background = "var(--paper)";
-      menu.style.borderTop = "1px solid var(--line)";
-      menu.innerHTML = `<div class="container" style="padding:12px 20px 16px; display:grid; gap:10px;">
-          <a href="index.html">Home</a>
-          <a href="#popular">Store</a>
-          <a href="about-us.html">About us</a>
-        </div>`;
-      document.querySelector(".site-header").appendChild(menu);
-    });
-  }
-</script>
+    <script type="module" src="js/signup.js"></script>
   </body>
 </html>
