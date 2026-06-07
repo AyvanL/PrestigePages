@@ -7,10 +7,6 @@ import {
   browserLocalPersistence,
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {
-  getFunctions,
-  httpsCallable,
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-functions.js";
-import {
   getFirestore,
   doc,
   getDoc,
@@ -25,21 +21,13 @@ import { firebaseConfig } from "./firebase-config.js";
 // ---------- Init ----------
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const functions = getFunctions(app);
 const db = getFirestore(app);
-
-// Callable function (backend) for sending OTP on login
-const sendEmailOTP = httpsCallable(functions, "sendEmailOTP");
 
 // UI refs
 const loginForm = document.getElementById("loginForm");
 const forgotPasswordLink = document.getElementById("forgotPassword");
 const emailInput = document.getElementById("email");
 const msgBox = document.getElementById("message");
-const otpModal = document.getElementById("otpModal");
-const verifyBtn = document.getElementById("verifyOtpBtn");
-const otpInput = document.getElementById("otpInput");
-const otpMessageEl = document.getElementById("otpMessage");
 const passwordInput = document.getElementById("password");
 const toggleIcon = document.getElementById("togglePassword");
 const navToggle = document.getElementById("navToggle");
@@ -158,42 +146,18 @@ if (loginForm) {
         }
       } catch (sErr) { console.warn('Suspension check failed', sErr); }
 
-  // OTP flow if UI & backend exist
-      if (otpModal && verifyBtn && otpInput) {
-        try {
-          await sendEmailOTP({ email });
-          otpModal.style.display = "flex";
-          localStorage.setItem("pendingEmail", email);
-        } catch (err) {
-          // If sending OTP fails, still redirect or show error
-          console.error("sendEmailOTP error:", err);
-          alert("✅ Signed in but failed to request OTP. Redirecting...");
-          // Role-based redirect
-          try {
-            const user = auth.currentUser;
-            if (user) {
-              const uSnap = await getDoc(doc(db,'users',user.uid));
-              const role = (uSnap.data()?.role||'').toLowerCase();
-              window.location.href = role ? "admin-sales-activity.html" : "homepage-logged.html";
-            } else {
-              window.location.href = "homepage-logged.html";
-            }
-          } catch { window.location.href = "homepage-logged.html"; }
-        }
-      } else {
-        // No OTP UI = redirect directly (role-based)
-        try {
-          const user = auth.currentUser;
-          if (user) {
-            const uSnap = await getDoc(doc(db,'users',user.uid));
-            const role = (uSnap.data()?.role||'').toLowerCase();
-            window.location.href = role ? "admin-sales-activity.html" : "homepage-logged.html";
-          } else {
-            window.location.href = "homepage-logged.html";
-          }
-        } catch {
+      // Redirect directly (role-based)
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          const uSnap = await getDoc(doc(db,'users',user.uid));
+          const role = (uSnap.data()?.role||'').toLowerCase();
+          window.location.href = role ? "admin-sales-activity.html" : "homepage-logged.html";
+        } else {
           window.location.href = "homepage-logged.html";
         }
+      } catch {
+        window.location.href = "homepage-logged.html";
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -220,75 +184,6 @@ if (loginForm) {
         );
       }
     }
-  });
-}
-
-// ---------- OTP verification (login flow) ----------
-if (verifyBtn) {
-  verifyBtn.addEventListener("click", async () => {
-    const email = localStorage.getItem("pendingEmail");
-    const enteredOtp = otpInput?.value?.trim() || "";
-
-    if (!email) {
-      if (otpMessageEl) otpMessageEl.textContent = "❌ No pending email found.";
-      return;
-    }
-
-    try {
-      const docRef = doc(db, "emailOtps", email);
-      const snapshot = await getDoc(docRef);
-
-      if (!snapshot.exists()) {
-        if (otpMessageEl) otpMessageEl.textContent = "❌ No code found.";
-        return;
-      }
-
-      const data = snapshot.data() || {};
-      const { otp, expiresAt } = data;
-
-      if (!otp || !expiresAt) {
-        if (otpMessageEl) otpMessageEl.textContent = "❌ Invalid OTP record.";
-        await deleteDoc(docRef).catch(() => {});
-        return;
-      }
-
-      if (Date.now() > expiresAt) {
-        if (otpMessageEl) otpMessageEl.textContent = "❌ Code expired.";
-        await deleteDoc(docRef).catch(() => {});
-        return;
-      }
-
-      if (enteredOtp === otp) {
-        await deleteDoc(docRef).catch(() => {});
-        alert("✅ Login successful!");
-        localStorage.removeItem("pendingEmail");
-        // Role-based redirect after OTP
-        try {
-          const user = auth.currentUser;
-          if (user) {
-            const uSnap = await getDoc(doc(db,'users',user.uid));
-            const role = (uSnap.data()?.role||'').toLowerCase();
-            window.location.href = role ? "admin-sales-activity.html" : "homepage-logged.html";
-          } else {
-            window.location.href = "homepage-logged.html";
-          }
-        } catch {
-          window.location.href = "homepage-logged.html";
-        }
-      } else {
-        if (otpMessageEl) otpMessageEl.textContent = "❌ Invalid code.";
-      }
-    } catch (err) {
-      console.error("OTP verify error:", err);
-      if (otpMessageEl) otpMessageEl.textContent = "❌ Error verifying OTP.";
-    }
-  });
-}
-
-// Allow closing OTP modal by clicking on backdrop
-if (otpModal) {
-  otpModal.addEventListener("click", (ev) => {
-    if (ev.target === otpModal) otpModal.style.display = "none";
   });
 }
 
@@ -322,3 +217,4 @@ if (navToggle) {
     document.querySelector(".site-header").appendChild(menu);
   });
 }
+

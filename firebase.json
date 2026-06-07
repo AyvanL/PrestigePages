@@ -1,7 +1,4 @@
 {
-  "functions": {
-    "source": "functions"
-  },
   "hosting": {
     "public": "public",
     "ignore": [
@@ -10,10 +7,6 @@
       "**/node_modules/**"
     ],
     "rewrites": [
-      {
-        "source": "/api/signup",
-        "function": "signupApi"
-      },
       {
         "source": "**",
         "destination": "/index.html"

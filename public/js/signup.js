@@ -11,6 +11,10 @@ const signupForm = document.getElementById('signupForm');
 const navToggle = document.getElementById('navToggle');
 const submitButton = signupForm?.querySelector('button[type="submit"]');
 
+// --- Bot Protection State ---
+const pageLoadTime = Date.now();
+const MIN_SUBMIT_DELAY_MS = 4000; // 4 seconds minimum to fill form
+
 const COOLDOWN_KEY = 'pp_signupCooldownUntil';
 const ATTEMPTS_KEY = 'pp_signupAttemptTimes';
 const DEVICE_KEY = 'pp_signupDeviceId';
@@ -99,52 +103,6 @@ function showMessage(message) {
   alert(message);
 }
 
-function getSignupEndpoints() {
-  const projectId = firebaseConfig?.projectId || 'prestige-pages';
-  return [
-    '/api/signup',
-    `https://us-central1-${projectId}.cloudfunctions.net/signupApi`,
-  ];
-}
-
-async function postSignup(payload) {
-  const endpoints = getSignupEndpoints();
-  let lastError = null;
-
-  for (const endpoint of endpoints) {
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain;charset=UTF-8',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const text = await response.text();
-      let result = {};
-      try {
-        result = text ? JSON.parse(text) : {};
-      } catch {
-        result = { message: text };
-      }
-
-      if (response.status === 404 && endpoint === endpoints[0]) {
-        lastError = new Error('Signup route was not found on Hosting. Trying the Cloud Function directly...');
-        continue;
-      }
-
-      return { response, result, endpoint };
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  const error = lastError || new Error('Unable to reach the signup service.');
-  error.offline = true;
-  throw error;
-}
-
 async function createAccountDirectly(payload) {
   const userCredential = await createUserWithEmailAndPassword(clientAuth, payload.email, payload.password);
   const user = userCredential.user;
@@ -167,6 +125,24 @@ signupForm?.addEventListener('submit', async (event) => {
   const gate = isAllowedToSubmit();
   if (!gate.allowed) {
     showMessage(gate.message);
+    return;
+  }
+
+  // --- Non-2FA Bot Checks ---
+  
+  // 1. Minimum Time Check
+  if (Date.now() - pageLoadTime < MIN_SUBMIT_DELAY_MS) {
+    console.warn('Submission too fast - possible bot.');
+    return; 
+  }
+
+  // 2. Multi-Honeypot
+  const hp1 = document.getElementById('website')?.value.trim() || '';
+  const hp2 = document.getElementById('hp_fax')?.value.trim() || '';
+  if (hp1 || hp2) {
+    console.warn('Honeypot hit.');
+    registerAttempt();
+    showMessage('Unable to complete signup.');
     return;
   }
 
@@ -227,38 +203,10 @@ signupForm?.addEventListener('submit', async (event) => {
   try {
     if (submitButton) submitButton.disabled = true;
 
-    let response;
-    let result;
-    let endpoint;
-
-    try {
-      ({ response, result, endpoint } = await postSignup(payload));
-    } catch (error) {
-      if (!error?.offline) {
-        throw error;
-      }
-
-      await createAccountDirectly(payload);
-      signupForm.reset();
-      showMessage('Account created successfully!');
-      window.location.href = 'homepage-logged.html';
-      return;
-    }
-
-    if (!response.ok && response.status !== 202) {
-      const details = result.message || `Request failed with status ${response.status}`;
-      throw new Error(`${details}${endpoint ? ` (${endpoint})` : ''}`);
-    }
-
+    await createAccountDirectly(payload);
     signupForm.reset();
 
-    if (result.suspended) {
-      showMessage('Account created but placed under review. You can sign in once it is approved.');
-      window.location.href = 'login.html';
-      return;
-    }
-
-    showMessage(result.message || 'Account created successfully!');
+    showMessage('Account created successfully!');
     window.location.href = 'homepage-logged.html';
   } catch (error) {
     console.error('Signup error:', error);
