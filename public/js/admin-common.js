@@ -23,15 +23,36 @@ document.addEventListener('click', async (e) => {
   }
 });
 
-// Auto-logout if current user becomes suspended
+// Auto-logout if current user becomes suspended, or redirect if not admin
 let SUSPEND_ALERTED = false;
 onAuthStateChanged(auth, async (user) => {
-  if (!user) return;
+  if (!user) {
+    // No user logged in -> go to login
+    window.location.href = 'login.html';
+    return;
+  }
+
   const userRef = doc(db, 'users', user.uid);
-  // Initial check in case the doc already has suspended=true
   try {
     const snap = await getDoc(userRef);
-    if (snap.exists() && snap.data()?.suspended) {
+    if (!snap.exists()) {
+      // User has no profile doc -> likely not an admin
+      window.location.href = 'index.html';
+      return;
+    }
+
+    const data = snap.data() || {};
+
+    // Authorization check: Must have a role (admin)
+    const role = (data.role || '').toLowerCase();
+    if (!role) {
+      // Logged in but not an admin -> go to user homepage
+      window.location.href = 'homepage-logged.html';
+      return;
+    }
+
+    // Suspension check
+    if (data.suspended) {
       if (!SUSPEND_ALERTED) { SUSPEND_ALERTED = true; alert('Your account has been suspended.'); }
       await signOut(auth).catch(()=>{});
       localStorage.removeItem('pendingEmail');
@@ -39,12 +60,22 @@ onAuthStateChanged(auth, async (user) => {
       return;
     }
   } catch (err) {
-    console.warn('Initial suspension check failed', err);
+    console.warn('Initial admin check failed', err);
+    // If we can't verify, safer to kick to index
+    // window.location.href = 'index.html';
   }
-  // Live listener to catch future bans
+
+  // Live listener to catch future bans or role changes
   onSnapshot(userRef, (snap) => {
     try {
       const data = snap.data() || {};
+      
+      // If role removed while online
+      if (!data.role) {
+        window.location.href = 'homepage-logged.html';
+        return;
+      }
+
       if (data.suspended) {
         if (!SUSPEND_ALERTED) { SUSPEND_ALERTED = true; alert('Your account has been suspended.'); }
         signOut(auth).finally(() => {
@@ -53,7 +84,7 @@ onAuthStateChanged(auth, async (user) => {
         });
       }
     } catch (err) {
-      console.warn('Suspend listener error', err);
+      console.warn('Admin listener error', err);
     }
   });
 });
