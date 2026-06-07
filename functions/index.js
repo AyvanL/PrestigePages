@@ -154,20 +154,39 @@ function sendJson(res, status, payload) {
   res.status(status).json(payload);
 }
 
-export const signupApi = onRequest({ cors: false }, async (req, res) => {
+function readSignupBody(req) {
+  const rawBody = req.body;
+
+  if (rawBody && typeof rawBody === 'object' && !Array.isArray(rawBody)) {
+    return rawBody;
+  }
+
+  if (typeof rawBody === 'string') {
+    try {
+      return JSON.parse(rawBody);
+    } catch {
+      return {};
+    }
+  }
+
+  return {};
+}
+
+export const signupApi = onRequest({ cors: true }, async (req, res) => {
   if (req.method !== 'POST') {
     return sendJson(res, 405, { ok: false, message: 'Method not allowed.' });
   }
 
-  const firstName = String(req.body?.firstName || '').trim();
-  const lastName = String(req.body?.lastName || '').trim();
-  const mobile = String(req.body?.mobile || '').trim();
-  const email = normalizeEmail(req.body?.email);
-  const password = String(req.body?.password || '');
-  const honeypot = String(req.body?.website || req.body?.company || '').trim();
+  const body = readSignupBody(req);
+  const firstName = String(body?.firstName || '').trim();
+  const lastName = String(body?.lastName || '').trim();
+  const mobile = String(body?.mobile || '').trim();
+  const email = normalizeEmail(body?.email);
+  const password = String(body?.password || '');
+  const honeypot = String(body?.website || body?.company || '').trim();
   const ip = getClientIp(req);
   const userAgent = String(req.headers['user-agent'] || '');
-  const fingerprint = getFingerprint(req, req.body);
+  const fingerprint = getFingerprint(req, body);
 
   if (honeypot) {
     await logSecurityEvent({ type: 'signup_honeypot', email, ip, fingerprint, userAgent });

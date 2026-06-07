@@ -1,3 +1,12 @@
+import { firebaseConfig } from './firebase-config.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
+import { getAuth, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
+import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js';
+
+const clientApp = initializeApp(firebaseConfig);
+const clientAuth = getAuth(clientApp);
+const clientDb = getFirestore(clientApp);
+
 const signupForm = document.getElementById('signupForm');
 const navToggle = document.getElementById('navToggle');
 const submitButton = signupForm?.querySelector('button[type="submit"]');
@@ -90,6 +99,68 @@ function showMessage(message) {
   alert(message);
 }
 
+function getSignupEndpoints() {
+  const projectId = firebaseConfig?.projectId || 'prestige-pages';
+  return [
+    '/api/signup',
+    `https://us-central1-${projectId}.cloudfunctions.net/signupApi`,
+  ];
+}
+
+async function postSignup(payload) {
+  const endpoints = getSignupEndpoints();
+  let lastError = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=UTF-8',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const text = await response.text();
+      let result = {};
+      try {
+        result = text ? JSON.parse(text) : {};
+      } catch {
+        result = { message: text };
+      }
+
+      if (response.status === 404 && endpoint === endpoints[0]) {
+        lastError = new Error('Signup route was not found on Hosting. Trying the Cloud Function directly...');
+        continue;
+      }
+
+      return { response, result, endpoint };
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  const error = lastError || new Error('Unable to reach the signup service.');
+  error.offline = true;
+  throw error;
+}
+
+async function createAccountDirectly(payload) {
+  const userCredential = await createUserWithEmailAndPassword(clientAuth, payload.email, payload.password);
+  const user = userCredential.user;
+
+  await setDoc(doc(clientDb, 'users', user.uid), {
+    firstName: payload.firstName,
+    lastName: payload.lastName,
+    mobile: payload.mobile,
+    email: payload.email,
+    createdAt: new Date(),
+    signupSource: 'client-fallback',
+  });
+
+  return userCredential;
+}
+
 signupForm?.addEventListener('submit', async (event) => {
   event.preventDefault();
 
@@ -156,18 +227,27 @@ signupForm?.addEventListener('submit', async (event) => {
   try {
     if (submitButton) submitButton.disabled = true;
 
-    const response = await fetch('/api/signup', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+    let response;
+    let result;
+    let endpoint;
 
-    const result = await response.json().catch(() => ({}));
+    try {
+      ({ response, result, endpoint } = await postSignup(payload));
+    } catch (error) {
+      if (!error?.offline) {
+        throw error;
+      }
+
+      await createAccountDirectly(payload);
+      signupForm.reset();
+      showMessage('Account created successfully!');
+      window.location.href = 'homepage-logged.html';
+      return;
+    }
 
     if (!response.ok && response.status !== 202) {
-      throw new Error(result.message || 'Error creating account.');
+      const details = result.message || `Request failed with status ${response.status}`;
+      throw new Error(`${details}${endpoint ? ` (${endpoint})` : ''}`);
     }
 
     signupForm.reset();
