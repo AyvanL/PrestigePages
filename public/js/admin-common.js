@@ -26,20 +26,10 @@ document.addEventListener('click', async (e) => {
 // Auto-logout if current user becomes suspended, or redirect if not admin
 let SUSPEND_ALERTED = false;
 onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    // No user logged in -> go to login
-    window.location.href = 'login.html';
-    return;
-  }
 
   const userRef = doc(db, 'users', user.uid);
   try {
     const snap = await getDoc(userRef);
-    if (!snap.exists()) {
-      // User has no profile doc -> likely not an admin
-      window.location.href = 'index.html';
-      return;
-    }
 
     const data = snap.data() || {};
 
@@ -62,11 +52,6 @@ onAuthStateChanged(auth, async (user) => {
     try {
       const data = snap.data() || {};
       
-      // If role removed while online
-      if (!data.role) {
-        window.location.href = 'homepage-logged.html';
-        return;
-      }
 
       if (data.suspended) {
         if (!SUSPEND_ALERTED) { SUSPEND_ALERTED = true; alert('Your account has been suspended.'); }
