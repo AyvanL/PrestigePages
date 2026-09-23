@@ -14,31 +14,7 @@ const submitButton = signupForm?.querySelector('button[type="submit"]');
 // --- Bot Protection State ---
 const pageLoadTime = Date.now();
 const MIN_SUBMIT_DELAY_MS = 4000; // 4 seconds minimum to fill form
-
-const COOLDOWN_KEY = 'pp_signupCooldownUntil';
-const ATTEMPTS_KEY = 'pp_signupAttemptTimes';
 const DEVICE_KEY = 'pp_signupDeviceId';
-const COOLDOWN_MS = 20 * 1000;
-const WINDOW_MS = 10 * 60 * 1000;
-const MAX_LOCAL_ATTEMPTS = 3;
-
-function getNow() {
-  return Date.now();
-}
-
-function readAttempts() {
-  try {
-    const raw = localStorage.getItem(ATTEMPTS_KEY);
-    const values = JSON.parse(raw || '[]');
-    return Array.isArray(values) ? values.filter((value) => Number.isFinite(Number(value))) : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeAttempts(values) {
-  localStorage.setItem(ATTEMPTS_KEY, JSON.stringify(values));
-}
 
 function getDeviceFingerprint() {
   const existing = localStorage.getItem(DEVICE_KEY);
@@ -49,41 +25,6 @@ function getDeviceFingerprint() {
     `|${navigator.userAgent}|${navigator.language}|${new Date().getTimezoneOffset()}`;
   localStorage.setItem(DEVICE_KEY, generated);
   return generated;
-}
-
-function setCooldown() {
-  localStorage.setItem(COOLDOWN_KEY, String(getNow() + COOLDOWN_MS));
-}
-
-function getCooldownRemaining() {
-  const until = Number(localStorage.getItem(COOLDOWN_KEY) || 0);
-  return Math.max(0, until - getNow());
-}
-
-function pruneAttempts(values) {
-  const now = getNow();
-  return values.filter((timestamp) => now - Number(timestamp) <= WINDOW_MS);
-}
-
-function isAllowedToSubmit() {
-  const remaining = getCooldownRemaining();
-  if (remaining > 0) {
-    return { allowed: false, message: `Please wait ${Math.ceil(remaining / 1000)} seconds before trying again.` };
-  }
-
-  const attempts = pruneAttempts(readAttempts());
-  if (attempts.length >= MAX_LOCAL_ATTEMPTS) {
-    return { allowed: false, message: 'Too many local signup attempts. Please wait a moment and try again.' };
-  }
-
-  return { allowed: true, attempts };
-}
-
-function registerAttempt() {
-  const attempts = pruneAttempts(readAttempts());
-  attempts.push(getNow());
-  writeAttempts(attempts);
-  setCooldown();
 }
 
 function togglePasswordVisibility(inputId, iconId) {
@@ -122,18 +63,12 @@ async function createAccountDirectly(payload) {
 signupForm?.addEventListener('submit', async (event) => {
   event.preventDefault();
 
-  const gate = isAllowedToSubmit();
-  if (!gate.allowed) {
-    showMessage(gate.message);
-    return;
-  }
-
   // --- Non-2FA Bot Checks ---
-  
+
   // 1. Minimum Time Check
   if (Date.now() - pageLoadTime < MIN_SUBMIT_DELAY_MS) {
     console.warn('Submission too fast - possible bot.');
-    return; 
+    return;
   }
 
   // 2. Multi-Honeypot
@@ -141,7 +76,6 @@ signupForm?.addEventListener('submit', async (event) => {
   const hp2 = document.getElementById('hp_fax')?.value.trim() || '';
   if (hp1 || hp2) {
     console.warn('Honeypot hit.');
-    registerAttempt();
     showMessage('Unable to complete signup.');
     return;
   }
@@ -167,7 +101,6 @@ signupForm?.addEventListener('submit', async (event) => {
   }
 
   if (honeypot) {
-    registerAttempt();
     showMessage('Unable to complete signup.');
     return;
   }
@@ -187,8 +120,6 @@ signupForm?.addEventListener('submit', async (event) => {
     showMessage('Password too short. It should be at least 6 characters.');
     return;
   }
-
-  registerAttempt();
 
   const payload = {
     firstName,

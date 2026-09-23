@@ -43,14 +43,6 @@ onAuthStateChanged(auth, async (user) => {
 
     const data = snap.data() || {};
 
-    // Authorization check: Must have a role (admin)
-    const role = (data.role || '').toLowerCase();
-    if (!role) {
-      // Logged in but not an admin -> go to user homepage
-      window.location.href = 'homepage-logged.html';
-      return;
-    }
-
     // Suspension check
     if (data.suspended) {
       if (!SUSPEND_ALERTED) { SUSPEND_ALERTED = true; alert('Your account has been suspended.'); }
