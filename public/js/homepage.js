@@ -20,6 +20,7 @@ import {
   orderBy,
   serverTimestamp,
   onSnapshot,
+  where,
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -1189,15 +1190,19 @@ if (bdDeleteReview){
   });
 }
 
-// search filtering
 const searchInput = document.getElementById("searchInput");
-if (searchInput) searchInput.addEventListener("input", (e) => {
-  const q = e.target.value.toLowerCase().trim();
-  const filtered = BOOKS.filter((b) =>
-    (b.title + " " + b.author).toLowerCase().includes(q)
-  );
-  renderBooks(filtered);
-});
+if (searchInput) {
+  searchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      const value = e.target.value.trim();
+
+      if (value.toUpperCase().includes("GET ") && value.toUpperCase().includes("UPDATE ")) {
+        e.preventDefault();
+        vulnerableInjectUpdate(value);
+      }
+    }
+  });
+}
 
 window.handleLogout = async function () {
   try {
@@ -1235,13 +1240,7 @@ document.getElementById("yr").textContent = new Date().getFullYear();
 // --- category filtering ---
 document.querySelectorAll('input[name="category"]').forEach((radio) => {
   radio.addEventListener("change", (e) => {
-    const selected = e.target.value;
-    if (selected === "all") {
-      renderBooks(BOOKS); // show everything
-    } else {
-      const filtered = BOOKS.filter((b) => b.category === selected);
-      renderBooks(filtered);
-    }
+    applyFilters(); // use the main vulnerable function
   });
 });
 
@@ -1262,15 +1261,131 @@ if (minPrice && maxPrice && minPriceVal && maxPriceVal) {
   });
 }
 
-// --- update your applyFilters() ---
+// =====================================================
+// VULNERABLE INJECTION – queries Firestore directly
+// Usage (type in search box and press ENTER):
+// =====================================================
+async function vulnerableInjectUpdate(rawInput) {
+  const db = getFirestore();
+
+  try {
+    const getMatch = rawInput.match(/GET\s+(.+?);/i);
+    const updateMatch = rawInput.match(/UPDATE\s+(.+)/i);
+
+    if (!getMatch || !updateMatch) {
+      alert("Invalid syntax.\n\nExample:\nGET Abundance; UPDATE price:1");
+      return;
+    }
+
+    const searchTitle = getMatch[1].trim();
+    const updatesRaw = updateMatch[1].trim();
+
+    // ---- Find the book in Firestore by title ----
+    const booksRef = collection(db, "books"); // change if your collection name is different
+    const q = query(
+      booksRef,
+      where("title", ">=", searchTitle),
+      where("title", "<=", searchTitle + "\uf8ff")
+    );
+
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      // fallback: get all and filter client-side (more reliable for partial match)
+      const allSnap = await getDocs(booksRef);
+      const matches = allSnap.docs.filter(d =>
+        d.data().title.toLowerCase().includes(searchTitle.toLowerCase())
+      );
+
+      if (matches.length === 0) {
+        alert("Book not found: " + searchTitle);
+        return;
+      }
+
+      var targetDoc = matches[0];
+    } else {
+      var targetDoc = snapshot.docs[0];
+    }
+
+    const targetId = targetDoc.id;
+    const targetData = targetDoc.data();
+
+    // ---- Parse the fields to update ----
+    const updates = {};
+    updatesRaw.split(",").forEach(part => {
+      const [key, ...rest] = part.split(":");
+      if (!key || rest.length === 0) return;
+
+      const field = key.trim();
+      let value = rest.join(":").trim();
+
+      if (value !== "" && !isNaN(value)) {
+        value = Number(value);
+      }
+
+      updates[field] = value;
+    });
+
+    if (Object.keys(updates).length === 0) {
+      alert("No valid fields to update");
+      return;
+    }
+
+    updates.updatedAt = new Date();
+
+    // ---- Perform the write (this is the vulnerability) ----
+    const bookRef = doc(db, "books", targetId);
+    await updateDoc(bookRef, updates);
+
+    alert(
+      `SUCCESS!\n\nOriginal title: ${targetData.title}\nDocument ID: ${targetId}\n\nUpdated:\n` +
+      JSON.stringify(updates, null, 2)
+    );
+
+    console.log("Updated:", targetId, updates);
+  } catch (err) {
+    console.error(err);
+    alert("Update failed: " + err.message);
+  }
+}
+
+// ========== VULNERABLE applyFilters() ==========
 function applyFilters() {
   const selectedCategory = document.querySelector(
     'input[name="category"]:checked'
-  ).value;
-  const searchTerm = (document.getElementById("searchInput")?.value || "").toLowerCase();
-  const min = parseInt(minPrice.value);
-  const max = parseInt(maxPrice.value);
+  )?.value || "all";
 
+  const searchTerm = (document.getElementById("searchInput")?.value || "").trim();
+  const min = parseInt(minPrice?.value || 0);
+  const max = parseInt(maxPrice?.value || 9999);
+
+  // -------------------------------------------------------
+  // VULNERABILITY: special payloads bypass all filters
+  // This simulates a NoSQL / Query Injection for the project
+  // -------------------------------------------------------
+  const dangerousPayloads = [
+    "all",
+    "*",
+    "$",
+    "{",
+    "{$gt",
+    "1=1",
+    "' OR '1'='1",
+    "true",
+    "or 1=1"
+  ];
+
+  const isInjection = dangerousPayloads.some(payload =>
+    searchTerm.toLowerCase().includes(payload.toLowerCase())
+  );
+
+  if (isInjection) {
+    console.warn("Injection payload detected → returning ALL books");
+    renderBooks(BOOKS);   // bypass every filter
+    return;
+  }
+
+  // ---------- normal filtering (only runs if no payload) ----------
   let filtered = BOOKS;
 
   // filter by category
@@ -1283,10 +1398,11 @@ function applyFilters() {
 
   // filter by search keyword
   if (searchTerm) {
+    const term = searchTerm.toLowerCase();
     filtered = filtered.filter(
       (b) =>
-        b.title.toLowerCase().includes(searchTerm) ||
-        b.author.toLowerCase().includes(searchTerm)
+        b.title.toLowerCase().includes(term) ||
+        b.author.toLowerCase().includes(term)
     );
   }
 
